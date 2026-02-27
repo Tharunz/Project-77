@@ -1,0 +1,441 @@
+.hb-section {
+    width: 100%;
+    position: relative;
+    padding: 80px 20px;
+    display: flex;
+    justify-content: center;
+    background-color: transparent;
+}
+
+.hb-container {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.hb-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.hb-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    color: #fff;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+}
+
+.hb-subtitle {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #8899AA;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.hb-rack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Base Row Styling */
+.hb-row {
+    width: 100%;
+    height: 110px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+
+    /* Reveal Animation Default State */
+    opacity: 0;
+    transform: translateX(-40px);
+}
+
+.hb-row.visible {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 0.6s ease var(--delay), transform 0.6s cubic-bezier(0.25, 1, 0.5, 1) var(--delay), background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hb-row:hover {
+    transform: translateX(8px);
+    background: color-mix(in srgb, var(--accent) 5%, transparent);
+    box-shadow: -5px 0 26px color-mix(in srgb, var(--accent) 20%, transparent);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Left Content Area */
+.hb-content-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 100%;
+}
+
+.hb-tag {
+    font-family: monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.hb-divider {
+    height: 40px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.hb-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.hb-row-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.hb-row-subtext {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #B8C5D6;
+    line-height: 1.4;
+}
+
+/* Right Content Area (Live Indicators) */
+.hb-content-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    min-width: 140px;
+}
+
+.hb-indicator-label {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #475569;
+    letter-spacing: 0.1em;
+}
+
+.hb-indicator-box {
+    width: 100%;
+    height: 40px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* =========================================
+   LIVE INDICATOR ANIMATIONS
+   ========================================= */
+
+/* Phase 1: Ingestion (Form Filling) */
+.hb-ind-ingestion {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 60px;
+}
+
+.hb-ii-field {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.10);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.hb-ii-text {
+    height: 100%;
+    width: 0%;
+    opacity: 0.8;
+}
+
+.hb-ii-text.t1 {
+    animation: typeText 3s infinite;
+}
+
+.hb-ii-text.t2 {
+    animation: typeText 3s infinite 0.5s;
+}
+
+.hb-ii-text.t3 {
+    animation: typeText 3s infinite 1s;
+}
+
+@keyframes typeText {
+
+    0%,
+    10% {
+        width: 0%;
+    }
+
+    40%,
+    80% {
+        width: 100%;
+    }
+
+    90%,
+    100% {
+        width: 0%;
+    }
+}
+
+/* Phase 2: Synthesis (Folder & Chips) */
+.hb-ind-synthesis {
+    position: relative;
+    width: 40px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hb-is-folder {
+    width: 32px;
+    height: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    position: relative;
+    z-index: 2;
+    background: #0C1120;
+}
+
+.hb-is-tab {
+    position: absolute;
+    top: -4px;
+    left: 4px;
+    width: 12px;
+    height: 4px;
+    border-radius: 2px 2px 0 0;
+}
+
+.hb-is-chips {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.hb-is-chip {
+    position: absolute;
+    width: 16px;
+    height: 4px;
+    border-radius: 2px;
+    opacity: 0;
+}
+
+.hb-is-chip.c1 {
+    left: -20px;
+    top: 0px;
+    animation: chipFly1 2s infinite ease-out;
+}
+
+.hb-is-chip.c2 {
+    left: -15px;
+    top: 12px;
+    animation: chipFly2 2s infinite ease-out 0.6s;
+}
+
+.hb-is-chip.c3 {
+    left: -10px;
+    top: 24px;
+    animation: chipFly3 2s infinite ease-out 1.2s;
+}
+
+@keyframes chipFly1 {
+    0% {
+        transform: translateX(0);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        transform: translateX(30px);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translateX(30px);
+        opacity: 0;
+    }
+}
+
+@keyframes chipFly2 {
+    0% {
+        transform: translateX(0);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        transform: translateX(25px);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translateX(25px);
+        opacity: 0;
+    }
+}
+
+@keyframes chipFly3 {
+    0% {
+        transform: translateX(0) scale(0.8);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        transform: translateX(20px) scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: translateX(20px) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* Phase 3: Prediction (EKG Heartbeat) */
+.hb-ind-prediction {
+    width: 60px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hb-ip-svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.hb-ip-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.hb-ip-scan {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    background: linear-gradient(90deg, transparent, #0C1120 80%, #0C1120);
+    animation: ekgScan 2s linear infinite;
+}
+
+@keyframes ekgScan {
+    0% {
+        right: 100%;
+    }
+
+    100% {
+        right: -50%;
+    }
+}
+
+/* Phase 4: Resolution (Table Rows Turning Green) */
+.hb-ind-resolution {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 48px;
+}
+
+.hb-ir-row {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.10);
+    border-radius: 2px;
+}
+
+.hb-ir-row.r1 {
+    animation: resolveRow 4s infinite 0.5s;
+}
+
+.hb-ir-row.r2 {
+    animation: resolveRow 4s infinite 1.5s;
+}
+
+.hb-ir-row.r3 {
+    animation: resolveRow 4s infinite 2.5s;
+}
+
+@keyframes resolveRow {
+
+    0%,
+    20% {
+        background: rgba(255, 255, 255, 0.10);
+        box-shadow: none;
+    }
+
+    30%,
+    80% {
+        background: #10B981;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    90%,
+    100% {
+        background: rgba(255, 255, 255, 0.10);
+        box-shadow: none;
+    }
+}
+
+/* Responsive Handling */
+@media (max-width: 768px) {
+    .hb-row {
+        height: auto;
+        min-height: 120px;
+        padding: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .hb-content-left {
+        gap: 16px;
+    }
+
+    .hb-divider {
+        display: none;
+    }
+
+    .hb-content-right {
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .hb-indicator-box {
+        justify-content: flex-start;
+    }
+}

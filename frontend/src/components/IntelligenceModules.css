@@ -1,0 +1,573 @@
+/* ── SYSTEM MODULES MASONRY LAYOUT ── */
+.sys-modules-section {
+    padding: 140px 48px;
+    max-width: 1550px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+}
+
+/* Header */
+.sys-mod-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 70px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.smh-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #475569;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.smh-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: #FFFFFF;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+.smh-highlight {
+    color: #FF5500;
+}
+
+.smh-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.smh-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #00E5A0;
+    font-weight: 700;
+}
+
+.smh-dot {
+    width: 6px;
+    height: 6px;
+    background: #00E5A0;
+    border-radius: 50%;
+    animation: smhPulse 2s infinite;
+}
+
+@keyframes smhPulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        box-shadow: none;
+    }
+
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 10px #00E5A0;
+    }
+}
+
+.smh-audit {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+/* Grid */
+.sys-mod-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-flow: dense;
+    gap: 24px;
+}
+
+/* Module Card Base */
+.mod-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.018);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), border-color 0.35s, box-shadow 0.35s;
+    opacity: 0;
+    transform: translateY(20px);
+    /* Rested state for JS entrance animation */
+}
+
+.mod-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mod-card:hover {
+    transform: translateY(-6px) !important;
+    /* overrides visible */
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Heartbeat Line */
+.mod-edge {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 40%;
+    border-radius: 2px;
+    background: var(--mc);
+    opacity: 0.6;
+    transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+    z-index: 5;
+}
+
+.mod-card:hover .mod-edge {
+    height: 70%;
+    opacity: 1;
+}
+
+/* Status Indicator */
+.mod-status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+}
+
+.mod-s-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mc);
+}
+
+.mod-s-txt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    color: var(--mc);
+    opacity: 0.6;
+}
+
+.mod-badge {
+    position: absolute;
+    top: 20px;
+    right: 80px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    background: rgba(255, 255, 255, 0.10);
+    padding: 3px 8px;
+    border-radius: 12px;
+    color: #FFF;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.3s ease;
+    z-index: 5;
+}
+
+.mod-card:hover .mod-badge {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Content Layout for standard cards */
+.mod-content {
+    flex: 1;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 4;
+}
+
+.mod-id {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.mod-viz-container {
+    position: absolute;
+    top: 60px;
+    left: 24px;
+    right: 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    /* Optional: justify-content: flex-end; if we want them on the right */
+}
+
+.mod-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--mc);
+    opacity: 0.9;
+    margin-bottom: 16px;
+}
+
+.mod-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #FFFFFF;
+    line-height: 1.2;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.mod-desc {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    color: #8899AA;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.3s ease;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 0;
+}
+
+.mod-card:hover .mod-desc {
+    opacity: 1;
+    transform: translateY(0);
+    height: auto;
+    margin-top: 8px;
+}
+
+/* Base card heights */
+.mod-card.span-4 {
+    grid-column: span 4;
+    height: 220px;
+}
+
+.mod-card.span-5 {
+    grid-column: span 5;
+    height: 200px;
+}
+
+.mod-card.span-7 {
+    grid-column: span 7;
+    height: 200px;
+}
+
+.mod-card.span-12 {
+    grid-column: span 12;
+    height: 180px;
+}
+
+.mod-card.span-12.hero-end {
+    height: 160px;
+}
+
+/* Hero Split Layout */
+.mod-card.span-12 .mod-content-wrap {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.mod-card.span-12 .mod-body-left {
+    width: 40%;
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 4;
+}
+
+.mod-card.span-12 .mod-desc {
+    opacity: 1;
+    transform: none;
+    height: auto;
+    margin-top: 8px;
+    -webkit-line-clamp: 3;
+}
+
+.mod-divider {
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0) 100%);
+}
+
+.mod-card.span-12 .mod-viz-right {
+    width: 60%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Adjustments for span-12 components */
+.mod-card.span-12 .mod-id {
+    top: 24px;
+    left: 32px;
+}
+
+.mod-card.span-12 .mod-icon {
+    mix-blend-mode: screen;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 24px;
+}
+
+.mod-card.span-12 .mod-name {
+    font-size: 1.4rem;
+}
+
+/* ── Live Visualization Specific CSS ── */
+
+.viz-speed-normal {
+    --spd: 1;
+}
+
+.viz-speed-fast {
+    --spd: 0.6;
+    /* CSS animations multiply by this var or we use JS */
+}
+
+/* 1. Sparkline heartbeat */
+@keyframes dashPulse {
+    0% {
+        stroke-dashoffset: 100;
+    }
+
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* 2. Distress Index */
+.viz-di-bar {
+    width: 4px;
+    border-radius: 2px;
+    transition: height 0.5s ease;
+}
+
+/* 3. AI Chatbot dots */
+.viz-bot-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--mc);
+    animation: botPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes botPulse {
+
+    0%,
+    100% {
+        transform: scale(0.6);
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+/* 4. Progress Ring */
+.viz-ring-circ {
+    transition: stroke-dashoffset 1s ease-out;
+}
+
+/* 5. Roadmap Lines */
+.viz-rd-line {
+    height: 2px;
+    background: var(--mc);
+    border-radius: 1px;
+    transition: width 0.5s ease;
+}
+
+/* 6. SLA Timer */
+.viz-sla-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: #EF4444;
+    font-weight: 700;
+}
+
+/* 7. JanConnect Avatars */
+.viz-jc-av {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 6px;
+    font-weight: bold;
+    color: #FFF;
+    transition: transform 0.4s ease;
+}
+
+/* 8. Fraud Shield */
+.viz-fd-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #EF4444;
+    margin-left: 8px;
+    font-weight: 700;
+}
+
+/* 9. DNA */
+.viz-dna-node {
+    transition: all 1s ease;
+}
+
+/* 10. Gap Calc */
+.viz-gap-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #F97316;
+}
+
+/* 11. Accountability Wall */
+.viz-aw-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.viz-aw-rank {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.viz-aw-bar {
+    height: 2px;
+    border-radius: 1px;
+    background: var(--mc);
+}
+
+/* 12. Weather */
+.viz-w-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    justify-content: flex-end;
+    height: 24px;
+}
+
+.viz-w-bar {
+    width: 3px;
+    background: rgba(14, 165, 233, 0.3);
+    border-radius: 1px;
+    transition: height 0.5s ease;
+}
+
+.viz-w-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+}
+
+/* 13. Petition Engine */
+.viz-pe-join {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #8B5CF6;
+    animation: fadeUpJoin 2s infinite;
+}
+
+@keyframes fadeUpJoin {
+    0% {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    20%,
+    80% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+}
+
+/* 16. Whisper Mode */
+.viz-wm-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #8899AA;
+    background: rgba(100, 116, 139, 0.1);
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+/* 21. Corridors */
+.viz-tc-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .sys-mod-grid {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .mod-card {
+        width: 100% !important;
+        min-height: 200px;
+        height: auto !important;
+    }
+
+    .mod-card.span-12 .mod-content-wrap {
+        flex-direction: column;
+    }
+
+    .mod-card.span-12 .mod-body-left {
+        width: 100%;
+        padding: 24px;
+    }
+
+    .mod-card.span-12 .mod-viz-right {
+        width: 100%;
+        height: 120px;
+        border-top: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .mod-divider {
+        display: none;
+    }
+}
