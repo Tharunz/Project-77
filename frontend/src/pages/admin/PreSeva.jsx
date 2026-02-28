@@ -77,7 +77,7 @@ export default function PreSeva() {
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Problems Prevented</div>
                     </div>
                     <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 8, padding: '8px 16px', textAlign: 'center' }}>
-                        <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.6rem', fontWeight: 800, color: '#A78BFA' }}>{stats?.totalGrievancesAvoided.toLocaleString()}</div>
+                        <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.6rem', fontWeight: 800, color: '#A78BFA' }}>{(stats?.totalGrievancesAvoided || 0).toLocaleString()}</div>
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>Citizen Complaints Avoided</div>
                     </div>
                     <div style={{ background: 'rgba(255,107,44,0.1)', border: '1px solid rgba(255,107,44,0.25)', borderRadius: 8, padding: '8px 16px', textAlign: 'center' }}>
@@ -178,8 +178,8 @@ export default function PreSeva() {
                                         <div className="responsive-grid-2" style={{ gap: 14, marginTop: 16 }}>
                                             <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, padding: '14px 16px' }}>
                                                 <h5 style={{ fontSize: '0.78rem', color: '#A78BFA', marginBottom: 8 }}>🤖 AI Pattern Analysis</h5>
-                                                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{alert.historicalPattern}</p>
-                                                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 8 }}>Based on {alert.basisGrievances.toLocaleString()} historical grievances</p>
+                                                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{alert.historicalPattern || 'Pattern analysis unavailable.'}</p>
+                                                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 8 }}>Based on {(alert.basisGrievances || 0).toLocaleString()} historical grievances</p>
                                             </div>
                                             <div style={{ background: 'rgba(0,200,150,0.06)', border: '1px solid rgba(0,200,150,0.2)', borderRadius: 10, padding: '14px 16px' }}>
                                                 <h5 style={{ fontSize: '0.78rem', color: '#00C896', marginBottom: 8 }}>📋 Suggested Action</h5>
