@@ -241,6 +241,27 @@ router.get('/my-grievances', protect, (req, res, next) => {
     }
 });
 
+// ─── GET /api/grievance/critical ──────────────────────────────────────────────
+router.get('/critical', protect, adminOnly, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const grievances = db_instance.get('grievances').value();
+
+        const criticalData = grievances
+            .filter(g => g.priority === 'Critical' || g.sentimentScore < 0.3)
+            .sort((a, b) => a.sentimentScore - b.sentimentScore);
+
+        return res.status(200).json({
+            success: true,
+            data: criticalData,
+            message: `Found ${criticalData.length} critical grievance(s).`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 // ─── GET /api/grievance/search ────────────────────────────────────────────────
 router.get('/search', (req, res, next) => {
     try {

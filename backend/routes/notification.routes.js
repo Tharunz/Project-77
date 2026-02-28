@@ -48,6 +48,29 @@ router.post('/send', protect, adminOnly, async (req, res, next) => {
     }
 });
 
+// ─── GET /api/notification ──────────────────────────────────────────────────────
+router.get('/', protect, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const notifications = db_instance.get('notifications')
+            .filter({ userId: req.user.id })
+            .value()
+            .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+
+        const unread = notifications.filter(n => !n.isRead).length;
+
+        return res.status(200).json({
+            success: true,
+            data: notifications,
+            meta: { total: notifications.length, unread },
+            message: `${notifications.length} notification(s) fetched.`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 // ─── GET /api/notification/history/:userId ────────────────────────────────────
 router.get('/history/:userId', protect, (req, res, next) => {
     try {

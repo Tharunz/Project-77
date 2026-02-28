@@ -201,6 +201,35 @@ router.get('/sla-tracker', (req, res, next) => {
     }
 });
 
+// ─── GET /api/admin/activity-feed ─────────────────────────────────────────────
+router.get('/activity-feed', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const recentGrievances = db_instance.get('grievances').value()
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 20)
+            .map(g => ({
+                id: g.id,
+                title: g.title,
+                citizenName: g.citizenName,
+                status: g.status,
+                priority: g.priority,
+                sentiment: g.sentiment,
+                state: g.state,
+                createdAt: g.createdAt
+            }));
+
+        return res.status(200).json({
+            success: true,
+            data: recentGrievances,
+            message: 'Activity feed fetched.',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 // ─── GET /api/admin/fraud-alerts ─────────────────────────────────────────────
 router.get('/fraud-alerts', (req, res, next) => {
     try {
@@ -218,6 +247,48 @@ router.get('/fraud-alerts', (req, res, next) => {
             success: true,
             data: fraudulent,
             message: `${fraudulent.length} suspicious grievance(s) flagged.`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── PATCH /api/admin/fraud-alerts/:id/review ────────────────────────────────
+router.patch('/fraud-alerts/:id/review', (req, res, next) => {
+    try {
+        const { action } = req.body; // 'confirm' | 'dismiss'
+        if (!['confirm', 'dismiss'].includes(action)) {
+            return res.status(400).json({
+                success: false, data: null,
+                message: "action must be 'confirm' or 'dismiss'.",
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const db_instance = db.getDb();
+        const grievance = db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).value();
+
+        if (!grievance) {
+            return res.status(404).json({
+                success: false, data: null,
+                message: 'Grievance not found.',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const updates = action === 'confirm'
+            ? { status: 'Closed', adminNote: 'Closed — confirmed as fraudulent/duplicate by admin.', fraudReviewed: true, fraudAction: 'confirmed' }
+            : { isDuplicate: false, fraudScore: 0.0, fraudReviewed: true, fraudAction: 'dismissed', adminNote: 'Fraud flag dismissed by admin — legitimate grievance.' };
+
+        db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).assign({
+            ...updates, updatedAt: new Date().toISOString()
+        }).write();
+
+        return res.status(200).json({
+            success: true,
+            data: db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).value(),
+            message: `Fraud alert ${action === 'confirm' ? 'confirmed - grievance closed' : 'dismissed - grievance reinstated'}.`,
             timestamp: new Date().toISOString()
         });
     } catch (err) {
