@@ -1,0 +1,319 @@
+.hq-hero-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+    background: transparent;
+}
+
+.hq-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.6;
+}
+
+/* Auroras - Parallax Layer 1 (Far background) */
+.hq-aurora {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.15;
+    mix-blend-mode: screen;
+    animation: hqAuroraFloat 20s infinite alternate ease-in-out;
+    transform: translate(calc(var(--mx, 0) * -20px), calc(var(--my, 0) * -20px));
+}
+
+.hq-aurora.a-teal {
+    width: 60vw;
+    height: 60vw;
+    top: -20%;
+    left: -10%;
+    background: radial-gradient(circle, #00C896, transparent 60%);
+    animation-delay: -5s;
+}
+
+.hq-aurora.a-saffron {
+    width: 50vw;
+    height: 50vw;
+    bottom: -10%;
+    right: 30%;
+    background: radial-gradient(circle, #FF6B2C, transparent 60%);
+    animation-delay: -2s;
+}
+
+.hq-aurora.a-blue {
+    width: 40vw;
+    height: 40vw;
+    bottom: 20%;
+    right: -10%;
+    background: radial-gradient(circle, #5C8EFF, transparent 60%);
+}
+
+@keyframes hqAuroraFloat {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        transform: translate(15vw, 15vh) scale(1.3);
+    }
+}
+
+/* 3D Data Floor - Parallax + Transform */
+.hq-floor-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40%;
+    transform: perspective(600px) rotateX(75deg) translate(calc(var(--mx, 0) * 30px), calc(var(--my, 0) * 10px));
+    transform-origin: bottom center;
+    opacity: 0.4;
+    transition: transform 0.1s linear;
+}
+
+.hq-floor {
+    position: absolute;
+    bottom: 0;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image:
+        linear-gradient(rgba(0, 200, 150, 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 150, 0.4) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: hqFloorScroll 5s linear infinite;
+    mask-image: linear-gradient(to top, black, transparent 80%);
+    -webkit-mask-image: linear-gradient(to top, black, transparent 80%);
+}
+
+@keyframes hqFloorScroll {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(50px);
+    }
+}
+
+/* Glass Nodes - Parallax Layer 3 (Foreground) */
+.hq-glass-nodes {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+}
+
+.hq-node {
+    position: absolute;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Layer 3 Depth Response */
+    transform:
+        translate(calc(var(--mx, 0) * 50px * var(--depth-factor, 1)), calc(var(--my, 0) * 50px * var(--depth-factor, 1))) translateY(var(--float-y, 0));
+    animation: hqNodeFloat 10s infinite alternate ease-in-out;
+    transition: transform 0.1s linear;
+}
+
+.hq-node-core {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00E5A0;
+    box-shadow: 0 0 20px #00E5A0, 0 0 40px #00E5A0;
+    animation: hqCorePulse 3s infinite alternate;
+}
+
+.hq-node-ring {
+    position: absolute;
+    width: 140%;
+    height: 140%;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    border-top-color: #00E5A0;
+    animation: hqSpinRing 15s linear infinite;
+}
+
+.hq-node-ring.reverse {
+    animation-direction: reverse;
+    border-top-color: #FF5500;
+}
+
+.hq-node-float-text {
+    position: absolute;
+    bottom: -25px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+}
+
+.hq-node.n1 {
+    top: 15%;
+    left: 8%;
+    animation-delay: 0s;
+    --depth-factor: 1.5;
+}
+
+.hq-node.n2 {
+    top: 60%;
+    left: 45%;
+    animation-delay: -3s;
+    width: 60px;
+    height: 60px;
+    --depth-factor: 0.8;
+}
+
+.hq-node.n2 .hq-node-core {
+    background: #FF5500;
+    box-shadow: 0 0 20px #FF5500;
+}
+
+.hq-node.n3 {
+    top: 25%;
+    right: 40%;
+    animation-delay: -6s;
+    width: 120px;
+    height: 120px;
+    --depth-factor: 2;
+}
+
+.hq-node.n3 .hq-node-core {
+    background: #5C8EFF;
+    box-shadow: 0 0 20px #5C8EFF;
+}
+
+@keyframes hqNodeFloat {
+    0% {
+        --float-y: 0px;
+    }
+
+    100% {
+        --float-y: -50px;
+    }
+}
+
+@keyframes hqCorePulse {
+    0% {
+        opacity: 0.6;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1.3);
+    }
+}
+
+@keyframes hqSpinRing {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Streams */
+.hq-streams {
+    position: absolute;
+    inset: 0;
+}
+
+.hq-stream {
+    position: absolute;
+    width: 1px;
+    height: 150px;
+    background: linear-gradient(to bottom, transparent, #fff, transparent);
+    opacity: 0;
+    animation: hqStreamShoot 3s infinite linear;
+    transition: transform 0.1s linear;
+}
+
+.hq-stream.s1 {
+    left: 15%;
+    top: -200px;
+    animation-delay: 1s;
+    background: linear-gradient(to bottom, transparent, #FF5500, transparent);
+    transform: translate(calc(var(--mx, 0) * 10px), calc(var(--my, 0) * 10px));
+}
+
+.hq-stream.s2 {
+    left: 60%;
+    top: -200px;
+    animation-delay: 4.5s;
+    background: linear-gradient(to bottom, transparent, #00E5A0, transparent);
+    transform: translate(calc(var(--mx, 0) * 10px), calc(var(--my, 0) * 10px));
+}
+
+.hq-stream.s3 {
+    left: 85%;
+    top: -200px;
+    animation-delay: 2.2s;
+    background: linear-gradient(to bottom, transparent, #5C8EFF, transparent);
+    height: 250px;
+    transform: translate(calc(var(--mx, 0) * 10px), calc(var(--my, 0) * 10px));
+}
+
+.hq-stream.s4 {
+    left: 35%;
+    top: -200px;
+    animation-delay: 6s;
+    background: linear-gradient(to bottom, transparent, #A78BFA, transparent);
+    transform: translate(calc(var(--mx, 0) * 10px), calc(var(--my, 0) * 10px));
+}
+
+@keyframes hqStreamShoot {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(1200px);
+        opacity: 0;
+    }
+}
+
+/* Interactive Cursor Aura */
+.hq-cursor-aura {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+    top: 50%;
+    left: 50%;
+    margin-top: -300px;
+    margin-left: -300px;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: overlay;
+    transform: translate(calc(var(--mx, 0) * 50vw), calc(var(--my, 0) * 50vh));
+    transition: transform 0.1s linear;
+}
+
+/* Vignette to blend into sides and bottom */
+.hq-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background: radial-gradient(circle at center, transparent 30%, #050b1a 100%);
+}
