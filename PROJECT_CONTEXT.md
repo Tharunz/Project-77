@@ -4,9 +4,9 @@
 
 ---
 
-## Last Updated: 2026-02-27
-## Active Branch: main
-## Current Phase: COMPLETE — Full frontend built, all pages functional
+## Last Updated: 2026-02-28
+## Active Branch: feature/surya-backend-group-1
+## Current Phase: Backend Group 1 COMPLETE — Frontend complete + Backend Group 1 APIs live
 
 ---
 
@@ -55,7 +55,72 @@
       api.service.js    ✅ Full API layer (all mock, swap-ready for Surya's backend)
 /PROJECT_CONTEXT.md    — this file
 /README.md             — project readme
+/backend/              — Express.js backend (Group 1 COMPLETE — see below)
 ```
+
+---
+
+## BACKEND STATUS (Surya)
+
+### Branch: `feature/surya-backend-group-1`
+### Server: `http://localhost:5000`
+### Start: `cd backend && npm run dev`
+
+#### Group 1 — COMPLETE ✅
+
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| 1 | Express server + all route skeletons | ✅ Complete | index.js, CORS, morgan, static uploads |
+| 2 | lowdb database + seed data | ✅ Complete | 14 users, 20 schemes, 50 grievances, 5 PreSeva alerts |
+| 3 | User Registration API | ✅ Complete | POST /api/auth/register — bcrypt hash, duplicate check |
+| 4 | User Login API with JWT | ✅ Complete | POST /api/auth/login — returns token + user |
+| 5 | Auth Middleware | ✅ Complete | protect, adminOnly, officerOrAdmin |
+| 6 | Citizen Profile GET + PUT | ✅ Complete | /api/auth/profile — with grievance stats |
+| 7 | Grievance Filing API | ✅ Complete | POST /api/grievance/file — sentiment + duplicate detect + email |
+| 8 | Grievance Tracking API | ✅ Complete | GET /api/grievance/track/:id — with timeline builder |
+| 9 | My Grievances List API | ✅ Complete | GET /api/grievance/my-grievances — pagination + filter |
+| 10 | Scheme Listing + Filtering | ✅ Complete | GET /api/schemes — filter, recommend, eligibility-check, benefit-gap |
+
+#### Additional APIs (bonus, also built in Group 1):
+- Admin dashboard — `/api/admin/dashboard` (KPIs, charts, activity feed)
+- Admin analytics — `/api/admin/analytics` (monthly trend, category, sentiment, state)
+- Admin officers — `/api/admin/officers` + PATCH
+- Admin SLA tracker — `/api/admin/sla-tracker`
+- Admin fraud alerts — `/api/admin/fraud-alerts`
+- Admin heatmap — `/api/admin/heatmap`
+- AI Chatbot — `/api/chatbot/message` (rule-based, multilingual)
+- OCR — `/api/ocr/extract` (tesseract.js)
+- PreSeva — `/api/preseva/predictions`, `/api/preseva/alerts`, `/api/preseva/threat-corridors`
+- Notifications — `/api/notification/send`, `/api/notification/history/:userId`
+
+### Backend Folder Structure
+
+```
+backend/
+├── services/       → 9 services (all local, AWS-swap-ready)
+├── routes/         → 9 route files
+├── middleware/     → auth.middleware.js, errorHandler.middleware.js
+├── db/             → database.js (lowdb), local.json, seed.js
+├── uploads/        → multer file storage
+├── index.js        → Express entry point
+├── .env            → local config (copy of .env.example)
+└── package.json
+```
+
+### AWS Swap Map (March 7)
+| Service File | Current | AWS Target |
+|---|---|---|
+| auth.service.js | bcryptjs + JWT | Amazon Cognito |
+| sentiment.service.js | npm sentiment | Amazon Comprehend |
+| storage.service.js | multer/local | Amazon S3 |
+| ocr.service.js | tesseract.js | Amazon Textract |
+| translate.service.js | i18n stubs | Amazon Translate |
+| chatbot.service.js | rule-based | Amazon Lex |
+| notification.service.js | Nodemailer | AWS SES + SNS |
+| preseva.service.js | pattern logic | Amazon SageMaker |
+| analytics.service.js | local compute | Amazon QuickSight |
+
+
 
 ---
 
