@@ -12,13 +12,27 @@ const bcrypt = require('bcryptjs');
 
 const SALT_ROUNDS = 10;
 
-const seed = async () => {
+const seed = async (force = false) => {
     const db_instance = db.getDb();
 
     const existingUsers = db_instance.get('users').value();
-    if (existingUsers.length > 0) {
+    if (existingUsers.length > 0 && !force) {
         console.log('[SEED] Database already seeded. Skipping.');
         return;
+    }
+
+    if (force) {
+        console.log('[SEED] Force seeding... clearing existing data.');
+        db_instance.setState({
+            users: [],
+            grievances: [],
+            schemes: [],
+            officers: [],
+            preSevaAlerts: [],
+            notifications: [],
+            communityPosts: [],
+            chatHistory: []
+        }).write();
     }
 
     console.log('[SEED] Starting database seed...');
@@ -539,10 +553,19 @@ const seed = async () => {
             state: 'Bihar',
             district: 'Patna',
             category: 'Flooding',
-            probability: 0.87,
+            title: 'Predicted Flood Grievance Spike',
+            probability: 87,
+            daysUntil: 4,
+            predictedDate: '2026-03-05',
+            urgency: 'critical',
+            historicalPattern: 'Pattern detected in 2024 and 2025 during similar pre-monsoon showers.',
+            basisGrievances: 1240,
+            suggestedAction: 'Clear drainages in Ward 4, 7, and 12 immediately.',
+            departmentAlerted: 'Water & Sanitation',
+            alertSentAt: '2026-02-28 10:00 AM',
             description: 'AI model predicts 85%+ probability of flood-related grievance surge in next 14 days based on IMD data and historical patterns.',
-            status: 'active',
-            departmentAlerted: true,
+            status: 'Department Notified',
+            prevented: false,
             createdAt: '2026-02-20T00:00:00.000Z'
         },
         {
@@ -551,10 +574,19 @@ const seed = async () => {
             state: 'Rajasthan',
             district: 'Jaisalmer',
             category: 'Agriculture',
-            probability: 0.79,
+            title: 'Drought Pattern Detected',
+            probability: 79,
+            daysUntil: 12,
+            predictedDate: '2026-03-15',
+            urgency: 'high',
+            historicalPattern: '300% grievance increase in this corridor during similar weather conditions.',
+            basisGrievances: 850,
+            suggestedAction: 'Release canal water for agricultural use and notify farmers.',
+            departmentAlerted: 'Agriculture',
+            alertSentAt: '2026-02-28 11:30 AM',
             description: 'Unusual drought pattern detected. Historical data shows 300% grievance increase in this corridor during similar weather conditions.',
-            status: 'active',
-            departmentAlerted: false,
+            status: 'Department Notified',
+            prevented: false,
             createdAt: '2026-02-22T00:00:00.000Z'
         },
         {
@@ -563,10 +595,19 @@ const seed = async () => {
             state: 'West Bengal',
             district: 'Kolkata',
             category: 'Healthcare',
-            probability: 0.72,
+            title: 'Potential Dengue Outbreak',
+            probability: 72,
+            daysUntil: 7,
+            predictedDate: '2026-03-08',
+            urgency: 'high',
+            historicalPattern: 'Vector disease pattern detected from health complaints.',
+            basisGrievances: 2100,
+            suggestedAction: 'Start intensive fogging and cleaning of stagnant water.',
+            departmentAlerted: 'Healthcare',
+            alertSentAt: '2026-02-28 09:15 AM',
             description: 'Vector disease pattern detected from health complaints. Dengue or malaria outbreak probability high in next 7-10 days.',
-            status: 'active',
-            departmentAlerted: true,
+            status: 'Department Notified',
+            prevented: false,
             createdAt: '2026-02-24T00:00:00.000Z'
         },
         {
@@ -575,23 +616,20 @@ const seed = async () => {
             state: 'Uttar Pradesh',
             district: 'Kanpur',
             category: 'Infrastructure',
-            probability: 0.68,
+            title: 'Road Surface Deterioration',
+            probability: 68,
+            daysUntil: 2,
+            predictedDate: '2026-03-03',
+            urgency: 'medium',
+            historicalPattern: 'Multiple bridge and road complaints in same corridor.',
+            basisGrievances: 450,
+            suggestedAction: 'Emergency road patching in the industrial zone.',
+            departmentAlerted: 'Infrastructure',
+            alertSentAt: '2026-02-28 02:45 PM',
             description: 'Multiple bridge and road complaints in same corridor. Systemic infrastructure failure predicted without intervention.',
-            status: 'active',
-            departmentAlerted: false,
+            status: 'Department Notified',
+            prevented: false,
             createdAt: '2026-02-25T00:00:00.000Z'
-        },
-        {
-            id: 'PRESEVA-005',
-            type: 'scheme_bottleneck',
-            state: 'All India',
-            district: 'National',
-            category: 'Finance',
-            probability: 0.91,
-            description: 'PM Kisan March 2026 installment due. Historical data predicts 40% spike in payment-delay grievances. Pre-emptive officer deployment recommended.',
-            status: 'active',
-            departmentAlerted: true,
-            createdAt: '2026-02-26T00:00:00.000Z'
         }
     ];
 
@@ -649,9 +687,10 @@ const seed = async () => {
 
 module.exports = { seed };
 
-// Allow direct execution: node db/seed.js
+// Allow direct execution: node db/seed.js [--force]
 if (require.main === module) {
-    seed().then(() => process.exit(0)).catch(err => {
+    const force = process.argv.includes('--force');
+    seed(force).then(() => process.exit(0)).catch(err => {
         console.error('[SEED] ❌ Seeding failed:', err.message);
         process.exit(1);
     });
