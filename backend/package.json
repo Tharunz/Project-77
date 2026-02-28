@@ -5,9 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon --ignore db/ index.js"
   },
-  "keywords": ["project-77", "grievance", "india", "government", "citizens"],
+  "keywords": [
+    "project-77",
+    "grievance",
+    "india",
+    "government",
+    "citizens"
+  ],
   "author": "Surya",
   "license": "MIT",
   "dependencies": {

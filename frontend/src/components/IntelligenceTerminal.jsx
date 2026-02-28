@@ -553,11 +553,11 @@ export default function IntelligenceTerminal() {
                     </div>
 
                     <div className="mc-dot-matrix">
-                        {MODULES_DATA.slice(0, 22).map((m) => (
+                        {MODULES_DATA.slice(0, 22).map((m, idx) => (
                             <div
                                 key={m.id}
                                 className={`mc-micro-dot ${m.id === activeMod.id ? 'active' : ''}`}
-                                onClick={() => setSelectedId(m.id)}
+                                onClick={() => handleItemClick(idx)}
                             />
                         ))}
                     </div>

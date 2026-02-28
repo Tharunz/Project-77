@@ -118,7 +118,9 @@ export default function AdminDashboard() {
         </div>
     );
 
-    const resolutionPct = Math.round((stats.resolved / stats.totalGrievances) * 100);
+    const resolutionPct = stats.totalGrievances > 0
+        ? Math.round((stats.resolved / stats.totalGrievances) * 100)
+        : 0;
 
     return (
         <div className="admin-dashboard page-wrapper">

@@ -256,6 +256,12 @@ select {
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+.badge-verification {
+  background: rgba(255, 107, 44, 0.15);
+  color: var(--saffron);
+  border: 1px solid rgba(255, 107, 44, 0.3);
+}
+
 .badge-high {
   background: rgba(239, 68, 68, 0.15);
   color: var(--red);

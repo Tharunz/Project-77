@@ -14,11 +14,20 @@ export default function CitizenDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        setLoading(true);
         Promise.all([
             apiGetMyGrievances(user?.id),
             apiGetMatchedSchemes({ age: user?.age, income: user?.income, state: user?.state })
-        ]).then(([g, s]) => { setGrievances(g.data); setSchemes(s.data.slice(0, 4)); setLoading(false); });
-    }, []);
+        ]).then(([g, s]) => {
+            setGrievances(g && Array.isArray(g.data) ? g.data : []);
+            setSchemes(s && Array.isArray(s.data) ? s.data.slice(0, 4) : []);
+            setLoading(false);
+        }).catch(() => {
+            setLoading(false);
+            setGrievances([]);
+            setSchemes([]);
+        });
+    }, [user?.id, user?.age, user?.income, user?.state]);
 
     const quickActions = [
         { to: '/citizen/file-grievance', icon: <MdEdit />, label: 'File Grievance', color: '#FF6B2C', desc: 'Raise a new complaint' },
@@ -28,10 +37,10 @@ export default function CitizenDashboard() {
     ];
 
     const stats = [
-        { label: 'Total Filed', value: grievances.length, color: '#3B82F6' },
-        { label: 'Resolved', value: grievances.filter(g => g.status === 'Resolved').length, color: '#00C896' },
-        { label: 'Pending', value: grievances.filter(g => g.status === 'Pending').length, color: '#F59E0B' },
-        { label: 'Matched Schemes', value: schemes.length, color: '#8B5CF6' },
+        { label: 'Total Filed', value: (grievances || []).length, color: '#3B82F6' },
+        { label: 'Resolved', value: (grievances || []).filter(g => g.status === 'Resolved').length, color: '#00C896' },
+        { label: 'Pending', value: (grievances || []).filter(g => g.status === 'Pending').length, color: '#F59E0B' },
+        { label: 'Matched Schemes', value: (schemes || []).length, color: '#8B5CF6' },
     ];
 
     return (
@@ -96,8 +105,23 @@ export default function CitizenDashboard() {
                 </div>
                 {loading ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading...</p> : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {grievances.slice(0, 4).map(g => (
-                            <div key={g.id} className="glass-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                        {(grievances || []).slice(0, 4).map(g => (
+                            <Link
+                                key={g.id}
+                                to={`/citizen/track?id=${g.id}`}
+                                className="glass-card"
+                                style={{
+                                    padding: '14px 18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 14,
+                                    flexWrap: 'wrap',
+                                    textDecoration: 'none',
+                                    color: 'inherit',
+                                    transition: 'var(--transition)',
+                                    cursor: 'pointer'
+                                }}
+                            >
                                 <span style={{ color: STATUS_COLORS[g.status] || '#F59E0B', fontSize: '1.2rem' }}>
                                     {STATUS_ICONS[g.status] || <MdHourglassEmpty />}
                                 </span>
@@ -108,9 +132,9 @@ export default function CitizenDashboard() {
                                 <span className={`badge badge-${g.status === 'Resolved' ? 'resolved' : g.status === 'Critical' ? 'critical' : g.status === 'In Progress' ? 'inprogress' : 'pending'}`}>
                                     {g.status}
                                 </span>
-                            </div>
+                            </Link>
                         ))}
-                        {grievances.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No grievances filed yet. <Link to="/citizen/file-grievance" style={{ color: 'var(--saffron)' }}>File your first →</Link></p>}
+                        {(grievances || []).length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No grievances filed yet. <Link to="/citizen/file-grievance" style={{ color: 'var(--saffron)' }}>File your first →</Link></p>}
                     </div>
                 )}
             </div>
@@ -125,7 +149,13 @@ export default function CitizenDashboard() {
                 </div>
                 {loading ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Analyzing your profile...</p> : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
-                        {schemes.map(s => (
+                        {(schemes || []).map(rawS => {
+                            const s = {
+                                ...rawS,
+                                benefit: rawS.benefit || rawS.benefits || 'See details',
+                                category: rawS.category || 'General'
+                            };
+                            return (
                             <div key={s.id} className="glass-card" style={{ padding: '16px 18px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                                     <span style={{ fontSize: '0.78rem', background: 'rgba(0,200,150,0.1)', color: 'var(--teal)', border: '1px solid rgba(0,200,150,0.2)', padding: '2px 8px', borderRadius: 100, fontWeight: 700 }}>{s.category}</span>
@@ -134,7 +164,7 @@ export default function CitizenDashboard() {
                                 <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>{s.name}</h4>
                                 <p style={{ fontSize: '0.78rem', color: 'var(--teal)', fontWeight: 600 }}>{s.benefit}</p>
                             </div>
-                        ))}
+                        );})}
                     </div>
                 )}
             </div>
