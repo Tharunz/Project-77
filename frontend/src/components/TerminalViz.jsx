@@ -1,7 +1,40 @@
 import React, { useState, useEffect } from 'react';
+import { PROJECT_NAME } from '../config/constants';
 import './IntelligenceTerminalViz.css';
 
 export default function TerminalViz({ vizType, color }) {
+    const [score, setScore] = useState(847);
+    const [rupee, setRupee] = useState(24783291);
+    const [petitionCount, setPetitionCount] = useState(1204);
+
+    useEffect(() => {
+        let intShakti, intRupee, intPetition;
+
+        if (vizType === 'shakti') {
+            intShakti = setInterval(() => {
+                setScore(s => s > 900 ? 840 : s + Math.floor(Math.random() * 5));
+            }, 800);
+        }
+
+        if (vizType === 'rupee') {
+            intRupee = setInterval(() => {
+                setRupee(r => r + Math.floor(Math.random() * 100));
+            }, 50);
+        }
+
+        if (vizType === 'petition') {
+            intPetition = setInterval(() => {
+                setPetitionCount(p => p > 9900 ? 1204 : p + Math.floor(Math.random() * 15) + 1);
+            }, 100);
+        }
+
+        return () => {
+            clearInterval(intShakti);
+            clearInterval(intRupee);
+            clearInterval(intPetition);
+        };
+    }, [vizType]);
+
     // -------------------------------------------------------------
     // M-01 PreSeva
     if (vizType === 'preseva') {
@@ -138,15 +171,15 @@ export default function TerminalViz({ vizType, color }) {
     if (vizType === 'fraud') {
         return (
             <div className="viz-fraud">
-                <div className="vf-counter">847 frauds blocked today</div>
+                <div className="vf-counter">847 files secured today</div>
                 <div className="vf-stream">
-                    <div className="vf-log ok">✓ VERIFIED · USR-9ABF2</div>
-                    <div className="vf-log ok">✓ VERIFIED · USR-12X21</div>
-                    <div className="vf-log warn">⚠ ANALYZING · USR-QQ412</div>
-                    <div className="vf-log ok">✓ VERIFIED · USR-98N21</div>
-                    <div className="vf-log block">⛔ FRAUD DETECTED — BLOCKED · USR-00XVOID</div>
-                    <div className="vf-log ok">✓ VERIFIED · USR-LLK21</div>
-                    <div className="vf-log ok">✓ VERIFIED · USR-XAQ11</div>
+                    <div className="vf-log ok">✓ SCANNED · DOC-9ABF2.pdf</div>
+                    <div className="vf-log ok">✓ SCANNED · IMG-12X21.png</div>
+                    <div className="vf-log warn">⚠ ANALYZING · ARX-QQ412.zip</div>
+                    <div className="vf-log ok">✓ SCANNED · TXT-98N21.txt</div>
+                    <div className="vf-log block">⛔ MALWARE DETECTED — BLOCKED · BIN-00XVOID.exe</div>
+                    <div className="vf-log ok">✓ SCANNED · DOC-LLK21.docx</div>
+                    <div className="vf-log ok">✓ SCANNED · IMG-XAQ11.jpg</div>
                 </div>
             </div>
         );
@@ -247,9 +280,7 @@ export default function TerminalViz({ vizType, color }) {
         return (
             <div className="viz-petition">
                 <div className="vpe-counter">
-                    <span className="vpe-num n1">1 citizen</span>
-                    <span className="vpe-num n2">47 citizens</span>
-                    <span className="vpe-num n3">1,204 citizens</span>
+                    <span className="vpe-num live">{petitionCount.toLocaleString('en-IN')} citizens</span>
                 </div>
                 <div className="vpe-bar-wrap">
                     <div className="vpe-bar" />
@@ -271,9 +302,9 @@ export default function TerminalViz({ vizType, color }) {
                         <circle cx="100" cy="100" r="60" className="vs-r2" />
                         <circle cx="100" cy="100" r="40" className="vs-r3" />
                     </svg>
-                    <div className="vs-score">847</div>
+                    <div className="vs-score">{score}</div>
                 </div>
-                <div className="vs-lvl">⭐ Level 4 — JanSevak</div>
+                <div className="vs-lvl">⭐ Level 4 — {PROJECT_NAME} Guardian</div>
             </div>
         );
     }
@@ -341,7 +372,7 @@ export default function TerminalViz({ vizType, color }) {
     if (vizType === 'rupee') {
         return (
             <div className="viz-rupee">
-                <div className="vru-val">₹2,47,83,<span className="vru-tick">291</span></div>
+                <div className="vru-val">₹{rupee.toLocaleString('en-IN')}</div>
                 <div className="vru-sub">saved for 47,382 citizens this month</div>
                 <svg className="vru-spark" viewBox="0 0 200 40" preserveAspectRatio="none">
                     <path d="M0 40 L40 35 L80 30 L120 20 L160 25 L200 5" fill="none" stroke="#F43F5E" strokeWidth="2" />
@@ -414,8 +445,523 @@ export default function TerminalViz({ vizType, color }) {
     }
 
     // -------------------------------------------------------------
-    // Default Fallback
+    // M-21 Timeline
+    if (vizType === 'timeline') {
+        return (
+            <div className="viz-timeline">
+                <div className="vtl-line" />
+                <div className="vtl-event e1" style={{ borderLeftColor: color }}>
+                    <div className="vtl-time">10:00 AM</div>
+                    <div className="vtl-desc">New proposal in Sector 4</div>
+                </div>
+                <div className="vtl-event e2" style={{ borderLeftColor: color }}>
+                    <div className="vtl-time">11:30 AM</div>
+                    <div className="vtl-desc">50 upvotes reached</div>
+                </div>
+                <div className="vtl-event e3" style={{ borderLeftColor: color }}>
+                    <div className="vtl-time">02:15 PM</div>
+                    <div className="vtl-desc">Forwarded to Municipal Council</div>
+                </div>
+            </div>
+        );
+    }
 
+    // -------------------------------------------------------------
+    // M-02 Shield
+    if (vizType === 'shield') {
+        return (
+            <div className="viz-shield">
+                <svg viewBox="0 0 100 120" className="vsh-svg">
+                    <path d="M50 5 L90 25 L90 60 C90 90 70 110 50 115 C30 110 10 90 10 60 L10 25 Z"
+                        fill="rgba(16, 185, 129, 0.1)" stroke={color} strokeWidth="2" className="vsh-path" />
+                </svg>
+                <div className="vsh-lock">
+                    <div className="vsh-shackle" />
+                    <div className="vsh-body">AES-256</div>
+                </div>
+                <div className="vsh-scan" />
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-22 Newsfeed
+    if (vizType === 'newsfeed') {
+        return (
+            <div className="viz-newsfeed">
+                <div className="vnf-marquee">
+                    <span>[URGENT] Water supply restored in Ward 12</span>
+                    <span className="dot">•</span>
+                    <span>New EV subsidy approved by State Council</span>
+                    <span className="dot">•</span>
+                    <span>Highway 4B expansion tender opens tomorrow</span>
+                    <span className="dot">•</span>
+                    <span>[ALERT] Heavy rain warning issued for Coastal zones</span>
+                </div>
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-01 Globe
+    if (vizType === 'globe') {
+        return (
+            <div className="viz-globe">
+                <div className="vgl-sphere" style={{ boxShadow: `inset 0 0 50px ${color}40, 0 0 20px ${color}20` }}>
+                    <div className="vgl-eq" />
+                    <div className="vgl-mer" />
+                    <div className="vgl-mer m2" />
+                    <div className="vgl-mer m3" />
+                </div>
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-03 Biometric
+    if (vizType === 'biometric') {
+        return (
+            <div className="viz-biometric">
+                <div className="vbm-print" style={{ color: color }}>
+                    {[...Array(6)].map((_, i) => <div className={`vbm-ridge r${i}`} key={i} />)}
+                </div>
+                <div className="vbm-scan" style={{ background: `linear-gradient(to bottom, transparent, ${color}, transparent)` }} />
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-06 Profile Hologram
+    if (vizType === 'profile') {
+        return (
+            <div className="viz-profile">
+                <div className="vpr-card" style={{ borderColor: `${color}40` }}>
+                    <div className="vpr-head" />
+                    <div className="vpr-body" />
+                    <div className="vpr-lines">
+                        <div className="vpr-l1" />
+                        <div className="vpr-l2" />
+                        <div className="vpr-l3" />
+                    </div>
+                </div>
+                <div className="vpr-base" style={{ background: `radial-gradient(ellipse at center, ${color}60 0%, transparent 70%)` }} />
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-09 Radar
+    if (vizType === 'radar') {
+        return (
+            <div className="viz-radar" style={{ borderColor: `${color}40` }}>
+                <div className="vrd-sweep" style={{ background: `conic-gradient(from 0deg, transparent 70%, ${color} 100%)` }} />
+                <div className="vrd-dot d1" style={{ background: color, boxShadow: `0 0 10px ${color}` }} />
+                <div className="vrd-dot d2" style={{ background: color, boxShadow: `0 0 10px ${color}` }} />
+                <div className="vrd-dot d3" style={{ background: color, boxShadow: `0 0 10px ${color}` }} />
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-13 Translate
+    if (vizType === 'translate') {
+        return (
+            <div className="viz-translate">
+                <div className="vtr-box left">A</div>
+                <div className="vtr-arrows">→</div>
+                <div className="vtr-box right" style={{ color: color, textShadow: `0 0 10px ${color}` }}>अ</div>
+                <div className="vtr-stream">
+                    <span>नमस्ते</span><span>வணக்கம்</span><span>ನಮಸ್ಕಾರ</span><span>হ্যালো</span>
+                </div>
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-14 Waveform
+    if (vizType === 'waveform') {
+        return (
+            <div className="viz-waveform">
+                {[...Array(15)].map((_, i) => (
+                    <div className="vwf-bar" key={i} style={{ background: color, animationDelay: `${Math.random() * -2}s` }} />
+                ))}
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-16 Dictation
+    if (vizType === 'dictation') {
+        return (
+            <div className="viz-dictation">
+                <div className="vdc-mic">🎤</div>
+                <div className="vdc-ring ring1" style={{ borderColor: color }} />
+                <div className="vdc-ring ring2" style={{ borderColor: color }} />
+                <div className="vdc-ring ring3" style={{ borderColor: color }} />
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-18 Barcode
+    if (vizType === 'barcode') {
+        return (
+            <div className="viz-barcode">
+                <div className="vbc-lines">
+                    {[...Array(20)].map((_, i) => (
+                        <div className="vbc-line" key={i} style={{ width: `${Math.max(2, Math.random() * 8)}px` }} />
+                    ))}
+                </div>
+                <div className="vbc-laser" style={{ background: color, boxShadow: `0 0 15px ${color}` }} />
+                <div className="vbc-hash">0x{Math.random().toString(16).slice(2, 10).toUpperCase()}</div>
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // ADVANCED UPGRADES
+    // -------------------------------------------------------------
+
+    if (vizType === 'v-portal') {
+        return (
+            <div className="viz-portal">
+                <div className="vpt-ring r1" style={{ borderColor: color }} />
+                <div className="vpt-ring r2" style={{ borderColor: color }} />
+                <div className="vpt-ring r3" style={{ borderColor: color }} />
+                <div className="vpt-core">
+                    <span className="vpt-lang l1">नमस्ते</span>
+                    <span className="vpt-lang l2">வணக்கம்</span>
+                    <span className="vpt-lang l3">Hello</span>
+                    <span className="vpt-lang l4">नमो नमः</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-holoform') {
+        return (
+            <div className="viz-holoform">
+                <div className="vhf-doc" style={{ borderColor: `${color}40`, boxShadow: `0 0 20px ${color}20` }}>
+                    <div className="vhf-header" style={{ background: color }} />
+                    <div className="vhf-lines">
+                        <div className="vhf-line w80" />
+                        <div className="vhf-line w60" />
+                        <div className="vhf-line w90" />
+                        <div className="vhf-line w40" />
+                    </div>
+                    <div className="vhf-scanner" style={{ background: `linear-gradient(to bottom, transparent, ${color}, transparent)` }} />
+                    <div className="vhf-stamp" style={{ color: '#10B981', borderColor: '#10B981' }}>APPROVED</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-dashboard') {
+        return (
+            <div className="viz-dashboard">
+                <div className="vdb-dials">
+                    <svg viewBox="0 0 100 100" className="vdb-dial">
+                        <circle cx="50" cy="50" r="40" className="vdb-bg" />
+                        <circle cx="50" cy="50" r="40" className="vdb-fg" style={{ stroke: color }} />
+                    </svg>
+                    <div className="vdb-stats">
+                        <div className="vdb-bar b1" style={{ background: color }} />
+                        <div className="vdb-bar b2" style={{ background: color }} />
+                        <div className="vdb-bar b3" style={{ background: color }} />
+                    </div>
+                </div>
+                <div className="vdb-grid">
+                    <div className="vdb-cell c1" />
+                    <div className="vdb-cell c2" />
+                    <div className="vdb-cell c3" />
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-shortcuts') {
+        return (
+            <div className="viz-shortcuts">
+                <div className="vsc-center" style={{ background: color, boxShadow: `0 0 20px ${color}` }}>⚡</div>
+                <div className="vsc-orbit">
+                    <div className="vsc-node n1">📄</div>
+                    <div className="vsc-node n2">💳</div>
+                    <div className="vsc-node n3">🏥</div>
+                    <div className="vsc-node n4">🎓</div>
+                </div>
+                <div className="vsc-pulses">
+                    <div className="vsc-pulse p1" style={{ borderColor: color }} />
+                    <div className="vsc-pulse p2" style={{ borderColor: color }} />
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-vault') {
+        return (
+            <div className="viz-vault">
+                <div className="vvt-door">
+                    <div className="vvt-gear g1" />
+                    <div className="vvt-gear g2" />
+                    <div className="vvt-center">
+                        <div className="vvt-lock-status">SECURE</div>
+                    </div>
+                </div>
+                <div className="vvt-shield">🛡️</div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-synapse') {
+        return (
+            <div className="viz-synapse">
+                <div className="vsn-side left">
+                    <div className="vsn-dot" />
+                    <div className="vsn-dot" />
+                    <div className="vsn-dot" />
+                </div>
+                <div className="vsn-beams">
+                    <div className="vsn-beam b1" style={{ background: color }} />
+                    <div className="vsn-beam b2" style={{ background: color }} />
+                    <div className="vsn-beam b3" style={{ background: color }} />
+                    <div className="vsn-core" style={{ boxShadow: `0 0 30px ${color}` }}>99.8%</div>
+                </div>
+                <div className="vsn-side right">
+                    <div className="vsn-dot" />
+                    <div className="vsn-dot" />
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-hexagon') {
+        return (
+            <div className="viz-hexagon">
+                <div className="vhx-grid">
+                    <div className="vhx-hex h1" style={{ borderColor: color }}><div className="vhx-inner" /></div>
+                    <div className="vhx-hex h2" style={{ borderColor: color }}><div className="vhx-inner pulse" /></div>
+                    <div className="vhx-hex h3" style={{ borderColor: color }}><div className="vhx-inner" /></div>
+                    <div className="vhx-hex h4" style={{ borderColor: color }}><div className="vhx-inner pulse" /></div>
+                    <div className="vhx-hex h5 pulse-border" style={{ borderColor: color, boxShadow: `0 0 20px ${color} inset` }}>
+                        <div className="vhx-core-val">87<br /><span>PTS</span></div>
+                    </div>
+                    <div className="vhx-hex h6" style={{ borderColor: color }}><div className="vhx-inner pulse" /></div>
+                    <div className="vhx-hex h7" style={{ borderColor: color }}><div className="vhx-inner" /></div>
+                </div>
+                <div className="vhx-sweeper" />
+            </div>
+        );
+    }
+
+    if (vizType === 'v-constellation') {
+        return (
+            <div className="viz-constellation">
+                <div className="vcs-space">
+                    <div className="vcs-node n1" style={{ background: color, boxShadow: `0 0 15px ${color}` }} />
+                    <div className="vcs-node n2" style={{ background: color, boxShadow: `0 0 15px ${color}` }} />
+                    <div className="vcs-node n3" style={{ background: color, boxShadow: `0 0 15px ${color}` }} />
+                    <div className="vcs-node n4" style={{ background: color, boxShadow: `0 0 15px ${color}` }} />
+                    <div className="vcs-node n5" style={{ background: color, boxShadow: `0 0 15px ${color}` }} />
+                    <div className="vcs-line l1" style={{ background: color }} />
+                    <div className="vcs-line l2" style={{ background: color }} />
+                    <div className="vcs-line l3" style={{ background: color }} />
+                    <div className="vcs-line l4" style={{ background: color }} />
+                    <div className="vcs-scanner" />
+                </div>
+                <div className="vcs-legend">
+                    <div>AGRI</div><div>MED</div><div>EDU</div>
+                </div>
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // M-20 Escrow Verification
+    if (vizType === 'escrow') {
+        return (
+            <div className="viz-escrow">
+                <div className="ves-system">
+                    <div className="ves-ai-core">
+                        <div className="ves-photo">
+                            <div className="ves-mesh" />
+                            <div className="ves-scan-line" style={{ background: color, boxShadow: `0 0 15px ${color}` }} />
+                            <div className="ves-cam">📷</div>
+                        </div>
+                        <div className="ves-status">AI VERIFYING</div>
+                    </div>
+                    <div className="ves-beam">
+                        <div className="ves-particles" />
+                    </div>
+                    <div className="ves-vault">
+                        <div className="ves-lock">
+                            <div className="ves-shackle" />
+                            <div className="ves-rupee">₹</div>
+                        </div>
+                        <div className="ves-funds">FUNDS RELEASED</div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-citizendash') {
+        return (
+            <div className="viz-citizendash">
+                <div className="vds-hologram" style={{ borderColor: color, boxShadow: `0 0 20px ${color}40`, background: `${color}10` }}>
+                    <div className="vds-header">
+                        <div className="vds-avatar" style={{ borderColor: color, background: `${color}30` }} />
+                        <div className="vds-title-bar" style={{ background: color }} />
+                    </div>
+                    <div className="vds-grid">
+                        <div className="vds-donut-card" style={{ borderColor: `${color}40` }}>
+                            <div className="vds-donut" style={{ borderTopColor: color, borderRightColor: color }} />
+                            <div className="vds-donut-inner" style={{ borderBottomColor: color, borderLeftColor: color }} />
+                        </div>
+                        <div className="vds-bar-card" style={{ borderColor: `${color}40` }}>
+                            <div className="vds-bar b1" style={{ background: color }} />
+                            <div className="vds-bar b2" style={{ background: color }} />
+                            <div className="vds-bar b3" style={{ background: color }} />
+                            <div className="vds-bar b4" style={{ background: color }} />
+                        </div>
+                    </div>
+                    <div className="vds-notifications">
+                        <div className="vds-notif n1" style={{ background: `${color}30` }} />
+                        <div className="vds-notif n2" style={{ background: `${color}30` }} />
+                        <div className="vds-notif n3" style={{ background: `${color}30` }} />
+                    </div>
+                    <div className="vds-scanner" style={{ background: color, boxShadow: `0 0 10px ${color}` }} />
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-reactor') {
+        return (
+            <div className="viz-reactor">
+                <div className="vrc-core" style={{ boxShadow: `0 0 30px ${color}, inset 0 0 20px #fff`, background: color }}>
+                    <div className="vrc-energy" />
+                </div>
+                <div className="vrc-ring-x" style={{ borderColor: `${color}80` }} />
+                <div className="vrc-ring-y" style={{ borderColor: `${color}80` }} />
+                <div className="vrc-sphere">
+                    <div className="vrc-orb o1" style={{ background: color, boxShadow: `0 0 15px ${color}` }}>⚡</div>
+                    <div className="vrc-orb o2" style={{ background: color, boxShadow: `0 0 15px ${color}` }}>💳</div>
+                    <div className="vrc-orb o3" style={{ background: color, boxShadow: `0 0 15px ${color}` }}>🏥</div>
+                </div>
+                <div className="vrc-lightning l1" style={{ background: color }} />
+                <div className="vrc-lightning l2" style={{ background: color }} />
+            </div>
+        );
+    }
+
+    if (vizType === 'v-aimatch') {
+        return (
+            <div className="viz-aimatch">
+                <div className="vam-cube">
+                    <div className="vam-face f-front" style={{ borderColor: color }} />
+                    <div className="vam-face f-back" style={{ borderColor: color }} />
+                    <div className="vam-face f-right" style={{ borderColor: color }} />
+                    <div className="vam-face f-left" style={{ borderColor: color }} />
+                    <div className="vam-face f-top" style={{ borderColor: color }} />
+                    <div className="vam-face f-bottom" style={{ borderColor: color }} />
+                    <div className="vam-ai-core">AI</div>
+                </div>
+                <div className="vam-cards">
+                    <div className="vam-card c1" style={{ background: `${color}20`, borderColor: color }}>+ PM KISAN</div>
+                    <div className="vam-card c2" style={{ background: `${color}20`, borderColor: color }}>+ AYUSHMAN</div>
+                </div>
+                <div className="vam-scan" style={{ background: `linear-gradient(to bottom, transparent, ${color}, transparent)` }} />
+            </div>
+        );
+    }
+
+    if (vizType === 'v-firewall') {
+        return (
+            <div className="viz-firewall">
+                <div className="vfw-attacks">
+                    <div className="vfw-attack a1" />
+                    <div className="vfw-attack a2" />
+                    <div className="vfw-attack a3" />
+                </div>
+                <div className="vfw-shield-container">
+                    <div className="vfw-shield-front" style={{ borderColor: color, boxShadow: `0 0 30px ${color}` }}>
+                        <div className="vfw-shield-glaze" />
+                        <div className="vfw-lock-icon">🔒</div>
+                    </div>
+                    <div className="vfw-waves">
+                        <div className="vfw-wave w1" style={{ borderColor: color }} />
+                        <div className="vfw-wave w2" style={{ borderColor: color }} />
+                    </div>
+                </div>
+                <div className="vfw-status">
+                    <div className="vfw-status-text" style={{ color: '#10B981' }}>CONSENT SECURED</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-quantumid') {
+        return (
+            <div className="viz-quantumid">
+                <div className="vqi-network">
+                    <div className="vqi-node n1" />
+                    <div className="vqi-node n2" />
+                    <div className="vqi-node n3" />
+                    <div className="vqi-node n4" />
+                    <div className="vqi-link l1" />
+                    <div className="vqi-link l2" />
+                    <div className="vqi-link l3" />
+                </div>
+                <div className="vqi-core-hologram">
+                    <div className="vqi-plate" style={{ borderColor: color }}>
+                        <div className="vqi-hash">ID: 0x7A99F...</div>
+                        <div className="vqi-barcode">
+                            <div className="vqi-bar b1" />
+                            <div className="vqi-bar b2" />
+                            <div className="vqi-bar b3" />
+                            <div className="vqi-bar b4" />
+                            <div className="vqi-bar b5" />
+                        </div>
+                        <div className="vqi-scan-plane" style={{ color: color }} />
+                    </div>
+                    <div className="vqi-ring r1" style={{ borderColor: color }} />
+                    <div className="vqi-ring r2" style={{ borderColor: color }} />
+                </div>
+                <div className="vqi-floating-data">
+                    <div className="vqi-data d1">ENCRYPTED</div>
+                    <div className="vqi-data d2">VERIFIED</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (vizType === 'v-broadcast') {
+        return (
+            <div className="viz-broadcast">
+                <div className="vbc-ticker-3d">
+                    <div className="vbc-row r1">
+                        <div className="vbc-tag" style={{ background: color }}>BREAKING</div>
+                        <div className="vbc-text">WATER SUPPLY RESTORED — WARD 12 PUMP REPAIRED</div>
+                    </div>
+                    <div className="vbc-row r2">
+                        <div className="vbc-tag" style={{ background: color }}>STATE ALERT</div>
+                        <div className="vbc-text">HEAVY RAIN WARNING — COASTAL ZONES ON STANDBY</div>
+                    </div>
+                    <div className="vbc-row r3">
+                        <div className="vbc-tag" style={{ background: color }}>SUBSIDY LIVE</div>
+                        <div className="vbc-text">NEW EV SCHEME FUNDS DISBURSED TO 14,000 CITIZENS</div>
+                    </div>
+                </div>
+                <div className="vbc-deco-lines">
+                    <div className="vbc-line" style={{ background: color }} />
+                    <div className="vbc-line" style={{ background: color }} />
+                </div>
+            </div>
+        );
+    }
+
+    // -------------------------------------------------------------
+    // Default Fallback
     return (
         <div className="viz-fallback" style={{ color }}>
             [ {vizType.toUpperCase()} ]<br />

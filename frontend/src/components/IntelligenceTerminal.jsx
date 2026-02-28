@@ -1,266 +1,277 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
+import { PROJECT_NAME } from '../config/constants';
 import './IntelligenceTerminal.css';
 import TerminalViz from './TerminalViz';
 
 const MODULES_DATA = [
     {
         id: 'M-01',
-        name: 'PreSeva Prevention',
-        color: '#A78BFA',
-        desc: 'The world\'s first proactive public service failure prediction system. AI analyzes millions of historical grievances to predict failures 48-72hrs before they happen and alerts departments preemptively.',
-        badge: 'WORLD FIRST',
-        badgeColor: 'violet',
-        impactVal: '48-72 hrs',
-        impactCtx: 'early warning lead time',
-        awsSvc: 'Amazon SageMaker',
-        vizType: 'preseva'
+        name: 'Multilingual Homepage',
+        color: '#38BDF8',
+        desc: 'Immersive landing portal with live feature ticker to guarantee top-tier digital equity across the nation.',
+        badge: 'ACCESSIBILITY',
+        badgeColor: 'cyan',
+        impactVal: '10+',
+        impactCtx: 'regional languages supported',
+        awsSvc: 'Amazon CloudFront',
+        vizType: 'v-portal'
     },
     {
         id: 'M-02',
-        name: 'Distress Index',
-        color: '#F43F5E',
-        desc: 'Real-time per-state citizen suffering score (0-100). Like a stock market index for governance accountability. Live national scoreboard with state rankings and trend arrows.',
-        badge: 'LIVE',
-        badgeColor: 'cyan',
-        impactVal: '247',
-        impactCtx: 'regional states monitored',
-        awsSvc: 'Amazon Kinesis Data Analytics',
-        vizType: 'distress'
+        name: 'Secure Authentication',
+        color: '#10B981',
+        desc: 'Role-based login and intelligent redirection ensuring that citizens and officers access exactly what they need safely.',
+        badge: 'SECURE',
+        badgeColor: 'violet',
+        impactVal: 'AES-256',
+        impactCtx: 'encryption standard',
+        awsSvc: 'Amazon Cognito',
+        vizType: 'shield'
     },
     {
         id: 'M-03',
-        name: 'AI Chatbot',
-        color: '#10B981',
-        desc: 'Interact with government services instantly through automated dialogue and voice interaction, removing language barriers and simplifying application processes.',
-        badge: 'AI-POWERED',
-        badgeColor: 'cyan',
-        impactVal: '22',
-        impactCtx: 'Indian languages supported natively',
-        awsSvc: 'Amazon Lex & Polly',
-        vizType: 'chat'
+        name: 'User Registration',
+        color: '#F43F5E',
+        desc: 'Adaptive forms with regional dropdown selections built to be inclusive and friction-free for every citizen.',
+        badge: null,
+        impactVal: '99%',
+        impactCtx: 'accessibility compliance',
+        awsSvc: 'Amazon RDS',
+        vizType: 'v-holoform'
     },
     {
         id: 'M-04',
-        name: 'Grievance Engine',
+        name: 'Citizen Dashboard',
         color: '#3B82F6',
-        desc: 'A seamless filing, tracking, and resolution engine that replaces outdated forms with a real-time tracking kanban board for clear line of sight.',
-        badge: null,
-        impactVal: '100%',
-        impactCtx: 'digital tracking adoption',
+        desc: 'Personalized welcome view with quick metrics aggregating all your governmental interactions in one clear hub.',
+        badge: 'PROFILE',
+        badgeColor: 'cyan',
+        impactVal: '360°',
+        impactCtx: 'citizen perspective',
         awsSvc: 'Amazon DynamoDB',
-        vizType: 'kanban'
+        vizType: 'v-citizendash'
     },
     {
         id: 'M-05',
-        name: 'Benefit Roadmap',
+        name: 'Quick Actions Module',
         color: '#F59E0B',
-        desc: 'AI generates a personalized 30-day action plan with massive unlockable benefits formatted along a citizen\'s life stages and changing needs.',
-        badge: 'PERSONAL',
-        badgeColor: 'cyan',
-        impactVal: '₹48,000+',
-        impactCtx: 'avg unlocked benefit value',
-        awsSvc: 'Amazon Personalize',
-        vizType: 'roadmap'
+        desc: 'Dedicated rapid-access shortcuts dynamically adapting to your most frequent public service needs.',
+        badge: null,
+        impactVal: '< 1s',
+        impactCtx: 'time to action',
+        awsSvc: 'AWS Lambda',
+        vizType: 'v-reactor'
     },
     {
         id: 'M-06',
-        name: 'Officer SLA Tracker',
-        color: '#EF4444',
-        desc: 'Public officer performance leaderboard with countdown timers. Breach SLA = auto-escalation. Unparalleled transparent officer accountability.',
-        badge: 'ACCOUNTABILITY',
-        badgeColor: 'violet',
-        impactVal: '99.4%',
-        impactCtx: 'SLA compliance enforced',
-        awsSvc: 'AWS Lambda (CRON)',
-        vizType: 'sla'
+        name: 'Profile Management',
+        color: '#8B5CF6',
+        desc: 'Complete capability to view, edit, and manage personal data with strict verified identity guardrails.',
+        badge: null,
+        impactVal: '100%',
+        impactCtx: 'data ownership',
+        awsSvc: 'Amazon S3',
+        vizType: 'profile'
     },
     {
         id: 'M-07',
-        name: 'JanConnect',
+        name: 'Data Privacy Controls',
         color: '#EC4899',
-        desc: 'Peer-to-peer Q&A community with AI moderation and official government officer responses. Upvotes, verified badges, and localized language support.',
+        desc: 'Strict settings for consent and engagement tracking, putting the power of data sovereignty back in the citizen\'s hands.',
+        badge: 'PRIVACY',
+        badgeColor: 'violet',
+        impactVal: 'Zero',
+        impactCtx: 'knowledge architecture',
+        awsSvc: 'AWS KMS',
+        vizType: 'v-firewall'
+    },
+    {
+        id: 'M-08',
+        name: 'Engagement Dashboard',
+        color: '#2DD4BF',
+        desc: 'Personal tracking of schemes claimed and grievances filed, visualizing your direct engagement with the state.',
         badge: null,
-        impactVal: '2.5M+',
-        impactCtx: 'active citizens connected',
+        impactVal: 'Live',
+        impactCtx: 'engagement tracking',
+        awsSvc: 'Amazon CloudWatch',
+        vizType: 'v-hexagon'
+    },
+    {
+        id: 'M-09',
+        name: 'Scheme Discovery Hub',
+        color: '#0EA5E9',
+        desc: 'Searchable repository of active government schemes spanning agriculture, education, healthcare and more.',
+        badge: 'SEARCH',
+        badgeColor: 'cyan',
+        impactVal: '200+',
+        impactCtx: 'schemes indexed',
+        awsSvc: 'Amazon OpenSearch',
+        vizType: 'v-constellation'
+    },
+    {
+        id: 'M-10',
+        name: 'AI Scheme Match',
+        color: '#F97316',
+        desc: 'Intelligent algorithm automatically matching users to eligible benefits based on their precise demographic profile.',
+        badge: 'AI-POWERED',
+        badgeColor: 'violet',
+        impactVal: '94%',
+        impactCtx: 'match accuracy',
+        awsSvc: 'Amazon Personalize',
+        vizType: 'v-aimatch'
+    },
+    {
+        id: 'M-11',
+        name: 'Benefit Roadmaps',
+        color: '#D946EF',
+        desc: 'Customized, step-by-step AI-generated guides yielding precise instructions to unlock claimed benefits efficiently.',
+        badge: 'AI-POWERED',
+        badgeColor: 'violet',
+        impactVal: '30-Day',
+        impactCtx: 'claim roadmap',
+        awsSvc: 'Amazon SageMaker',
+        vizType: 'roadmap'
+    },
+    {
+        id: 'M-12',
+        name: 'AI Chatbot',
+        color: '#10B981',
+        desc: 'Automated 24/7 support resolving minor queries instantly, serving as the first line of digital assistance.',
+        badge: 'AI-POWERED',
+        badgeColor: 'cyan',
+        impactVal: '24/7',
+        impactCtx: 'instant resolution',
+        awsSvc: 'Amazon Lex',
+        vizType: 'chat'
+    },
+    {
+        id: 'M-13',
+        name: 'Multilingual AI',
+        color: '#3B82F6',
+        desc: 'Dynamic real-time translation across 10 regional languages allowing every citizen to be heard in their mother tongue.',
+        badge: null,
+        impactVal: '10',
+        impactCtx: 'languages translated',
+        awsSvc: 'Amazon Translate',
+        vizType: 'translate'
+    },
+    {
+        id: 'M-14',
+        name: 'Voice-to-Text Input',
+        color: '#A78BFA',
+        desc: 'Accessibility allowing spoken interaction with the AI, completely sidestepping literacy barriers in rural areas.',
+        badge: 'ACCESSIBILITY',
+        badgeColor: 'violet',
+        impactVal: 'Real-Time',
+        impactCtx: 'speech transcription',
+        awsSvc: 'Amazon Transcribe',
+        vizType: 'waveform'
+    },
+    {
+        id: 'M-15',
+        name: 'Grievance Filing Flow',
+        color: '#EF4444',
+        desc: 'Complete, validated submission engine for complaints with intelligent categorization routing directly to the right officer.',
+        badge: 'REVOLUTIONARY',
+        badgeColor: 'violet',
+        impactVal: '100%',
+        impactCtx: 'issue routing',
+        awsSvc: 'Amazon EventBridge',
+        vizType: 'petition'
+    },
+    {
+        id: 'M-16',
+        name: 'Voice Input (Filing)',
+        color: '#EAB308',
+        desc: 'Accessibility allowing citizens to actively dictate grievances natively within the complaint flow.',
+        badge: null,
+        impactVal: 'Speech',
+        impactCtx: 'to evidence conversion',
+        awsSvc: 'Amazon Polly',
+        vizType: 'dictation'
+    },
+    {
+        id: 'M-17',
+        name: 'Secure File Uploads',
+        color: '#14B8A6',
+        desc: 'Capability to seamlessly attach evidentiary documents, images, and proof to directly bolster grievance claims.',
+        badge: null,
+        impactVal: 'S3 Secured',
+        impactCtx: 'evidence storage',
+        awsSvc: 'Amazon S3',
+        vizType: 'fraud'
+    },
+    {
+        id: 'M-18',
+        name: 'Unique Tracking IDs',
+        color: '#8B5CF6',
+        desc: 'Secure ticket generation for real-time monitoring ensuring no complaint is ever lost in the bureaucracy again.',
+        badge: null,
+        impactVal: 'Blockchain',
+        impactCtx: 'immutable ledgers',
+        awsSvc: 'Amazon QLDB',
+        vizType: 'v-quantumid'
+    },
+    {
+        id: 'M-19',
+        name: 'Status Timeline',
+        color: '#F43F5E',
+        desc: 'Visual progress tracker mapping a grievance\'s resolution journey step-by-step from filing to closure.',
+        badge: null,
+        impactVal: 'Transparent',
+        impactCtx: 'officer accountability',
+        awsSvc: 'AWS Step Functions',
+        vizType: 'timeline'
+    },
+    {
+        id: 'M-20',
+        name: 'Citizen Escrow Verification',
+        color: '#10B981',
+        desc: 'Users are prompted by the AI to physically verify (via photo) that a grievance in their area was resolved before government funds are released.',
+        badge: 'REVOLUTIONARY',
+        badgeColor: 'violet',
+        impactVal: 'Escrow',
+        impactCtx: 'fund release blockade',
+        awsSvc: 'Amazon Rekognition',
+        vizType: 'escrow'
+    },
+    {
+        id: 'M-21',
+        name: 'Community Forum',
+        color: '#3B82F6',
+        desc: 'Social platform enabling peer-to-peer municipal discussion, upvoting, and collective neighborhood action.',
+        badge: 'COMMUNITY',
+        badgeColor: 'cyan',
+        impactVal: 'P2P',
+        impactCtx: 'municipal engagement',
         awsSvc: 'Amazon OpenSearch',
         vizType: 'janconnect'
     },
     {
-        id: 'M-08',
-        name: 'Fraud Detection',
-        color: '#22C55E',
-        desc: 'Real-time monitoring stream analyzing scheme applications and grievance filings for anomalous bot behavior, duplicated identities, or syndicate activity.',
-        badge: 'AI-POWERED',
-        badgeColor: 'cyan',
-        impactVal: '847',
-        impactCtx: 'frauds blocked daily average',
-        awsSvc: 'Amazon Fraud Detector',
-        vizType: 'fraud'
-    },
-    {
-        id: 'M-09',
-        name: 'Grievance DNA',
-        color: '#8B5CF6',
-        desc: 'Every complaint is assigned a unique topological map mapping its relation to historic grievances based on severity, emotion, location, and department.',
-        badge: 'INNOVATION',
-        badgeColor: 'violet',
-        impactVal: 'DNA-Level',
-        impactCtx: 'pattern matching accuracy',
-        awsSvc: 'Amazon Neptune',
-        vizType: 'dna'
-    },
-    {
-        id: 'M-10',
-        name: 'Benefit Gap Calculator',
+        id: 'M-22',
+        name: 'Seva News Feed',
         color: '#F97316',
-        desc: 'Dynamically computes the monetary deficit between a citizen\'s currently claimed schemes and what their profile is legally entitled to receive.',
+        desc: 'Live scrolling feed distributing verified government announcements, combating misinformation with truth.',
         badge: null,
-        impactVal: '₹4,200',
-        impactCtx: 'monthly missing average uncovered',
-        awsSvc: 'AWS Step Functions',
-        vizType: 'gap'
-    },
-    {
-        id: 'M-11',
-        name: 'Officer Accountability Wall',
-        color: '#0EA5E9',
-        desc: 'A live tracking system establishing a competitive podium for officers resolving grievances, driven by speed and citizen satisfaction metrics.',
-        badge: null,
-        impactVal: '+40%',
-        impactCtx: 'increase in resolution speed',
-        awsSvc: 'Amazon RDS',
-        vizType: 'podium'
-    },
-    {
-        id: 'M-12',
-        name: 'Grievance Weather',
-        color: '#38BDF8',
-        desc: '7-day predictive forecast anticipating volume surges in complaints for specific districts, allowing preemptive resource allocation.',
-        badge: null,
-        impactVal: '7-Day',
-        impactCtx: 'forecast horizon window',
-        awsSvc: 'Amazon Forecast',
-        vizType: 'weather'
-    },
-    {
-        id: 'M-13',
-        name: 'Mass Petition Engine',
-        color: '#D946EF',
-        desc: 'A coordinated engine allowing local grievances to rapidly consolidate into mass petitions that auto-escalate directly to ministry level when thresholds hit.',
-        badge: null,
-        impactVal: '10,000',
-        impactCtx: 'citizen signatures to auto-escalate',
-        awsSvc: 'Amazon SQS',
-        vizType: 'petition'
-    },
-    {
-        id: 'M-14',
-        name: 'Jan Shakti Score',
-        color: '#14B8A6',
-        desc: 'A gamified citizen impact rating dynamically built across scheme participation, grievance helpfulness, and community engagement.',
-        badge: 'GAMIFIED',
-        badgeColor: 'violet',
-        impactVal: 'Level 4',
-        impactCtx: 'average active citizen tier',
-        awsSvc: 'Amazon DynamoDB',
-        vizType: 'shakti'
-    },
-    {
-        id: 'M-15',
-        name: 'Scheme Time Machine',
-        color: '#EAB308',
-        desc: 'Analyzes citizen history to retroactively identify benefits they missed claiming in past years, calculating total historical opportunity lost.',
-        badge: null,
-        impactVal: '₹87K+',
-        impactCtx: 'historical average missed per family',
-        awsSvc: 'Amazon Redshift',
-        vizType: 'timemachine'
-    },
-    {
-        id: 'M-16',
-        name: 'Whisper Mode',
-        color: '#8899AA',
-        desc: 'Highly secure, anonymized reporting pipeline for severe corruption. Uses military-grade encryption and obfuscates identifying metadata before delivery.',
-        badge: null,
-        impactVal: 'AES-256',
-        impactCtx: 'end-to-end encryption standard',
-        awsSvc: 'AWS KMS',
-        vizType: 'whisper'
-    },
-    {
-        id: 'M-17',
-        name: 'Resolution Replay',
-        color: '#10B981',
-        desc: 'Full transparency tracker providing a minute-by-minute playback of a grievance\'s lifecycle from filing through investigation and resolution.',
-        badge: null,
-        impactVal: '100%',
-        impactCtx: 'process transparency achieved',
-        awsSvc: 'Amazon EventBridge',
-        vizType: 'replay'
-    },
-    {
-        id: 'M-18',
-        name: 'Impact Rupee Counter',
-        color: '#F43F5E',
-        desc: 'A live tracking metric calculating the exact aggregate monetary value delivered to citizens across the platform through verified schemes.',
-        badge: null,
-        impactVal: '₹2.4 Cr+',
-        impactCtx: 'delivered in current month',
-        awsSvc: 'Amazon EC2',
-        vizType: 'rupee'
-    },
-    {
-        id: 'M-19',
-        name: 'Seva Mirror',
-        color: '#3B82F6',
-        desc: 'A dynamic, interconnected graph showing exactly how the government views your aggregate citizen footprint—schemes, family context, and interactions.',
-        badge: 'PROFILE',
-        badgeColor: 'cyan',
-        impactVal: '360°',
-        impactCtx: 'unified citizen schema view',
-        awsSvc: 'Amazon Neptune',
-        vizType: 'mirror'
-    },
-    {
-        id: 'M-20',
-        name: 'Predict My Future',
-        color: '#8B5CF6',
-        desc: 'Forecasts scheme eligibility based on approaching life milestones like incoming children, graduation, or retirement ages before they occur.',
-        badge: 'PREDICTIVE',
-        badgeColor: 'violet',
-        impactVal: '5 Years',
-        impactCtx: 'rolling future forecast projection',
-        awsSvc: 'Amazon SageMaker',
-        vizType: 'future'
-    },
-    {
-        id: 'M-21',
-        name: 'Threat Corridors',
-        color: '#FF5500',
-        desc: 'Maps the systemic ripple effects of public failures across state lines. Predicts how a water shortage in UP will strain hospitals in Bihar.',
-        badge: 'WORLD FIRST',
-        badgeColor: 'violet',
-        impactVal: '78%',
-        impactCtx: 'cross-border contagion risk accuracy',
-        awsSvc: 'AWS Step Functions',
-        vizType: 'corridors'
-    },
-    // Adding the rest of 33 to fill the list, though only 21 have unique visuals described.
-    ...Array.from({ length: 12 }).map((_, i) => ({
-        id: `M-${i + 22}`,
-        name: `Auxiliary System 0${i + 1}`,
-        desc: 'Running background intelligence routines for data coherence and load balancing.',
-        badge: null, impactVal: 'N/A', impactCtx: 'Support System', awsSvc: 'AWS Core', vizType: 'default'
-    }))
+        impactVal: 'Verified',
+        impactCtx: 'official broadcasts',
+        awsSvc: 'Amazon Kinesis',
+        vizType: 'v-broadcast'
+    }
 ];
 
 export default function IntelligenceTerminal() {
-    const [selectedId, setSelectedId] = useState(MODULES_DATA[0].id);
+    const [spinIndex, setSpinIndex] = useState(0);
+    const numItems = MODULES_DATA.length;
+    const theta = 360 / numItems;
+    const radius = 280;
+
+    const activeIndex = ((spinIndex % numItems) + numItems) % numItems;
+    const activeMod = MODULES_DATA[activeIndex];
+
     const [visible, setVisible] = useState(false);
     const sectionRef = useRef(null);
-
-    const activeMod = MODULES_DATA.find(m => m.id === selectedId) || MODULES_DATA[0];
 
     useEffect(() => {
         if (!sectionRef.current) return;
@@ -306,21 +317,41 @@ export default function IntelligenceTerminal() {
         }
     }
 
-    const currentIdx = MODULES_DATA.findIndex(m => m.id === selectedId);
+    const currentIdx = activeIndex;
 
-    const handleNext = () => setSelectedId(MODULES_DATA[(currentIdx + 1) % 21].id);
-    const handlePrev = () => setSelectedId(MODULES_DATA[currentIdx === 0 ? 20 : currentIdx - 1].id);
+    const handleNext = useCallback(() => setSpinIndex(prev => prev + 1), []);
+    const handlePrev = useCallback(() => setSpinIndex(prev => prev - 1), []);
+
+    const handleItemClick = (clickedIndex) => {
+        setSpinIndex(prev => {
+            const currentNorm = ((prev % numItems) + numItems) % numItems;
+            let diff = clickedIndex - currentNorm;
+            if (diff > numItems / 2) diff -= numItems;
+            if (diff < -numItems / 2) diff += numItems;
+            return prev + diff;
+        });
+    };
+
+    const scrollTimeout = useRef(null);
+    const handleWheel = (e) => {
+        if (scrollTimeout.current) return;
+        if (e.deltaY > 15) {
+            handleNext();
+            scrollTimeout.current = setTimeout(() => { scrollTimeout.current = null }, 300);
+        } else if (e.deltaY < -15) {
+            handlePrev();
+            scrollTimeout.current = setTimeout(() => { scrollTimeout.current = null }, 300);
+        }
+    };
 
     // Auto-scroll functionality
     useEffect(() => {
         if (!visible) return; // Only auto-scroll when the section is visible
 
-        const autoScrollTimer = setInterval(() => {
-            handleNext();
-        }, 4000); // 4 seconds per slide
+        const autoScrollTimer = setInterval(handleNext, 4000); // 4 seconds per slide
 
         return () => clearInterval(autoScrollTimer);
-    }, [visible, currentIdx]);
+    }, [visible, spinIndex, handleNext]);
 
     const onTouchEnd = () => {
         // Snap the card back to flat immediately with a smooth spring transition
@@ -340,8 +371,8 @@ export default function IntelligenceTerminal() {
             <div className={`it-term-header-container ${visible ? 'visible' : ''}`}>
                 <div className="it-th-left">
                     <div className="it-th-tag">// SYSTEM MODULES</div>
-                    <h2 className="it-th-title">33 Active Capabilities.</h2>
-                    <h2 className="it-th-title highlight">Zero Competition.<span className="it-cursor" /></h2>
+                    <h2 className="it-th-title">22 Features.</h2>
+                    <h2 className="it-th-title highlight">Unified Intelligence.<span className="it-cursor" /></h2>
                 </div>
                 <div className="it-th-right">
                     <div className="it-th-status">
@@ -355,26 +386,45 @@ export default function IntelligenceTerminal() {
             <div className={`it-terminal desktop-only ${visible ? 'visible' : ''}`}>
                 <div className="it-col-left">
                     <div className="it-left-header">
-                        <span className="it-lh-title">// SYSTEM PROCESSES</span>
-                        <span className="it-lh-count">33 active</span>
+                        <span className="it-lh-title">// {PROJECT_NAME.toUpperCase()} MATRIX</span>
+                        <span className="it-lh-count">3D ROTOR ACTIVE</span>
                     </div>
-                    <div className="it-process-list">
-                        {MODULES_DATA.map((mod) => (
-                            <div
-                                key={mod.id}
-                                className={`it-process-row ${mod.id === selectedId ? 'active' : ''}`}
-                                style={{ '--accent': mod.color }}
-                                onClick={() => setSelectedId(mod.id)}
-                            >
-                                <div className="it-pr-dot" />
-                                <div className="it-pr-id">{mod.id}</div>
-                                <div className="it-pr-name">{mod.name}</div>
-                                <div className="it-pr-dots">
-                                    <span /><span /><span /><span /><span />
-                                </div>
-                                <div className="it-pr-status">ACTIVE</div>
-                            </div>
-                        ))}
+                    <div className="it-rotor-viewport" onWheel={handleWheel} style={{ '--active-accent': activeMod.color }}>
+                        <div className="it-rotor-wheel" style={{ transform: `translateZ(${-radius}px) rotateX(${spinIndex * theta}deg)` }}>
+                            {MODULES_DATA.map((mod, i) => {
+                                const angle = -i * theta;
+                                let dist = Math.abs(i - activeIndex);
+                                if (dist > numItems / 2) dist = numItems - dist;
+                                const isActive = dist === 0;
+
+                                return (
+                                    <div
+                                        key={mod.id}
+                                        className={`it-rotor-item ${isActive ? 'active' : ''}`}
+                                        style={{ transform: `rotateX(${angle}deg) translateZ(${radius}px)`, '--dist': dist, '--accent': mod.color }}
+                                        onClick={() => handleItemClick(i)}
+                                    >
+                                        {isActive && (
+                                            <div className="it-ri-frame">
+                                                <span className="it-rif tl"></span>
+                                                <span className="it-rif tr"></span>
+                                                <span className="it-rif bl"></span>
+                                                <span className="it-rif br"></span>
+                                            </div>
+                                        )}
+                                        <div className="it-ri-content">
+                                            <div className="it-ri-dot"></div>
+                                            <div className="it-ri-id">[{mod.id}]</div>
+                                            <div className="it-ri-name">{mod.name}</div>
+                                            {isActive && <div className="it-ri-status">EXEC</div>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="it-rotor-fade top"></div>
+                        <div className="it-rotor-fade bottom"></div>
+                        <div className="it-rotor-connector"></div>
                     </div>
                 </div>
 
@@ -395,7 +445,7 @@ export default function IntelligenceTerminal() {
                         {MODULES_DATA.map((mod) => (
                             <div
                                 key={mod.id}
-                                className={`it-viz-layer ${mod.id === selectedId ? 'active' : ''}`}
+                                className={`it-viz-layer ${mod.id === activeMod.id ? 'active' : ''}`}
                             >
                                 <TerminalViz vizType={mod.vizType} color={mod.color} />
                             </div>
@@ -490,10 +540,10 @@ export default function IntelligenceTerminal() {
 
                         <div className="mc-tracker">
                             <div className="mc-tracker-text">
-                                SYS.MOD // {currentIdx + 1 < 10 ? '0' + (currentIdx + 1) : currentIdx + 1}<span>/21</span>
+                                SYS.MOD // {currentIdx + 1 < 10 ? '0' + (currentIdx + 1) : currentIdx + 1}<span>/22</span>
                             </div>
                             <div className="mc-tracker-bar">
-                                <div className="mc-tracker-fill" style={{ width: `${((currentIdx + 1) / 21) * 100}%` }} />
+                                <div className="mc-tracker-fill" style={{ width: `${((currentIdx + 1) / 22) * 100}%` }} />
                             </div>
                         </div>
 
@@ -503,7 +553,7 @@ export default function IntelligenceTerminal() {
                     </div>
 
                     <div className="mc-dot-matrix">
-                        {MODULES_DATA.slice(0, 21).map((m) => (
+                        {MODULES_DATA.slice(0, 22).map((m) => (
                             <div
                                 key={m.id}
                                 className={`mc-micro-dot ${m.id === activeMod.id ? 'active' : ''}`}

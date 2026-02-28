@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiLogin } from '../../services/api.service';
 import { MdEmail, MdLock, MdAdminPanelSettings, MdPerson } from 'react-icons/md';
+import { PROJECT_NAME } from '../../config/constants';
 import './AuthPages.css';
 
 export default function LoginPage() {
@@ -48,7 +49,7 @@ export default function LoginPage() {
                         </svg>
                     </div>
 
-                    <h1 className="auth-title">Project-77</h1>
+                    <h1 className="auth-title">{PROJECT_NAME}</h1>
                     <p className="auth-subtitle">Citizen Services Platform — Government of India</p>
 
                     {/* Quick Login Buttons */}
@@ -82,7 +83,7 @@ export default function LoginPage() {
                     </form>
 
                     <p className="auth-switch">
-                        New to Project-77? <Link to="/register">Create Account</Link>
+                        New to {PROJECT_NAME}? <Link to="/register">Create Account</Link>
                     </p>
                     <p style={{ textAlign: 'center', marginTop: 8 }}>
                         <Link to="/" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>← Back to Home</Link>

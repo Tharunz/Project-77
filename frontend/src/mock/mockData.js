@@ -168,7 +168,8 @@ function generateDate(daysAgo) {
 
 export const mockGrievances = Array.from({ length: 120 }, (_, i) => {
   const sentiment = randomSentiment();
-  const status = sentiment < 0.25 ? 'Critical' : randomItem(statuses.filter(s => s !== 'Critical'));
+  const statusesWithEscrow = [...statuses, 'Resolved (Pending Verification)'];
+  const status = sentiment < 0.25 ? 'Critical' : (i % 8 === 0 ? 'Resolved (Pending Verification)' : randomItem(statuses.filter(s => s !== 'Critical')));
   const priority = sentiment < 0.3 ? 'High' : sentiment < 0.65 ? 'Medium' : 'Low';
   return {
     id: generateGrievanceId(i),
@@ -548,3 +549,92 @@ export const mockBenefitRoadmap = {
     { id: 7, title: 'Register Daughter for Sukanya Samriddhi', done: false, benefit: '8.2% interest savings scheme', scheme: 'Sukanya Samriddhi Yojana', dueDate: '2026-03-30', documents: ['Birth certificate', 'Aadhaar', 'Bank account'], description: 'Open at Post Office or major banks.' },
   ],
 };
+
+// --- Feature 27 & 20: Digital Budget Escrow ---
+export const mockEscrowProjects = [
+  {
+    id: 'ESC-26001',
+    title: 'Village Road Paving — Varanasi Ward 4',
+    contractor: 'NH Infra Ltd',
+    budget: 1250000,
+    lockedAmount: 1250000,
+    disbursedAmount: 0,
+    status: 'Locked (Awaiting Citizen Verification)',
+    grievanceId: 'GRV-2601001',
+    progress: 100,
+    verificationPhoto: 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?q=80&w=400&auto=format&fit=crop',
+    completionDate: '2026-02-26',
+    citizenVerified: false,
+    rating: 0,
+  },
+  {
+    id: 'ESC-26002',
+    title: 'Water Pipeline Repair — Patna North',
+    contractor: 'AquaSolutions Corp',
+    budget: 450000,
+    lockedAmount: 0,
+    disbursedAmount: 450000,
+    status: 'Disbursed (Verified by Citizens)',
+    grievanceId: 'GRV-2601045',
+    progress: 100,
+    verificationPhoto: 'https://images.unsplash.com/photo-1541810270632-63321033485b?q=80&w=400&auto=format&fit=crop',
+    completionDate: '2026-02-20',
+    citizenVerified: true,
+    rating: 5,
+  },
+  {
+    id: 'ESC-26003',
+    title: 'Primary School Building Extension — Ranchi',
+    contractor: 'BuildWell Cooperatives',
+    budget: 2800000,
+    lockedAmount: 2800000,
+    disbursedAmount: 0,
+    status: 'Work In Progress',
+    grievanceId: 'GRV-2601098',
+    progress: 65,
+    verificationPhoto: null,
+    completionDate: null,
+    citizenVerified: false,
+    rating: 0,
+  }
+];
+
+// --- Feature 28: AI Ghost Audits ---
+export const mockGhostAuditAlerts = [
+  {
+    id: 'AUD-001',
+    grievanceId: 'GRV-2605432',
+    officer: 'Officer Bose',
+    action: 'Ticket Closed (Suspicious)',
+    aiReasoning: 'Officer closed the ticket within 2 hours of assignment without attaching a resolution photo or field notes. Historical average for this category is 48 hours.',
+    consequence: 'Ticket Reopened (Bypassed Officer)',
+    impact: 'Stopped fraudulent closure of road repair request.',
+    timestamp: '2026-02-27 14:20',
+    severity: 'high',
+    verifiedByCitizen: false,
+  },
+  {
+    id: 'AUD-002',
+    grievanceId: 'GRV-2605488',
+    officer: 'Officer Rao',
+    action: 'Marked Resolved',
+    aiReasoning: 'Sentiment analysis of citizen metadata indicates negative sentiment at closure site. GPS coordinates of officer dont match grievance location.',
+    consequence: 'Pending Citizen Verification',
+    impact: 'Ensuring worker presence for water supply maintenance.',
+    timestamp: '2026-02-27 15:45',
+    severity: 'medium',
+    verifiedByCitizen: null,
+  },
+  {
+    id: 'AUD-003',
+    grievanceId: 'GRV-2605512',
+    officer: 'Officer Mehta',
+    action: 'Duplicate Closure Pattern',
+    aiReasoning: 'Pattern matching reveals 5 identical closures with the same copy-pasted resolution text in 1 hour.',
+    consequence: 'Manual Audit Triggered (Escrow Locked)',
+    impact: 'Protected ₹5.4 Lakh in sanitation contract funds.',
+    timestamp: '2026-02-27 11:30',
+    severity: 'critical',
+    verifiedByCitizen: false,
+  }
+];

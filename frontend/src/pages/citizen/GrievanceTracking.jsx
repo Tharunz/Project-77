@@ -1,8 +1,99 @@
 import React, { useState } from 'react';
-import { MdTrackChanges, MdSearch, MdCheckCircle, MdHourglassEmpty, MdEdit, MdArrowForward } from 'react-icons/md';
+import { MdTrackChanges, MdSearch, MdCheckCircle, MdHourglassEmpty, MdEdit, MdArrowForward, MdPhotoCamera, MdStar, MdStarBorder, MdCloudUpload, MdVerifiedUser } from 'react-icons/md';
 import { apiTrackGrievance } from '../../services/api.service';
 import { useAuth } from '../../context/AuthContext';
 import { apiGetMyGrievances } from '../../services/api.service';
+
+function EscrowVerificationPanel({ grievanceId, onSuccess }) {
+    const [rating, setRating] = useState(0);
+    const [hover, setHover] = useState(0);
+    const [photo, setPhoto] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const handleVerify = async () => {
+        if (rating === 0) return alert('Please provide a rating.');
+        setLoading(true);
+        // Simulate API call
+        await new Promise(res => setTimeout(res, 1500));
+        setLoading(false);
+        onSuccess();
+    };
+
+    return (
+        <div style={{
+            marginTop: 24, padding: 20, background: 'rgba(0, 200, 150, 0.05)',
+            border: '2px dashed rgba(0, 200, 150, 0.3)', borderRadius: 12,
+            animation: 'pulseBorder 2s infinite'
+        }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <MdVerifiedUser style={{ color: 'var(--teal)', fontSize: '1.4rem' }} />
+                <h3 style={{ fontSize: '1rem', color: 'var(--text-white)' }}>Action Required: Confirm Resolution</h3>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
+                The government has locked <strong>₹12,50,000</strong> in Escrow for this project.
+                Contractor <strong>NH Infra Ltd</strong> claims work is done.
+                Please verify below to release the funds.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* 1. Photo Upload */}
+                <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 6 }}>1. Upload Proof of Resolution (Photo)</label>
+                    <div
+                        onClick={() => setPhoto('mock-photo-url')}
+                        style={{
+                            height: 100, border: '1px dashed var(--border)', borderRadius: 8,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', background: photo ? 'rgba(255,255,255,0.05)' : 'transparent'
+                        }}
+                    >
+                        {photo ? (
+                            <div style={{ color: 'var(--teal)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <MdCheckCircle /> Photo Uploaded Successfully
+                            </div>
+                        ) : (
+                            <>
+                                <MdCloudUpload style={{ fontSize: '1.5rem', color: 'var(--text-muted)' }} />
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Click to capture/upload photo</span>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* 2. Rating */}
+                <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 6 }}>2. Rate the Quality of Work</label>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                                onClick={() => setRating(star)}
+                                onMouseEnter={() => setHover(star)}
+                                onMouseLeave={() => setHover(0)}
+                            >
+                                {star <= (hover || rating) ? (
+                                    <MdStar style={{ color: '#FFD700', fontSize: '1.8rem' }} />
+                                ) : (
+                                    <MdStarBorder style={{ color: 'var(--text-muted)', fontSize: '1.8rem' }} />
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <button
+                    className="btn-primary"
+                    onClick={handleVerify}
+                    disabled={loading || rating === 0}
+                    style={{ background: 'var(--teal)', width: '100%', padding: '12px', fontWeight: 700 }}
+                >
+                    {loading ? 'Processing Escrow Release...' : 'Confirm & Release Funds'}
+                </button>
+            </div>
+        </div>
+    );
+}
 
 function StatusTimeline({ timeline }) {
     return (
@@ -138,6 +229,16 @@ export default function GrievanceTracking() {
                         <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 0 }}>Timeline</h4>
                         <StatusTimeline timeline={result.timeline} />
                     </div>
+
+                    {/* Escrow Verification Section */}
+                    {result.status === 'Resolved (Pending Verification)' && (
+                        <EscrowVerificationPanel
+                            grievanceId={result.id}
+                            onSuccess={() => {
+                                setResult({ ...result, status: 'Resolved', timeline: [...result.timeline, { status: 'Funds Disbursed', date: new Date().toISOString().split('T')[0], note: 'Citizen verified resolution. Contractor funds released.' }] });
+                            }}
+                        />
+                    )}
                 </div>
             )}
 

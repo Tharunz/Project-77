@@ -20,6 +20,8 @@ import Analytics from './pages/admin/Analytics';
 import DistressIndex from './pages/admin/DistressIndex';
 import SLATracker from './pages/admin/SLATracker';
 import PreSeva from './pages/admin/PreSeva';
+import EscrowManagement from './pages/admin/EscrowManagement';
+import GhostAudits from './pages/admin/GhostAudits';
 
 // Citizen Pages
 import HomePage from './pages/citizen/HomePage';
@@ -83,6 +85,8 @@ function AppRoutes() {
         <Route path="distress" element={<DistressIndex />} />
         <Route path="sla" element={<SLATracker />} />
         <Route path="preseva" element={<PreSeva />} />
+        <Route path="escrow" element={<EscrowManagement />} />
+        <Route path="audits" element={<GhostAudits />} />
       </Route>
 
       {/* Citizen Routes */}

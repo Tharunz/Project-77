@@ -10,7 +10,8 @@ import {
     mockStateAnalytics, mockSentimentTrend,
     mockAdminUsers, mockCitizenUsers,
     mockPreSevaAlerts, mockPreSevaStats, mockDistressIndex,
-    mockSLAData, mockOfficerSLA, mockCommunityPosts, mockSevaNews, mockBenefitRoadmap
+    mockSLAData, mockOfficerSLA, mockCommunityPosts, mockSevaNews, mockBenefitRoadmap,
+    mockEscrowProjects, mockGhostAuditAlerts
 } from '../mock/mockData';
 
 // Simulate async delay
@@ -256,3 +257,10 @@ export const apiUpvotePost = async (id) => { await delay(200); return { success:
 
 // Feature 19: Seva News
 export const apiGetSevaNews = async () => { await delay(400); return { success: true, data: mockSevaNews }; };
+
+// Feature 27 & 20: Digital Budget Escrow
+export const apiGetEscrowProjects = async () => { await delay(500); return { success: true, data: mockEscrowProjects }; };
+export const apiVerifyEscrow = async (id, rating, photo) => { await delay(800); return { success: true }; };
+
+// Feature 28: AI Ghost Audits
+export const apiGetGhostAuditAlerts = async () => { await delay(400); return { success: true, data: mockGhostAuditAlerts }; };

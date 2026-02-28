@@ -90,6 +90,28 @@ export default function AdminDashboard() {
         load();
     }, []);
 
+    const [isResizing, setIsResizing] = useState(false);
+
+    useEffect(() => {
+        const dashboard = document.querySelector('.admin-dashboard');
+        if (!dashboard) return;
+
+        let timeout;
+        const observer = new ResizeObserver(() => {
+            setIsResizing(true);
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                setIsResizing(false);
+            }, 300); // Wait 300ms after the last resize event to redraw
+        });
+
+        observer.observe(dashboard);
+        return () => {
+            observer.disconnect();
+            clearTimeout(timeout);
+        };
+    }, []);
+
     if (loading) return (
         <div className="dash-loading">
             <div className="spinner" /><span>Loading intelligence data...</span>
@@ -189,27 +211,35 @@ export default function AdminDashboard() {
                         <h3>Monthly Grievance Trend</h3>
                         <span className="chart-sub">Filed vs Resolved (last 7 months)</span>
                     </div>
-                    <ResponsiveContainer width="100%" height={220}>
-                        <AreaChart data={trend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="gradFiled" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                                </linearGradient>
-                                <linearGradient id="gradResolved" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#00C896" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#00C896" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.10)" />
-                            <XAxis dataKey="month" tick={{ fill: '#B8C5D6', fontSize: 12 }} axisLine={false} tickLine={false} />
-                            <YAxis tick={{ fill: '#B8C5D6', fontSize: 12 }} axisLine={false} tickLine={false} />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Legend wrapperStyle={{ color: '#B8C5D6', fontSize: 12 }} />
-                            <Area type="monotone" dataKey="filed" name="Filed" stroke="#3B82F6" strokeWidth={2} fill="url(#gradFiled)" />
-                            <Area type="monotone" dataKey="resolved" name="Resolved" stroke="#00C896" strokeWidth={2} fill="url(#gradResolved)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                    <div style={{ height: 220, position: 'relative', width: '100%' }}>
+                        {isResizing ? (
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div className="spinner" style={{ width: 24, height: 24, borderWidth: 2, opacity: 0.3 }} />
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={trend} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="gradFiled" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="gradResolved" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#00C896" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#00C896" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.10)" />
+                                    <XAxis dataKey="month" tick={{ fill: '#B8C5D6', fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fill: '#B8C5D6', fontSize: 12 }} axisLine={false} tickLine={false} />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend wrapperStyle={{ color: '#B8C5D6', fontSize: 12 }} />
+                                    <Area type="monotone" dataKey="filed" name="Filed" stroke="#3B82F6" strokeWidth={2} fill="url(#gradFiled)" />
+                                    <Area type="monotone" dataKey="resolved" name="Resolved" stroke="#00C896" strokeWidth={2} fill="url(#gradResolved)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
                 </div>
 
                 {/* Category Pie */}
@@ -218,17 +248,25 @@ export default function AdminDashboard() {
                         <h3>By Category</h3>
                         <span className="chart-sub">Volume breakdown</span>
                     </div>
-                    <ResponsiveContainer width="100%" height={160}>
-                        <PieChart>
-                            <Pie data={categories} cx="50%" cy="50%" innerRadius={40} outerRadius={70}
-                                dataKey="count" nameKey="category" paddingAngle={3}>
-                                {categories.map((entry, index) => (
-                                    <Cell key={index} fill={CUSTOM_COLORS[index % CUSTOM_COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip formatter={(v, n) => [v.toLocaleString(), n]} />
-                        </PieChart>
-                    </ResponsiveContainer>
+                    <div style={{ height: 160, position: 'relative', width: '100%' }}>
+                        {isResizing ? (
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div className="spinner" style={{ width: 24, height: 24, borderWidth: 2, opacity: 0.3 }} />
+                            </div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={categories} cx="50%" cy="50%" innerRadius={40} outerRadius={70}
+                                        dataKey="count" nameKey="category" paddingAngle={3}>
+                                        {categories.map((entry, index) => (
+                                            <Cell key={index} fill={CUSTOM_COLORS[index % CUSTOM_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip formatter={(v, n) => [v.toLocaleString(), n]} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
                     <div className="pie-legend">
                         {categories.slice(0, 4).map((c, i) => (
                             <div key={i} className="pie-legend-item">

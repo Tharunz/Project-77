@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MdMap, MdCheckCircle, MdArrowForward, MdLock } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { apiGetBenefitRoadmap } from '../../services/api.service';
+import { PROJECT_NAME } from '../../config/constants';
 
 export default function BenefitRoadmap() {
     const { user } = useAuth();
@@ -63,7 +64,7 @@ export default function BenefitRoadmap() {
 
             {/* AI Explainer */}
             <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, padding: '14px 18px', fontSize: '0.83rem', color: '#A78BFA' }}>
-                🤖 <strong>How this works:</strong> Project-77's AI analyzed your profile (age {user?.age || '?'}, state: {user?.state || '?'}, income: ₹{Number(user?.income || 0).toLocaleString()}) and identified the schemes you're most likely to qualify for, in the optimal application order to unlock maximum benefits with least effort.
+                🤖 <strong>How this works:</strong> {PROJECT_NAME}'s AI analyzed your profile (age {user?.age || '?'}, state: {user?.state || '?'}, income: ₹{Number(user?.income || 0).toLocaleString()}) and identified the schemes you're most likely to qualify for, in the optimal application order to unlock maximum benefits with least effort.
             </div>
 
             {/* Timeline */}
