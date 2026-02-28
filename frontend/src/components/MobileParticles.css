@@ -1,0 +1,58 @@
+.mobile-particles-container {
+    display: none;
+    /* Hidden by default on desktop */
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+    .mobile-particles-container {
+        display: block;
+    }
+}
+
+.m-particle-canvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.m-glow-orb {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(255, 107, 44, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    filter: blur(20px);
+    top: 20%;
+    left: 10%;
+    animation: m-orb-float 15s ease-in-out infinite alternate;
+}
+
+.m-glow-orb-2 {
+    background: radial-gradient(circle, rgba(0, 200, 150, 0.15) 0%, transparent 70%);
+    top: 60%;
+    left: 60%;
+    animation-duration: 20s;
+    animation-direction: alternate-reverse;
+}
+
+@keyframes m-orb-float {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(40px, 30px) scale(1.1);
+    }
+
+    100% {
+        transform: translate(-30px, 50px) scale(0.9);
+    }
+}

@@ -472,3 +472,345 @@
     font-size: 0.78rem;
     color: #F97316;
 }
+
+/* =========================================
+   MOBILE EXCLUSIVE CAPABILITIES UI
+========================================= */
+.desktop-only {
+    display: flex;
+}
+
+.mobile-only {
+    display: none;
+}
+
+.mobile-capabilities-ui {
+    position: relative;
+    width: 100%;
+    margin-top: 20px;
+    padding: 20px 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.7s ease;
+}
+
+.mobile-capabilities-ui.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.mc-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.mc-particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    bottom: -10px;
+    animation-name: mcFloat;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+@keyframes mcFloat {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-1000px) scale(0);
+        opacity: 0;
+    }
+}
+
+/* NEW HOLOGRAPHIC DECK STYLES */
+.mc-holo-deck {
+    position: relative;
+    z-index: 5;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    perspective: 1000px;
+}
+
+.mc-holo-card {
+    background: linear-gradient(135deg, rgba(16, 24, 45, 0.8), rgba(8, 12, 24, 0.6));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid var(--accent);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(16px);
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 0 30px rgba(255, 255, 255, 0.03);
+    animation: holoEntry 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    touch-action: pan-y;
+    transform-style: preserve-3d;
+}
+
+.mc-holo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(800px circle at top left, rgba(255, 255, 255, 0.06), transparent 40%);
+}
+
+@keyframes holoEntry {
+    0% {
+        transform: scale(0.85) rotateX(-20deg) translateY(40px);
+        opacity: 0;
+        filter: brightness(1.5) contrast(1.2);
+    }
+
+    100% {
+        transform: scale(1) rotateX(0deg) translateY(0);
+        opacity: 1;
+        filter: brightness(1) contrast(1);
+    }
+}
+
+.mc-scanline-fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+    height: 15%;
+    width: 100%;
+    animation: scanMove 3s linear infinite;
+    z-index: 10;
+}
+
+@keyframes scanMove {
+    0% {
+        transform: translateY(-100%);
+    }
+
+    100% {
+        transform: translateY(1000%);
+    }
+}
+
+.mc-card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.mc-card-id {
+    font-family: monospace;
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.mc-card-status {
+    font-family: monospace;
+    color: #00C896;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+.mc-card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: #fff;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mc-card-badge {
+    font-family: monospace;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mc-card-desc {
+    font-size: 0.9rem;
+    color: #B8C5D6;
+    line-height: 1.6;
+    margin: 0 0 20px 0;
+}
+
+.mc-card-stats {
+    display: flex;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.35);
+    padding: 16px;
+    border-radius: 8px;
+    border-left: 2px solid var(--accent);
+}
+
+.mc-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mc-stat-lbl {
+    font-family: monospace;
+    font-size: 0.7rem;
+    color: #8899AA;
+    text-transform: uppercase;
+}
+
+.mc-stat-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.mc-stat-aws {
+    font-size: 0.85rem;
+    color: #F97316;
+    font-weight: 600;
+}
+
+.mc-stat-ctx {
+    font-size: 0.65rem;
+    color: #64748B;
+}
+
+/* Control Deck */
+.mc-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(6, 11, 24, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    padding: 6px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+}
+
+.mc-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mc-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.9);
+}
+
+.mc-tracker {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 0 16px;
+}
+
+.mc-tracker-text {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.mc-tracker-text span {
+    color: #64748B;
+    font-weight: 400;
+}
+
+.mc-tracker-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.mc-tracker-fill {
+    height: 100%;
+    background: #FF6B2C;
+    border-radius: 3px;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mc-dot-matrix {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 0 20px;
+    margin-top: 5px;
+}
+
+.mc-micro-dot {
+    width: 14px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.mc-micro-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    width: 24px;
+}
+
+/* Responsive Overrides */
+@media (max-width: 1024px) {
+    .desktop-only {
+        display: none !important;
+    }
+
+    .mobile-only {
+        display: block !important;
+    }
+
+    .it-term-header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 0 16px;
+    }
+
+    .it-th-title {
+        font-size: 2.2rem;
+    }
+}

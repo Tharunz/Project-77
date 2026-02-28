@@ -60,7 +60,7 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
     const hasLegendHover = hoveredLegendLevel !== null;
 
     return (
-        <g className={`map-geographies ${hasClick ? 'has-click' : ''} ${hasLegendHover ? 'has-legend-hover' : ''}`}>
+        <g className={`map-geographies ${hasClick ? 'has-click' : ''} ${hasLegendHover ? 'has-legend-hover' : ''}`} style={{ willChange: 'filter, opacity' }}>
             <Geographies geography={geoData}>
                 {({ geographies }) =>
                     geographies.map(geo => {
@@ -76,10 +76,11 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
 
                         // If there is a click, isolate the state. Ghost out all others.
                         let groupOpacity = 1;
-                        let filter = 'drop-shadow(0 0 10px rgba(0,255,238,0.65))';
-                        if (hasClick && !isClicked) {
-                            groupOpacity = 0.08;
-                            filter = 'saturate(0)';
+                        let filter = 'none';
+                        if (isClicked) {
+                            filter = `drop-shadow(0 0 16px ${DC[level]})`;
+                        } else if (!hasClick) {
+                            filter = 'drop-shadow(0 0 10px rgba(0,255,238,0.4))';
                         }
 
                         let fillVal = 'rgba(0,229,255,0.07)';
@@ -105,7 +106,6 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
                             strokeColor = DC[level];
                             strokeWidth = 2.5;
                             strokeOpacity = 1;
-                            filter = `drop-shadow(0 0 16px ${DC[level]})`;
                         }
 
                         // Threat Aura Borders (Animated via CSS classes)
@@ -121,7 +121,7 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
                         return (
                             <g key={geo.rsmKey}
                                 className={`state-layer-group ${isClicked ? 'is-clicked' : ''} ${isLegendPulsed ? 'is-legend-pulsed' : ''}`}
-                                style={{ transformOrigin: '50% 50%', opacity: groupOpacity, filter, transition: 'all 0.5s ease', ...fillStyle }}>
+                                style={{ transformOrigin: '50% 50%', opacity: groupOpacity, filter, ...fillStyle }}>
                                 <Geography
                                     geography={geo}
                                     onMouseEnter={() => !hasClick && onHoverState(name)}
@@ -380,46 +380,52 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
 
                         return (
                             <div className={`detail-card-left ${isClosingClick ? 'slide-out-left' : 'slide-in-left'}`}>
-                                <div className="iso-state-svg-wrap" style={{ filter: `drop-shadow(0 0 16px ${activeColor})` }}>
-                                    {/* Render an isolated version of the exact state for that beautiful large shape */}
-                                    <svg viewBox="0 0 900 700" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="iso-svg">
-                                        <ComposableMap
-                                            projection="geoMercator"
-                                            projectionConfig={{ center: [82.5, 22.0], scale: 1050 }}
-                                            width={900}
-                                            height={700}
-                                            viewBox="0 0 900 700"
-                                            style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-                                        >
-                                            <Geographies geography={{ type: "FeatureCollection", features: [clickedState.geoPath] }}>
-                                                {({ geographies }) =>
-                                                    geographies.map((geo) => (
-                                                        <Geography
-                                                            key={geo.rsmKey}
-                                                            geography={geo}
-                                                            style={{
-                                                                default: {
-                                                                    fill: `${activeColor}40`,
-                                                                    stroke: activeColor,
-                                                                    strokeWidth: 2.5
-                                                                }
-                                                            }}
-                                                        />
-                                                    ))
-                                                }
-                                            </Geographies>
-                                        </ComposableMap>
-                                    </svg>
-                                </div>
+                                <div className="iso-target-hud" style={{ '--ac': activeColor }}>
+                                    <div className="hud-corner top-left"></div>
+                                    <div className="hud-corner top-right"></div>
+                                    <div className="hud-corner bottom-left"></div>
+                                    <div className="hud-corner bottom-right"></div>
 
-                                <div className="iso-state-name">{clickedState.name}</div>
+                                    <div className="hud-header">
+                                        <span className="hud-flash">● LIVE NODE</span>
+                                        <span className="hud-sys">SYS.LINK.ESTABLISHED</span>
+                                    </div>
 
-                                <div className="iso-score-circle" style={{ borderColor: activeColor, background: `${activeColor}33` }}>
-                                    {10 + distressLevel * 22}
-                                </div>
+                                    <h3 className="iso-state-name">{clickedState.name}</h3>
 
-                                <div className="iso-desc">
-                                    {mockData.g.toLocaleString()} active grievances
+                                    <div className="hud-divider"></div>
+
+                                    <div className="hud-core-metrics">
+                                        <div className="iso-metric">
+                                            <span className="iso-metric-lbl">RISK LEVEL</span>
+                                            <div className="iso-score-circle" style={{ borderColor: activeColor, background: `${activeColor}15`, color: activeColor, textShadow: `0 0 10px ${activeColor}` }}>
+                                                {10 + distressLevel * 22}
+                                            </div>
+                                        </div>
+
+                                        <div className="hud-chart-container">
+                                            <div className="hud-bar" style={{ animationDelay: '0.1s', height: '60%' }}></div>
+                                            <div className="hud-bar" style={{ animationDelay: '0.2s', height: '80%' }}></div>
+                                            <div className="hud-bar" style={{ animationDelay: '0.3s', height: '40%' }}></div>
+                                            <div className="hud-bar" style={{ animationDelay: '0.4s', height: '100%', background: activeColor, boxShadow: `0 0 10px ${activeColor}` }}></div>
+                                            <div className="hud-bar" style={{ animationDelay: '0.5s', height: '50%' }}></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="iso-metric" style={{ marginTop: '16px' }}>
+                                        <span className="iso-metric-lbl">ACTIVE GRIEVANCES</span>
+                                        <div className="iso-desc">
+                                            {mockData.g.toLocaleString()}
+                                        </div>
+                                    </div>
+
+                                    <div className="hud-ai-analysis" style={{ borderLeft: `2px solid ${activeColor}` }}>
+                                        <div className="hud-ai-title">AI PREDICTION</div>
+                                        <div className="hud-ai-value">{mockData.pred}</div>
+                                        <div className="hud-ai-conf" style={{ color: activeColor }}>{mockData.rr} Confidence Level</div>
+                                    </div>
+
+                                    <div className="hud-scanner"></div>
                                 </div>
                             </div>
                         )

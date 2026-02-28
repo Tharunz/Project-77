@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 import './IntelligenceTerminal.css';
 import TerminalViz from './TerminalViz';
 
@@ -273,6 +274,67 @@ export default function IntelligenceTerminal() {
         return () => observer.disconnect();
     }, []);
 
+    const [touchStart, setTouchStart] = useState(null);
+    const [touchEnd, setTouchEnd] = useState(null);
+    const [cardStyle, setCardStyle] = useState({ transform: 'rotateX(0deg) rotateY(0deg)', transition: 'none' });
+
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e) => {
+        setTouchEnd(null);
+        setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY });
+        setCardStyle(prev => ({ ...prev, transition: 'none' }));
+    }
+
+    const onTouchMove = (e) => {
+        const cx = e.targetTouches[0].clientX;
+        const cy = e.targetTouches[0].clientY;
+        setTouchEnd(cx);
+
+        if (touchStart) {
+            // Calculate a 3D tilt based on swipe distance
+            const dx = cx - touchStart.x;
+            const dy = cy - touchStart.y;
+            // Cap the rotation to max 15 degrees
+            const rotateY = Math.max(-15, Math.min(15, dx * 0.1));
+            const rotateX = Math.max(-15, Math.min(15, -dy * 0.1));
+
+            setCardStyle({
+                transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+                transition: 'none'
+            });
+        }
+    }
+
+    const currentIdx = MODULES_DATA.findIndex(m => m.id === selectedId);
+
+    const handleNext = () => setSelectedId(MODULES_DATA[(currentIdx + 1) % 21].id);
+    const handlePrev = () => setSelectedId(MODULES_DATA[currentIdx === 0 ? 20 : currentIdx - 1].id);
+
+    // Auto-scroll functionality
+    useEffect(() => {
+        if (!visible) return; // Only auto-scroll when the section is visible
+
+        const autoScrollTimer = setInterval(() => {
+            handleNext();
+        }, 4000); // 4 seconds per slide
+
+        return () => clearInterval(autoScrollTimer);
+    }, [visible, currentIdx]);
+
+    const onTouchEnd = () => {
+        // Snap the card back to flat immediately with a smooth spring transition
+        setCardStyle({ transform: 'rotateX(0deg) rotateY(0deg)', transition: 'transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' });
+
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart.x - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe) handleNext();
+        if (isRightSwipe) handlePrev();
+    }
+
     return (
         <section className="it-terminal-section" ref={sectionRef}>
             <div className={`it-term-header-container ${visible ? 'visible' : ''}`}>
@@ -290,7 +352,7 @@ export default function IntelligenceTerminal() {
                 </div>
             </div>
 
-            <div className={`it-terminal ${visible ? 'visible' : ''}`}>
+            <div className={`it-terminal desktop-only ${visible ? 'visible' : ''}`}>
                 <div className="it-col-left">
                     <div className="it-left-header">
                         <span className="it-lh-title">// SYSTEM PROCESSES</span>
@@ -362,6 +424,92 @@ export default function IntelligenceTerminal() {
                             <div className="it-zc-aws">{activeMod.awsSvc}</div>
                             <div className="it-zc-aws-logo">AWS</div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Exclusive Capabilities UI */}
+            <div className={`mobile-capabilities-ui mobile-only ${visible ? 'visible' : ''}`}>
+                <div className="mc-particles">
+                    {Array.from({ length: 25 }).map((_, i) => (
+                        <div
+                            key={i}
+                            className="mc-particle"
+                            style={{
+                                left: `${Math.random() * 100}%`,
+                                animationDelay: `${Math.random() * 5}s`,
+                                animationDuration: `${Math.random() * 4 + 3}s`,
+                                background: Math.random() > 0.5 ? '#00E5A0' : '#FF6B2C',
+                                boxShadow: `0 0 12px ${Math.random() > 0.5 ? '#00E5A0' : '#FF6B2C'}`,
+                                opacity: Math.random() * 0.5 + 0.3
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <div className="mc-holo-deck">
+                    <div
+                        className="mc-holo-card"
+                        key={activeMod.id}
+                        style={{ '--accent': activeMod.color, transform: cardStyle.transform, transition: cardStyle.transition }}
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                    >
+                        <div className="mc-scanline-fx" />
+                        <div className="mc-card-header">
+                            <span className="mc-card-id">[{activeMod.id}]</span>
+                            <span className="mc-card-status">
+                                <div className="it-za-pulse" style={{ display: 'inline-block', marginRight: 6, verticalAlign: 'middle', width: 6, height: 6 }} />
+                                ACTIVE
+                            </span>
+                        </div>
+                        <h3 className="mc-card-title">
+                            {activeMod.name}
+                            {activeMod.badge && <span className="mc-card-badge" style={{ color: activeMod.color, borderColor: activeMod.color }}>{activeMod.badge}</span>}
+                        </h3>
+                        <p className="mc-card-desc">{activeMod.desc}</p>
+                        <div className="mc-card-stats">
+                            <div className="mc-stat" style={{ flex: 1 }}>
+                                <span className="mc-stat-lbl">IMPACT</span>
+                                <span className="mc-stat-val">{activeMod.impactVal}</span>
+                                <span className="mc-stat-ctx">{activeMod.impactCtx}</span>
+                            </div>
+                            <div className="mc-stat" style={{ flex: 1 }}>
+                                <span className="mc-stat-lbl">POWERED BY</span>
+                                <span className="mc-stat-aws">{activeMod.awsSvc}</span>
+                                <span className="mc-stat-ctx">AWS Architecture</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mc-controls">
+                        <button className="mc-btn" onClick={handlePrev}>
+                            <MdKeyboardArrowLeft size={28} />
+                        </button>
+
+                        <div className="mc-tracker">
+                            <div className="mc-tracker-text">
+                                SYS.MOD // {currentIdx + 1 < 10 ? '0' + (currentIdx + 1) : currentIdx + 1}<span>/21</span>
+                            </div>
+                            <div className="mc-tracker-bar">
+                                <div className="mc-tracker-fill" style={{ width: `${((currentIdx + 1) / 21) * 100}%` }} />
+                            </div>
+                        </div>
+
+                        <button className="mc-btn" onClick={handleNext}>
+                            <MdKeyboardArrowRight size={28} />
+                        </button>
+                    </div>
+
+                    <div className="mc-dot-matrix">
+                        {MODULES_DATA.slice(0, 21).map((m) => (
+                            <div
+                                key={m.id}
+                                className={`mc-micro-dot ${m.id === activeMod.id ? 'active' : ''}`}
+                                onClick={() => setSelectedId(m.id)}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

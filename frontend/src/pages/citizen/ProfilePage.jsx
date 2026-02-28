@@ -78,7 +78,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Fields */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-grid-2" style={{ gap: 16 }}>
                     {[
                         { key: 'name', label: 'Full Name', icon: <MdPerson />, type: 'text' },
                         { key: 'email', label: 'Email Address', icon: <MdEmail />, type: 'email' },
@@ -122,7 +122,7 @@ export default function ProfilePage() {
             {/* Activity Stats */}
             <div>
                 <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 14 }}>Activity Overview</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
                     {profileStats.map(stat => (
                         <div key={stat.label} className="metric-card" style={{ '--accent-color': stat.color, textAlign: 'center', padding: '16px 12px' }}>
                             <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.6rem', fontWeight: 800, color: stat.color }}>{stat.value}</div>

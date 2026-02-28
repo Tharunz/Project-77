@@ -103,7 +103,7 @@ export default function GrievanceFiling() {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 {/* Row 1 */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-grid-2" style={{ gap: 16 }}>
                     <div className="form-group">
                         <label className="form-label">Full Name *</label>
                         <input className="form-input" value={form.citizenName} onChange={e => setForm(f => ({ ...f, citizenName: e.target.value }))} placeholder="Your name" />
@@ -120,7 +120,7 @@ export default function GrievanceFiling() {
                 </div>
 
                 {/* Row 2 */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-grid-2" style={{ gap: 16 }}>
                     <div className="form-group">
                         <label className="form-label">Category *</label>
                         <select className="form-input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>

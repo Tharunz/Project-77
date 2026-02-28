@@ -148,7 +148,7 @@ export default function FraudDetection() {
                                         <h5 style={{ fontSize: '0.78rem', color: '#A78BFA', marginBottom: 6 }}>🤖 AI Reasoning</h5>
                                         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{item.aiReason}</p>
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: item.secondary ? '1fr 1fr' : '1fr', gap: 16 }}>
+                                    <div className={item.secondary ? "responsive-grid-2" : ""} style={{ display: 'grid', gridTemplateColumns: item.secondary ? undefined : '1fr', gap: 16 }}>
                                         {[item.primary, item.secondary].filter(Boolean).map((g, gi) => (
                                             <div key={gi} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '14px 16px' }}>
                                                 <h5 style={{ fontSize: '0.78rem', color: 'var(--saffron)', marginBottom: 8 }}>

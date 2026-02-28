@@ -49,7 +49,7 @@ export default function SLATracker() {
             </div>
 
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14 }}>
                 {[
                     { label: 'SLA Breached', value: breached, color: '#EF4444', icon: '💔' },
                     { label: 'Due Today', value: dueToday, color: '#F59E0B', icon: '⚡' },

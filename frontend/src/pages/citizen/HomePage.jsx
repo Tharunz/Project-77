@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { MdArrowForward, MdShield } from 'react-icons/md';
 import IntelligenceTerminal from '../../components/IntelligenceTerminal';
 import HowItWorksBriefing from '../../components/HowItWorksBriefing';
+import MobileParticles from '../../components/MobileParticles';
 import './HomePage.css';
 
 const IndiaMap = lazy(() => import('../../components/IndiaMap'));
@@ -55,6 +56,7 @@ function Ring({ prob, color }) {
     return (<div className="it-pred-ring"><svg viewBox="0 0 56 56"><circle className="ring-bg" cx="28" cy="28" r={r} fill="none" strokeWidth="3" /><circle className="ring-fill" cx="28" cy="28" r={r} fill="none" strokeWidth="3" stroke={color} strokeDasharray={`${circ * prob / 100} ${circ}`} /></svg><div className="it-pred-pct">{prob}%</div></div>);
 }
 const Chakra = ({ size = 28 }) => (<svg width={size} height={size} viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="rgba(255,85,0,.1)" /><circle cx="20" cy="20" r="11.5" stroke="#FF5500" strokeWidth="1.8" fill="none" /><circle cx="20" cy="20" r="2.8" fill="#FF5500" />{Array.from({ length: 24 }).map((_, i) => <line key={i} x1="20" y1="9.5" x2="20" y2="12.5" stroke="#FF5500" strokeWidth="1.1" strokeLinecap="round" transform={`rotate(${i * 15} 20 20)`} />)}</svg>);
+
 
 export default function HomePage() {
     const [scrolled, setScrolled] = useState(false);
@@ -120,20 +122,21 @@ export default function HomePage() {
                     <a href="#caps" className="it-nav-a">Capabilities</a>
                     <a href="#how" className="it-nav-a">How it Works</a>
                     <div className="it-sep" />
-                    <Link to="/login" className="it-ghost">Sign In</Link>
-                    <Link to="/register" className="it-solid">Get Started <MdArrowForward /></Link>
+                    <Link to="/login" className="it-ghost">Citizen Login</Link>
+                    <Link to="/register" className="it-solid">Access Portal <MdArrowForward /></Link>
                 </div>
             </nav>
 
             {/* Hero — Split */}
-            <section className="it-hero">
+            <section className="it-hero" style={{ position: 'relative' }}>
+                <MobileParticles />
                 <div className="it-hero-left">
                     <div className="it-hero-tag">AI-Powered Citizen Services <span>WORLD FIRST</span></div>
                     <h1 className="it-title">Problems<br /><span className="it-title-a">solved</span><br />before they<br /><span className="it-title-b">happen.</span></h1>
                     <p className="it-sub">Project-77 is the world's <em>first</em> platform that predicts government service failures before citizens are affected. 500+ schemes, 22 languages, grievance tracking, officer accountability — unified.</p>
                     <div className="it-ctas">
-                        <Link to="/register" className="it-cta-p">Start Using Project-77 <MdArrowForward /></Link>
-                        <Link to="/login" className="it-cta-s">Sign In →</Link>
+                        <Link to="/register" className="it-cta-p">Access Citizen Portal <MdArrowForward /></Link>
+                        <Link to="/login" className="it-cta-s">Officer Login →</Link>
                     </div>
                     <p className="it-hint">🚀 Demo: <strong>admin@gov.in / admin123</strong> (Admin) · <strong>ramesh@gmail.com / ramesh123</strong> (Citizen)</p>
                 </div>
@@ -191,21 +194,90 @@ export default function HomePage() {
                                 <div className="it-ss-stat"><span>36</span> STATES MONITORED</div>
                                 <div className="it-ss-div" />
                                 <div className="it-ss-stat"><span>{liveGrievanceCount}</span> ACTIVE GRIEVANCES</div>
-                                <div className="it-ss-div" />
-                                <div className="it-ss-stat"><span>3</span> PRESEVA ALERTS</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Counters */}
-            <div className="it-counts"><div className="it-counts-inner">
-                <div className="it-count" ref={rC}><span className="it-count-num" style={{ color: '#FF5500' }}>{vC < 142 ? vC : '14.2'}Cr</span><span className="it-count-lbl">Citizens Served</span></div>
-                <div className="it-count" ref={rS}><span className="it-count-num" style={{ color: '#A78BFA' }}>{vS}+</span><span className="it-count-lbl">Govt. Schemes</span></div>
-                <div className="it-count" ref={rL}><span className="it-count-num" style={{ color: '#00E5A0' }}>{vL}+</span><span className="it-count-lbl">Indian Languages</span></div>
-                <div className="it-count" ref={rA}><span className="it-count-num" style={{ color: '#5C8EFF' }}>{vA}%</span><span className="it-count-lbl">AI Accuracy</span></div>
-            </div></div>
+            {/* Unified Intersection Observers for Counters */}
+            <div className="stats-triggers" style={{ display: 'flex', width: '100%', height: '1px', opacity: 0, pointerEvents: 'none' }}>
+                <div ref={rC} style={{ flex: 1 }} />
+                <div ref={rS} style={{ flex: 1 }} />
+                <div ref={rL} style={{ flex: 1 }} />
+                <div ref={rA} style={{ flex: 1 }} />
+            </div>
+
+            {/* Neural Data Pipeline Counters (Desktop) */}
+            <div className="it-pipeline-wrapper desktop-pipeline">
+                <div className="it-pipeline">
+                    <div className="it-pipeline-track">
+                        <div className="it-pipeline-glow"></div>
+                    </div>
+
+                    <div className="it-pipeline-nodes">
+                        {/* Citizens Served */}
+                        <div className="it-node" style={{ '--node-color': '#FF5500' }}>
+                            <div className="it-node-val">{vC < 142 ? vC : '14.2'}Cr</div>
+                            <div className="it-node-point"><div className="it-node-pulse"></div></div>
+                            <div className="it-node-lbl">Citizens Served</div>
+                        </div>
+
+                        {/* Govt Schemes */}
+                        <div className="it-node" style={{ '--node-color': '#A78BFA' }}>
+                            <div className="it-node-val">{vS}+</div>
+                            <div className="it-node-point"><div className="it-node-pulse"></div></div>
+                            <div className="it-node-lbl">Govt. Schemes</div>
+                        </div>
+
+                        {/* Indian Languages */}
+                        <div className="it-node" style={{ '--node-color': '#00E5A0' }}>
+                            <div className="it-node-val">{vL}+</div>
+                            <div className="it-node-point"><div className="it-node-pulse"></div></div>
+                            <div className="it-node-lbl">Indian Languages</div>
+                        </div>
+
+                        {/* AI Accuracy */}
+                        <div className="it-node" style={{ '--node-color': '#5C8EFF' }}>
+                            <div className="it-node-val">{vA}%</div>
+                            <div className="it-node-point"><div className="it-node-pulse"></div></div>
+                            <div className="it-node-lbl">AI Accuracy</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Premium Mobile Data Stack */}
+            <div className="mobile-data-stack">
+                <div className="mds-item">
+                    <div className="mds-bar" style={{ background: '#FF5500', width: `${(vC / 142) * 100}%` }}></div>
+                    <div className="mds-content">
+                        <span className="mds-lbl">Citizens Served</span>
+                        <span className="mds-val">{vC < 142 ? vC : '14.2'}Cr</span>
+                    </div>
+                </div>
+                <div className="mds-item">
+                    <div className="mds-bar" style={{ background: '#A78BFA', width: `${(vS / 500) * 100}%` }}></div>
+                    <div className="mds-content">
+                        <span className="mds-lbl">Govt. Schemes</span>
+                        <span className="mds-val">{vS}+</span>
+                    </div>
+                </div>
+                <div className="mds-item">
+                    <div className="mds-bar" style={{ background: '#00E5A0', width: `${(vL / 22) * 100}%` }}></div>
+                    <div className="mds-content">
+                        <span className="mds-lbl">Indian Languages</span>
+                        <span className="mds-val">{vL}+</span>
+                    </div>
+                </div>
+                <div className="mds-item">
+                    <div className="mds-bar" style={{ background: '#5C8EFF', width: `${(vA / 91) * 100}%` }}></div>
+                    <div className="mds-content">
+                        <span className="mds-lbl">AI Accuracy</span>
+                        <span className="mds-val">{vA}%</span>
+                    </div>
+                </div>
+            </div>
 
             {/* PreSeva */}
             <section id="preseva" className="it-pv">
@@ -234,11 +306,11 @@ export default function HomePage() {
             {/* CTA */}
             <section className="it-cta">
                 <div className="it-cta-box sr" ref={sr5}>
-                    <h2>This isn't another platform.<br />It's a <span>new category</span>.</h2>
+                    <h2>Digital Governance.<br /><span>Redefined for Bharat.</span></h2>
                     <p>500+ schemes · 22 languages · AI prevention · officer accountability · community — unified for 1.4 billion Indians.</p>
                     <div className="it-cta-btns">
-                        <Link to="/register" className="it-cta-p">Get Started Free <MdArrowForward /></Link>
-                        <Link to="/login" className="it-cta-s">Admin Login</Link>
+                        <Link to="/register" className="it-cta-p">Citizen Access <MdArrowForward /></Link>
+                        <Link to="/login" className="it-cta-s">Department Login</Link>
                     </div>
                 </div>
             </section>

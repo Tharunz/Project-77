@@ -175,7 +175,7 @@ export default function PreSeva() {
                                 {/* Expanded Detail */}
                                 {isExpanded && (
                                     <div style={{ padding: '0 20px 20px', borderTop: '1px solid rgba(255, 255, 255, 0.12)', animation: 'fadeIn 0.3s ease' }}>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 16 }}>
+                                        <div className="responsive-grid-2" style={{ gap: 14, marginTop: 16 }}>
                                             <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 10, padding: '14px 16px' }}>
                                                 <h5 style={{ fontSize: '0.78rem', color: '#A78BFA', marginBottom: 8 }}>🤖 AI Pattern Analysis</h5>
                                                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{alert.historicalPattern}</p>

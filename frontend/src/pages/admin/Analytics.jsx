@@ -83,7 +83,7 @@ export default function Analytics() {
             </div>
 
             {/* Charts Row 1 */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            <div className="responsive-grid-2">
                 {/* Monthly Trend */}
                 <div className="chart-container">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>

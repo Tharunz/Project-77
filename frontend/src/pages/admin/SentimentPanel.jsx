@@ -115,7 +115,7 @@ export default function SentimentPanel() {
             </div>
 
             {/* Filter Tabs */}
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {[
                     { key: 'all', label: `All Flagged (${critical.length})` },
                     { key: 'critical', label: `🔴 Critical (${criticalCount})` },

@@ -76,7 +76,7 @@ export default function IndiaHeatmap() {
             </div>
 
             {/* Summary Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div className="responsive-grid-3">
                 {[
                     { label: 'Total Grievances', value: totalGrievances.toLocaleString(), color: '#3B82F6', icon: <MdPlace /> },
                     { label: 'Resolved', value: totalResolved.toLocaleString(), color: '#00C896', icon: <MdCheckCircle /> },
@@ -90,7 +90,7 @@ export default function IndiaHeatmap() {
                 ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
+            <div className="responsive-map-layout">
                 {/* Map Visualization */}
                 <div style={{
                     background: 'var(--bg-card)', border: '1px solid var(--border)',
@@ -116,12 +116,7 @@ export default function IndiaHeatmap() {
                     </div>
 
                     {/* Grid-based map */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(10, 1fr)',
-                        gap: 3,
-                        padding: '0 16px'
-                    }}>
+                    <div className="heatmap-grid">
                         {loading ? (
                             <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 60, color: 'var(--text-secondary)' }}>
                                 Loading heatmap data...
@@ -178,10 +173,11 @@ export default function IndiaHeatmap() {
                     {/* Selected state detail */}
                     {selectedState && heatData[selectedState] && (
                         <div style={{
-                            position: 'absolute', bottom: 16, left: 16, right: 16,
+                            marginTop: 20, zIndex: 10,
                             background: 'rgba(10,22,40,0.95)', border: '1px solid var(--border)',
                             borderRadius: 10, padding: '14px 18px',
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            flexWrap: 'wrap', gap: 16
                         }}>
                             <div>
                                 <h4 style={{ fontSize: '0.9rem', color: 'white', marginBottom: 4 }}>{selectedState}</h4>

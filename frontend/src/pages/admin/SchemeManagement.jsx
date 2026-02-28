@@ -162,7 +162,7 @@ export default function SchemeManagement() {
                             <h2 style={{ fontSize: '1.1rem' }}>{editMode ? 'Edit Scheme' : 'Add New Scheme'}</h2>
                             <button onClick={() => setModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}><MdClose /></button>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                        <div className="responsive-grid-2" style={{ gap: 16 }}>
                             {[
                                 { key: 'name', label: 'Scheme Name', span: 2 },
                                 { key: 'category', label: 'Category', type: 'select', options: SCHEME_CATEGORIES },
