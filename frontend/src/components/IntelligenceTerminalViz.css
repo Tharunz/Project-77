@@ -1,0 +1,2259 @@
+/* Base TerminalViz Wrappers */
+.viz-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-size: 1.2rem;
+    letter-spacing: 0.2em;
+    opacity: 0.4;
+}
+
+/* =========================================
+   M-01 PreSeva
+   ========================================= */
+.viz-preseva {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.vp-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.vp-line-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.vp-line {
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+    animation: drawLine 4s infinite;
+}
+
+@keyframes drawLine {
+    0% {
+        stroke-dashoffset: 2000;
+    }
+
+    40%,
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+.vp-spike-line {
+    position: absolute;
+    left: 70%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #FF6B2C;
+    opacity: 0;
+    animation: showSpike 4s infinite;
+}
+
+.vp-spike-label {
+    position: absolute;
+    left: calc(70% + 12px);
+    top: 40px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    opacity: 0;
+    animation: showSpike 4s infinite;
+}
+
+@keyframes showSpike {
+
+    0%,
+    25% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    30%,
+    80% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.vp-safe-zone {
+    position: absolute;
+    left: 70%;
+    right: 0;
+    bottom: 0;
+    height: 100px;
+    background: linear-gradient(0deg, rgba(16, 185, 129, 0.2), transparent);
+    border-left: 2px solid #10B981;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px;
+    opacity: 0;
+    animation: showSafe 4s infinite;
+}
+
+.vp-safe-zone span {
+    color: #10B981;
+    font-family: monospace;
+    font-size: 0.78rem;
+}
+
+@keyframes showSafe {
+
+    0%,
+    35% {
+        opacity: 0;
+    }
+
+    40%,
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/* =========================================
+   M-02 Distress
+   ========================================= */
+.viz-distress {
+    width: 100%;
+    height: 100%;
+    padding: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vd-ticker {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #B8C5D6;
+}
+
+.vd-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 4px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.vd-cell {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.78rem;
+    font-family: monospace;
+    position: relative;
+}
+
+.pulse-danger {
+    animation: dangerPulse 2.5s infinite;
+}
+
+@keyframes dangerPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+
+    50% {
+        box-shadow: 0 0 15px 2px rgba(239, 68, 68, 0.6);
+        z-index: 2;
+        border: 1px solid #fff;
+    }
+}
+
+/* =========================================
+   M-03 Chatbot
+   ========================================= */
+.viz-chat {
+    width: 100%;
+    height: 100%;
+    padding: 20px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    position: relative;
+}
+
+.vc-lang {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+
+.vc-msg {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-family: sans-serif;
+    max-width: 80%;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: msgIn 8s infinite;
+}
+
+.vc-msg.user {
+    align-self: flex-end;
+    background: rgba(255, 107, 44, 0.15);
+    border-left: 3px solid #FF6B2C;
+    color: #fff;
+}
+
+.vc-msg.ai {
+    align-self: flex-start;
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid #10B981;
+    color: #A7F3D0;
+    animation-delay: 1.5s;
+}
+
+.vc-msg.typing {
+    animation-delay: 4.5s;
+    position: relative;
+}
+
+.vc-cursor {
+    display: inline-block;
+    width: 6px;
+    height: 12px;
+    background: #fff;
+    margin-left: 4px;
+    animation: blink 0.5s infinite;
+}
+
+.vc-dots {
+    align-self: flex-start;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    animation: dotsIn 8s infinite;
+    animation-delay: 3s;
+    padding: 8px 16px;
+}
+
+.vc-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.5);
+    animation: bounce 1s infinite alternate;
+}
+
+.vc-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.vc-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes msgIn {
+
+    0%,
+    5% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    10%,
+    95% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes dotsIn {
+
+    0%,
+    5% {
+        opacity: 0;
+    }
+
+    10%,
+    25% {
+        opacity: 1;
+    }
+
+    30%,
+    100% {
+        opacity: 0;
+        display: none;
+    }
+}
+
+/* =========================================
+   M-04 Kanban
+   ========================================= */
+.viz-kanban {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    gap: 16px;
+    padding: 24px;
+}
+
+.vk-col {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vk-header {
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #B8C5D6;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.vk-card {
+    height: 48px;
+    background: rgba(255, 255, 255, 0.10);
+    border-radius: 6px;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #E2E8F0;
+    display: flex;
+    align-items: center;
+    border-left: 2px solid #3B82F6;
+    animation: cardMove 8s infinite;
+}
+
+.vk-card.c2 {
+    border-color: #F59E0B;
+    animation-name: cardMoveMid;
+    animation-delay: 2s;
+}
+
+.vk-card.c3 {
+    border-color: #10B981;
+    animation: none;
+}
+
+.vk-card.c4 {
+    border-color: #EC4899;
+    opacity: 0;
+    animation: newCard 8s infinite;
+    animation-delay: 4s;
+}
+
+@keyframes cardMove {
+
+    0%,
+    30% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    32%,
+    100% {
+        transform: translateX(calc(100% + 16px));
+        opacity: 0;
+    }
+}
+
+@keyframes cardMoveMid {
+
+    0%,
+    50% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    52%,
+    100% {
+        transform: translateX(calc(100% + 16px));
+        opacity: 0;
+    }
+}
+
+@keyframes newCard {
+
+    0%,
+    50% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    55%,
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   M-05 Roadmap
+   ========================================= */
+.viz-roadmap {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding: 40px;
+}
+
+.vr-timeline {
+    position: absolute;
+    left: 40px;
+    top: 40px;
+    bottom: 40px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.vr-dot {
+    width: 10px;
+    height: 10px;
+    background: #F59E0B;
+    border-radius: 50%;
+    position: absolute;
+    left: -4px;
+    top: 0;
+    box-shadow: 0 0 13px #F59E0B;
+    animation: dotTravel 6s linear infinite;
+}
+
+.vr-stages {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-left: 24px;
+}
+
+.vr-stage {
+    font-family: sans-serif;
+    font-size: 0.8rem;
+    color: #B8C5D6;
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 20px;
+}
+
+.vr-chip {
+    padding: 4px 12px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #FCD34D;
+    font-size: 0.78rem;
+    border-radius: 99px;
+    margin-left: auto;
+    opacity: 0;
+    transform: translateX(40px);
+}
+
+.vr-chip.p1 {
+    animation: chipIn 6s infinite 0.2s;
+}
+
+.vr-chip.p2 {
+    animation: chipIn 6s infinite 1.4s;
+}
+
+.vr-chip.p3 {
+    animation: chipIn 6s infinite 2.6s;
+}
+
+.vr-chip.p4 {
+    animation: chipIn 6s infinite 3.8s;
+}
+
+.vr-chip.p5 {
+    animation: chipIn 6s infinite 5s;
+}
+
+@keyframes dotTravel {
+    0% {
+        top: 0;
+    }
+
+    100% {
+        top: 100%;
+    }
+}
+
+@keyframes chipIn {
+    0% {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+
+    10%,
+    90% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+}
+
+/* =========================================
+   M-06 SLA
+   ========================================= */
+.viz-sla {
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    position: relative;
+}
+
+.vs-table {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vs-thead,
+.vs-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1.5fr;
+    padding: 8px 16px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #B8C5D6;
+}
+
+.vs-row {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    color: #E2E8F0;
+    transition: all 0.5s ease;
+    position: relative;
+}
+
+.vs-row.breach {
+    animation: breachFlash 6s infinite;
+}
+
+.vs-alert {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #EF4444;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    opacity: 0;
+    animation: alertPop 6s infinite;
+}
+
+@keyframes breachFlash {
+
+    0%,
+    30% {
+        background: rgba(255, 255, 255, 0.03);
+        transform: translateY(0);
+        color: #E2E8F0;
+        z-index: 1;
+    }
+
+    35%,
+    85% {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-70px) scale(1.02);
+        color: #FECACA;
+        border: 1px solid #EF4444;
+        z-index: 10;
+        box-shadow: 0 13px 26px rgba(0, 0, 0, 0.5);
+    }
+
+    100% {
+        background: rgba(255, 255, 255, 0.03);
+        transform: translateY(0);
+        color: #E2E8F0;
+        z-index: 1;
+    }
+}
+
+@keyframes alertPop {
+
+    0%,
+    40% {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+
+    45%,
+    80% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+}
+
+/* =========================================
+   M-07 JanConnect
+   ========================================= */
+.viz-janconnect {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vj-pinned {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #fff;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vj-reply {
+    font-size: 0.78rem;
+    color: #B8C5D6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 12px;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.vj-up {
+    color: #10B981;
+    font-family: monospace;
+}
+
+.vj-badge {
+    background: #EC4899;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+}
+
+.vj-reply.r1 {
+    animation: replyShow 8s infinite 1s;
+}
+
+.vj-reply.r2 {
+    animation: replyShow 8s infinite 2.5s;
+}
+
+.vj-reply.r3 {
+    animation: replyShow 8s infinite 4s;
+}
+
+.vj-btn-wrap {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    opacity: 0;
+    animation: replyShow 8s infinite 5s;
+}
+
+.vj-join {
+    background: #EC4899;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    cursor: pointer;
+    box-shadow: 0 0 19px rgba(236, 72, 153, 0.4);
+}
+
+.vj-counter {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #8899AA;
+}
+
+@keyframes replyShow {
+
+    0%,
+    5% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    10%,
+    95% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* =========================================
+   M-08 Fraud
+   ========================================= */
+.viz-fraud {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.vf-counter {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #22C55E;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.vf-stream {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: streamScroll 5s linear infinite;
+    padding-top: 100px;
+}
+
+.vf-log {
+    font-family: monospace;
+    font-size: 0.78rem;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.vf-log.ok {
+    color: #22C55E;
+    border-left: 2px solid #22C55E;
+}
+
+.vf-log.warn {
+    color: #F59E0B;
+    border-left: 2px solid #F59E0B;
+}
+
+.vf-log.block {
+    color: #fff;
+    background: #DC2626;
+    border-left: 2px solid #ef4444;
+    font-weight: bold;
+    animation: flashFraud 2s infinite;
+}
+
+@keyframes streamScroll {
+    0% {
+        transform: translateY(100px);
+    }
+
+    100% {
+        transform: translateY(-300px);
+    }
+}
+
+@keyframes flashFraud {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 19px rgba(220, 38, 38, 0.6);
+    }
+
+    50% {
+        opacity: 0.6;
+        box-shadow: none;
+    }
+}
+
+/* =========================================
+   M-09 DNA
+   ========================================= */
+.viz-dna {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vn-center-svg {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    z-index: 5;
+    animation: pulseDna 4s infinite alternate;
+}
+
+.vn-dna-spin {
+    animation: spinDna 20s linear infinite;
+}
+
+.vn-nodes {
+    position: absolute;
+    inset: 0;
+}
+
+.vn-node {
+    position: absolute;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #B8C5D6;
+    padding: 4px 8px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 4px;
+    background: rgba(8, 11, 18, 0.8);
+    backdrop-filter: blur(4px);
+    transition: all 1s ease;
+}
+
+.vn-node::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 1px;
+    background: rgba(139, 92, 246, 0.4);
+    top: 50%;
+    z-index: -1;
+}
+
+.n1 {
+    top: 20%;
+    left: 20%;
+    animation: float1 8s infinite alternate;
+}
+
+.n1::after {
+    left: 100%;
+    transform: rotate(30deg);
+    transform-origin: left;
+}
+
+.n2 {
+    top: 15%;
+    right: 25%;
+    animation: float2 9s infinite alternate;
+}
+
+.n2::after {
+    right: 100%;
+    transform: rotate(-45deg);
+    transform-origin: right;
+}
+
+.n3 {
+    top: 50%;
+    left: 10%;
+    animation: float3 7s infinite alternate;
+}
+
+.n3::after {
+    left: 100%;
+    width: 60px;
+}
+
+.n4 {
+    top: 55%;
+    right: 15%;
+    animation: float1 10s infinite alternate-reverse;
+}
+
+.n4::after {
+    right: 100%;
+    width: 50px;
+}
+
+.n5 {
+    bottom: 20%;
+    left: 30%;
+    animation: float2 8s infinite alternate-reverse;
+}
+
+.n5::after {
+    left: 100%;
+    transform: rotate(-20deg);
+    transform-origin: left;
+    width: 60px;
+}
+
+.n6 {
+    bottom: 15%;
+    right: 30%;
+    animation: float3 6s infinite alternate-reverse;
+}
+
+.n6::after {
+    right: 100%;
+    transform: rotate(30deg);
+    transform-origin: right;
+    width: 50px;
+}
+
+.vn-id {
+    position: absolute;
+    bottom: 20px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #8B5CF6;
+    letter-spacing: 0.1em;
+}
+
+@keyframes spinDna {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulseDna {
+    0% {
+        filter: drop-shadow(0 0 5px rgba(139, 92, 246, 0.4));
+    }
+
+    100% {
+        filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.8));
+        transform: scale(1.05);
+    }
+}
+
+@keyframes float1 {
+    100% {
+        transform: translate(15px, 10px);
+    }
+}
+
+@keyframes float2 {
+    100% {
+        transform: translate(-10px, 15px);
+    }
+}
+
+@keyframes float3 {
+    100% {
+        transform: translate(10px, -15px);
+    }
+}
+
+/* =========================================
+   M-10 Gap Calc
+   ========================================= */
+.viz-gap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.vg-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 3.5rem;
+    color: #F97316;
+    line-height: 1;
+}
+
+.vg-sub {
+    font-size: 0.8rem;
+    color: #B8C5D6;
+    margin-bottom: 30px;
+}
+
+.vg-bar-wrap {
+    width: 60%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.10);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.vg-bar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.vg-fill {
+    width: 40%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.vg-unclaim {
+    width: 0%;
+    background: #F97316;
+    animation: barFill 5s infinite ease-out;
+}
+
+.vg-labels {
+    width: 60%;
+    display: flex;
+    justify-content: space-between;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #8899AA;
+}
+
+@keyframes barFill {
+
+    0%,
+    10% {
+        width: 0%;
+    }
+
+    40%,
+    80% {
+        width: 60%;
+        box-shadow: 0 0 19px rgba(249, 115, 22, 0.5);
+    }
+
+    100% {
+        width: 0%;
+    }
+}
+
+/* =========================================
+   M-11 Podium
+   ========================================= */
+.viz-podium {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 16px;
+    padding-bottom: 40px;
+}
+
+.vp-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 8px 8px 0 0;
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 8px;
+    position: relative;
+    box-shadow: 0 -13px 39px rgba(0, 0, 0, 0.5);
+}
+
+.vpc-rank {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+}
+
+.vpc-name {
+    font-size: 0.78rem;
+    color: #B8C5D6;
+    margin-bottom: 4px;
+}
+
+.vpc-score {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #fff;
+}
+
+.vp-card.p1 {
+    height: 180px;
+    border-color: rgba(250, 204, 21, 0.4);
+    box-shadow: 0 -13px 39px rgba(250, 204, 21, 0.15);
+    z-index: 3;
+    animation: podiumIn 10s infinite;
+}
+
+.vp-card.p1 .vpc-rank {
+    color: #FACC15;
+}
+
+.vp-card.p2 {
+    height: 140px;
+    border-color: rgba(148, 163, 184, 0.4);
+    box-shadow: 0 -13px 39px rgba(148, 163, 184, 0.15);
+    z-index: 2;
+    animation: podiumIn 10s infinite 2s;
+}
+
+.vp-card.p2 .vpc-rank {
+    color: #CBD5E1;
+}
+
+.vp-card.p3 {
+    height: 110px;
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 -13px 39px rgba(239, 68, 68, 0.15);
+    z-index: 1;
+    animation: podiumIn 10s infinite 4s;
+}
+
+.vp-card.p3 .vpc-rank {
+    color: #FCA5A5;
+}
+
+@keyframes podiumIn {
+
+    0%,
+    10% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    15%,
+    85% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    90%,
+    100% {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+/* =========================================
+   M-12 Weather
+   ========================================= */
+.viz-weather {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+    position: relative;
+}
+
+.vw-scan {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.1), transparent);
+    animation: scanWeather 8s linear infinite;
+    z-index: 0;
+}
+
+.vw-days {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+}
+
+.vw-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #8899AA;
+    position: relative;
+}
+
+.vwd-icon {
+    font-size: 1.5rem;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+}
+
+.vw-day.alert {
+    color: #F97316;
+}
+
+.vw-day.alert .vwd-icon {
+    filter: drop-shadow(0 0 15px rgba(249, 115, 22, 0.5));
+    animation: pulseAlert 2s infinite;
+}
+
+.vwd-badge {
+    position: absolute;
+    top: -24px;
+    background: #F97316;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    opacity: 0;
+    animation: badgePop 4s infinite alternate;
+}
+
+@keyframes scanWeather {
+    0% {
+        left: -100px;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes badgePop {
+
+    0%,
+    50% {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    60%,
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   M-13 Petition
+   ========================================= */
+.viz-petition {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.vpe-counter {
+    height: 60px;
+    overflow: hidden;
+    position: relative;
+    width: 300px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.vpe-num {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    color: #D946EF;
+    opacity: 0;
+    transform: translateY(40px);
+}
+
+.vpe-num.n1 {
+    animation: countUp1 8s infinite;
+}
+
+.vpe-num.n2 {
+    animation: countUp2 8s infinite;
+}
+
+.vpe-num.n3 {
+    animation: countUp3 8s infinite;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(217, 70, 239, 0.6);
+}
+
+.vpe-bar-wrap {
+    width: 60%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.10);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.vpe-bar {
+    height: 100%;
+    background: #D946EF;
+    width: 0%;
+    animation: petitionFill 8s infinite;
+}
+
+.vpe-limit {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #B8C5D6;
+}
+
+.vpe-confetti {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #D946EF 2px, transparent 2px), radial-gradient(circle, #38BDF8 2px, transparent 2px);
+    background-size: 100px 100px, 80px 80px;
+    background-position: 0 0, 40px 40px;
+    opacity: 0;
+    animation: explodeConfetti 8s infinite;
+}
+
+@keyframes countUp1 {
+    0% {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    5%,
+    30% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    35%,
+    100% {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+}
+
+@keyframes countUp2 {
+    30% {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    35%,
+    60% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    65%,
+    100% {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+}
+
+@keyframes countUp3 {
+    60% {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    65%,
+    95% {
+        opacity: 1;
+        transform: translateY(0);
+        scale: 1.1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-40px);
+    }
+}
+
+@keyframes petitionFill {
+
+    0%,
+    5% {
+        width: 0%;
+        box-shadow: none;
+    }
+
+    35% {
+        width: 40%;
+    }
+
+    65% {
+        width: 100%;
+        box-shadow: 0 0 26px #D946EF;
+    }
+
+    95%,
+    100% {
+        width: 100%;
+    }
+}
+
+@keyframes explodeConfetti {
+    65% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    70%,
+    90% {
+        opacity: 0.3;
+        transform: scale(1.5);
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/* =========================================
+   M-14 Shakti
+   ========================================= */
+.viz-shakti {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.vs-rings {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vs-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.vs-svg circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+}
+
+.vs-r1 {
+    stroke: rgba(139, 92, 246, 0.4);
+    stroke-dasharray: 502;
+    stroke-dashoffset: 502;
+    animation: ringFill 4s forwards;
+}
+
+.vs-r2 {
+    stroke: rgba(16, 185, 129, 0.6);
+    stroke-dasharray: 377;
+    stroke-dashoffset: 377;
+    animation: ringFill 4s forwards 0.5s;
+}
+
+.vs-r3 {
+    stroke: rgba(249, 115, 22, 1);
+    stroke-dasharray: 251;
+    stroke-dashoffset: 251;
+    animation: ringFill 4s forwards 1s;
+}
+
+.vs-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 2rem;
+    color: #fff;
+    z-index: 5;
+}
+
+.vs-lvl {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #14B8A6;
+    background: rgba(20, 184, 166, 0.1);
+    padding: 4px 12px;
+    border-radius: 99px;
+}
+
+@keyframes ringFill {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* =========================================
+   M-15 Time Machine
+   ========================================= */
+.viz-time {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.vt-track {
+    width: 80%;
+    height: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #8899AA;
+    margin-bottom: 40px;
+}
+
+.vt-track span {
+    z-index: 2;
+}
+
+.vt-scan {
+    position: absolute;
+    top: -20px;
+    bottom: -20px;
+    width: 4px;
+    background: #EAB308;
+    box-shadow: 0 0 26px #EAB308;
+    animation: scanTime 6s infinite;
+    z-index: 1;
+}
+
+.vt-chip {
+    position: absolute;
+    top: -30px;
+    background: rgba(234, 179, 8, 0.15);
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    color: #FDE047;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    opacity: 0;
+    white-space: nowrap;
+}
+
+.vt-chip.c1 {
+    left: 0;
+    animation: chipPop 6s infinite 1s;
+}
+
+.vt-chip.c2 {
+    left: 40%;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #FCA5A5;
+    animation: chipPop 6s infinite 3s;
+    top: 10px;
+}
+
+.vt-chip.c3 {
+    right: 0;
+    animation: chipPop 6s infinite 5s;
+}
+
+.vt-total {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    color: #EF4444;
+    opacity: 0;
+    animation: totalReveal 6s infinite;
+}
+
+@keyframes scanTime {
+    0% {
+        left: 0;
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        left: 100%;
+        opacity: 1;
+    }
+
+    100% {
+        left: 100%;
+        opacity: 0;
+    }
+}
+
+@keyframes chipPop {
+
+    0%,
+    5% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    10%,
+    90% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes totalReveal {
+
+    0%,
+    80% {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    85%,
+    95% {
+        opacity: 1;
+        transform: scale(1);
+        filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.4));
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/* =========================================
+   M-16 Whisper
+   ========================================= */
+.viz-whisper {
+    width: 100%;
+    height: 100%;
+    padding: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.vw-text-layer {
+    position: absolute;
+    left: 40px;
+    right: 40px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    line-height: 1.8;
+}
+
+.vw-text-layer.redact {
+    color: #475569;
+}
+
+.vw-text-layer.decrypt {
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+    animation: sweepDecrypt 6s infinite;
+}
+
+.vw-scan-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #8899AA;
+    box-shadow: 0 0 26px #fff;
+    right: 40px;
+    opacity: 0;
+    animation: sweepLine 6s infinite;
+    z-index: 10;
+}
+
+@keyframes sweepDecrypt {
+
+    0%,
+    30% {
+        clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+    }
+
+    50%,
+    80% {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    90%,
+    100% {
+        clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+    }
+}
+
+@keyframes sweepLine {
+
+    0%,
+    30% {
+        right: 40px;
+        opacity: 0;
+    }
+
+    31% {
+        opacity: 1;
+    }
+
+    50%,
+    80% {
+        right: calc(100% - 40px);
+        opacity: 1;
+    }
+
+    81%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* =========================================
+   M-17 Replay
+   ========================================= */
+.viz-replay {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+}
+
+.vrr-track {
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    margin-top: 40px;
+}
+
+.vrr-point {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #475569;
+    border-radius: 50%;
+    top: -3px;
+    transform: translateX(-50%);
+}
+
+.vrr-point.p1 {
+    left: 0%;
+}
+
+.vrr-point.p2 {
+    left: 25%;
+}
+
+.vrr-point.p3 {
+    left: 50%;
+}
+
+.vrr-point.p4 {
+    left: 75%;
+}
+
+.vrr-point.p5 {
+    left: 100%;
+}
+
+.vrr-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #10B981;
+    border-radius: 50%;
+    top: -5px;
+    left: 0;
+    box-shadow: 0 0 19px #10B981;
+    animation: travelReplay 6s infinite;
+}
+
+.vrr-card {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #E2E8F0;
+    white-space: nowrap;
+    opacity: 0;
+}
+
+.vrr-card.c1 {
+    animation: cardReplay 6s infinite 0s;
+}
+
+.vrr-card.c2 {
+    animation: cardReplay 6s infinite 1.5s;
+}
+
+.vrr-card.c3 {
+    animation: cardReplay 6s infinite 3s;
+}
+
+.vrr-card.c4 {
+    animation: cardReplay 6s infinite 4.5s;
+    color: #10B981;
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.vrr-card.c5 {
+    animation: cardReplay 6s infinite 5.5s;
+}
+
+@keyframes travelReplay {
+    0% {
+        left: 0%;
+    }
+
+    25% {
+        left: 25%;
+    }
+
+    50% {
+        left: 50%;
+    }
+
+    75% {
+        left: 75%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes cardReplay {
+
+    0%,
+    5% {
+        opacity: 0;
+        transform: translate(-50%, 10px);
+    }
+
+    10%,
+    20% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    25%,
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -10px);
+    }
+}
+
+/* =========================================
+   M-18 Rupee
+   ========================================= */
+.viz-rupee {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.vru-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 900;
+    font-size: 3rem;
+    color: #F43F5E;
+    letter-spacing: -1px;
+}
+
+.vru-tick {
+    display: inline-block;
+    animation: incrementRupee 0.1s steps(5) infinite;
+}
+
+.vru-sub {
+    font-size: 0.78rem;
+    color: #B8C5D6;
+    margin-bottom: 20px;
+}
+
+.vru-spark {
+    width: 60%;
+    height: 40px;
+    overflow: visible;
+}
+
+@keyframes incrementRupee {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(-2px);
+    }
+}
+
+/* =========================================
+   M-19 Mirror
+   ========================================= */
+.viz-mirror {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vm-nodes {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+.vm-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #3B82F6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 99px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 0.78rem;
+    box-shadow: 0 0 26px rgba(59, 130, 246, 0.4);
+}
+
+.vm-sat {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #CBD5E1;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.vm-sat:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3B82F6;
+    color: #fff;
+    z-index: 10;
+    transform: scale(1.1);
+}
+
+.vm-sat.s1 {
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: orbit1 15s infinite linear;
+}
+
+.vm-sat.s2 {
+    top: 20%;
+    right: 10%;
+    animation: orbit2 20s infinite linear reverse;
+}
+
+.vm-sat.s3 {
+    bottom: 20%;
+    right: 20%;
+    animation: orbit3 18s infinite linear;
+}
+
+.vm-sat.s4 {
+    bottom: 20%;
+    left: 20%;
+    animation: orbit1 25s infinite linear reverse;
+}
+
+.vm-sat.s5 {
+    top: 20%;
+    left: 10%;
+    animation: orbit2 12s infinite linear;
+}
+
+.vm-tip {
+    position: absolute;
+    bottom: 120%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0F172A;
+    border: 1px solid #3B82F6;
+    color: #60A5FA;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s;
+}
+
+.vm-sat:hover .vm-tip {
+    opacity: 1;
+    transform: translate(-50%, -5px);
+}
+
+.vm-lines {
+    width: 300px;
+    height: 300px;
+    stroke: rgba(255, 255, 255, 0.10);
+    stroke-width: 1;
+    z-index: 1;
+}
+
+@keyframes orbit1 {
+    0% {
+        transform: rotate(0deg) translateX(80px) rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg) translateX(80px) rotate(-360deg);
+    }
+}
+
+@keyframes orbit2 {
+    0% {
+        transform: rotate(0deg) translateX(110px) rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg) translateX(110px) rotate(-360deg);
+    }
+}
+
+@keyframes orbit3 {
+    0% {
+        transform: rotate(0deg) translateX(90px) rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg) translateX(90px) rotate(-360deg);
+    }
+}
+
+/* =========================================
+   M-20 Future
+   ========================================= */
+.viz-future {
+    width: 100%;
+    height: 100%;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.vfu-header {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #A78BFA;
+    animation: txtChange 8s infinite;
+}
+
+.vfu-cols {
+    display: flex;
+    gap: 16px;
+    height: 100%;
+}
+
+.vfu-col {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vfu-title {
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #8899AA;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+    padding-bottom: 8px;
+}
+
+.vfu-chip {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #C4B5FD;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    text-align: center;
+    opacity: 0;
+}
+
+.vfu-chip.f1 {
+    animation: chipDrop 8s infinite 1s;
+}
+
+.vfu-chip.f2 {
+    animation: chipDrop 8s infinite 2s;
+}
+
+.vfu-chip.f3 {
+    animation: chipDrop 8s infinite 3s;
+}
+
+@keyframes txtChange {
+
+    0%,
+    45% {
+        opacity: 1;
+        content: "If you have a child →";
+    }
+
+    50%,
+    95% {
+        opacity: 1;
+        color: #34D399;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes chipDrop {
+
+    0%,
+    5% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    10%,
+    45% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    50%,
+    100% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+/* =========================================
+   M-21 Corridors
+   ========================================= */
+.viz-corridors {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.vco-map {
+    width: 250px;
+    height: 180px;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+}
+
+.vco-arc {
+    stroke: #FF5500;
+    stroke-width: 2;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 8px #FF5500);
+}
+
+.vco-arc.a1 {
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    animation: arcDraw 4s infinite alternate;
+}
+
+.vco-arc.a2 {
+    stroke-dasharray: 150;
+    stroke-dashoffset: 150;
+    animation: arcDraw 5s infinite alternate-reverse;
+}
+
+.vco-log {
+    position: absolute;
+    bottom: 20px;
+    font-family: monospace;
+    font-size: 0.78rem;
+    color: #FF5500;
+    background: rgba(255, 85, 0, 0.1);
+    padding: 4px 12px;
+    border-radius: 99px;
+    border: 1px solid rgba(255, 85, 0, 0.3);
+}
+
+@keyframes arcDraw {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
