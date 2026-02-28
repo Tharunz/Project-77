@@ -4,6 +4,7 @@ import { MdArrowForward, MdShield } from 'react-icons/md';
 import IntelligenceTerminal from '../../components/IntelligenceTerminal';
 import HowItWorksBriefing from '../../components/HowItWorksBriefing';
 import MobileParticles from '../../components/MobileParticles';
+import QuantumHeroBg from '../../components/QuantumHeroBg';
 import { PROJECT_NAME } from '../../config/constants';
 import './HomePage.css';
 
@@ -130,8 +131,9 @@ export default function HomePage() {
 
             {/* Hero — Split */}
             <section className="it-hero" style={{ position: 'relative' }}>
+                <QuantumHeroBg />
                 <MobileParticles />
-                <div className="it-hero-left">
+                <div className="it-hero-left" style={{ position: 'relative', zIndex: 10 }}>
                     <div className="it-hero-tag">AI-Powered Citizen Services</div>
                     <h1 className="it-title">Problems<br /><span className="it-title-a">solved</span><br />before they<br /><span className="it-title-b">happen.</span></h1>
                     <p className="it-sub">{PROJECT_NAME} is an intelligent platform that predicts government service failures before citizens are affected. 500+ schemes, 22 languages, grievance tracking, officer accountability — unified.</p>
@@ -140,7 +142,7 @@ export default function HomePage() {
                         <Link to="/login" className="it-cta-s">Officer Login →</Link>
                     </div>
                 </div>
-                <div className="it-hero-right">
+                <div className="it-hero-right" style={{ position: 'relative', zIndex: 10 }}>
                     <div className="it-map-container">
                         {/* Top Command Strip */}
                         <div className={`it-cmd-strip ${mapReady ? 'fade-in' : 'hidden'}`}>
