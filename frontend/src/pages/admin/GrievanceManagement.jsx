@@ -5,7 +5,12 @@ import { INDIAN_STATES, GRIEVANCE_CATEGORIES } from '../../mock/mockData';
 
 const STATUS_COLORS = {
     Pending: 'badge-pending', Resolved: 'badge-resolved', Critical: 'badge-critical',
-    'In Progress': 'badge-inprogress', Escalated: 'badge-critical'
+    'In Progress': 'badge-inprogress', Escalated: 'badge-critical',
+    'Resolved (Pending Verification)': 'badge-verification'
+};
+
+const STATUS_LABELS = {
+    'Resolved (Pending Verification)': 'Awaiting User'
 };
 
 const PRIORITY_COLORS = {
@@ -156,15 +161,19 @@ export default function GrievanceManagement() {
                                         <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{g.state}</td>
                                         <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{g.category}</td>
                                         <td style={{ maxWidth: 160, fontSize: '0.82rem' }}>
-                                            <span title={g.description} style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            <div title={g.description} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word' }}>
                                                 {g.title}
-                                            </span>
+                                            </div>
                                         </td>
                                         <td style={{ minWidth: 100 }}>
                                             <SentimentBar score={g.sentimentScore} />
                                         </td>
                                         <td><span className={`badge ${PRIORITY_COLORS[g.priority] || 'badge-medium'}`}>{g.priority}</span></td>
-                                        <td><span className={`badge ${STATUS_COLORS[g.status] || 'badge-pending'}`}>{g.status}</span></td>
+                                        <td>
+                                            <span className={`badge ${STATUS_COLORS[g.status] || 'badge-pending'}`}>
+                                                {STATUS_LABELS[g.status] || g.status}
+                                            </span>
+                                        </td>
                                         <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                                             {g.assignedTo || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>}
                                         </td>
@@ -225,13 +234,13 @@ export default function GrievanceManagement() {
                             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
                                 <strong style={{ color: 'var(--text-primary)' }}>{selected.citizenName}</strong> — {selected.state}
                             </p>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>{selected.description}</p>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5, maxHeight: 200, overflowY: 'auto', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{selected.description}</div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             <div className="form-group">
                                 <label className="form-label">Update Status</label>
                                 <select className="form-input" value={editStatus} onChange={e => setEditStatus(e.target.value)}>
-                                    {['Pending', 'In Progress', 'Resolved', 'Critical', 'Escalated'].map(s => <option key={s}>{s}</option>)}
+                                    {['Pending', 'In Progress', 'Resolved (Pending Verification)', 'Critical', 'Escalated'].map(s => <option key={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className="form-group">

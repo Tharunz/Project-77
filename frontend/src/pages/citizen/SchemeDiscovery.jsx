@@ -26,15 +26,29 @@ export default function SchemeDiscovery() {
         const load = async () => {
             setLoading(true);
             const res = await apiGetSchemes({ search, category: filterCat, state: filterState });
-            setSchemes(res.data);
+            setSchemes(Array.isArray(res.data) ? res.data : []);
             setLoading(false);
         };
         load();
     }, [search, filterCat, filterState]);
 
-    const displayed = aiMode
-        ? schemes.filter(s => user?.age >= s.minAge && user?.age <= s.maxAge && (s.maxIncome === 0 || (user?.income || 200000) <= s.maxIncome))
-        : schemes;
+    // Helper to normalize backend vs mock data structure
+    const getSchemeData = (s) => {
+        if (!s) return null;
+        return {
+            ...s,
+            minAge: s.minAge ?? s.eligibility?.minAge ?? 0,
+            maxAge: s.maxAge ?? s.eligibility?.maxAge ?? 100,
+            maxIncome: s.maxIncome ?? s.eligibility?.maxIncome ?? 0,
+            benefit: s.benefit || s.benefits || 'See details',
+            eligibilityText: typeof s.eligibility === 'string' ? s.eligibility : 'Check details for criteria',
+            category: s.category || 'General'
+        };
+    };
+
+    const displayed = (aiMode
+        ? (schemes || []).map(getSchemeData).filter(s => s && user?.age >= s.minAge && user?.age <= s.maxAge && (s.maxIncome === 0 || (user?.income || 200000) <= s.maxIncome))
+        : (schemes || []).map(getSchemeData).filter(s => s)) || [];
 
     return (
         <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -79,7 +93,7 @@ export default function SchemeDiscovery() {
                 </select>
                 <select className="form-input" style={{ flex: '0 1 180px' }} value={filterState} onChange={e => setFilterState(e.target.value)}>
                     <option value="">All India</option>
-                    {INDIAN_STATES.map(s => <option key={s}>{s}</option>)}
+                    {(INDIAN_STATES || []).map(s => <option key={s}>{s}</option>)}
                 </select>
             </div>
 
@@ -100,7 +114,7 @@ export default function SchemeDiscovery() {
                             </div>
                             <h3 style={{ fontSize: '0.92rem', fontWeight: 700, marginBottom: 8, lineHeight: 1.3 }}>{s.name}</h3>
                             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-                                {s.eligibility}
+                                {s.eligibilityText}
                             </p>
                             <div style={{ padding: '10px 14px', background: 'rgba(0,200,150,0.08)', borderRadius: 8, marginBottom: 12 }}>
                                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 2 }}>Benefit:</p>

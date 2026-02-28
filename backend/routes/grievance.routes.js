@@ -21,7 +21,7 @@ const db = require('../db/database');
 // ─── POST /api/grievance/file ─────────────────────────────────────────────────
 router.post('/file', protect, upload.array('documents', 5), async (req, res, next) => {
     try {
-        const { title, description, category, state, district } = req.body;
+        const { title, description, category, state, district, priority } = req.body;
 
         if (!title || !description || !category) {
             return res.status(400).json({
@@ -70,7 +70,7 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             status: 'Pending',
             sentiment: sentimentResult.label,
             sentimentScore: sentimentResult.score,
-            priority: sentimentResult.priority,
+            priority: priority || sentimentResult.priority,
             assignedOfficer: null,
             documents,
             isDuplicate,
@@ -174,6 +174,14 @@ router.get('/track/:id', (req, res, next) => {
             });
         }
 
+        if (grievance.status === 'Resolved (Pending Verification)') {
+            timeline.push({
+                status: 'Awaiting Confirmation',
+                date: grievance.updatedAt,
+                note: 'The department has marked this as resolved. Please verify the work to release funds.'
+            });
+        }
+
         if (grievance.status === 'Resolved') {
             timeline.push({
                 status: 'Resolved',
@@ -256,6 +264,41 @@ router.get('/critical', protect, adminOnly, (req, res, next) => {
             data: criticalData,
             message: `Found ${criticalData.length} critical grievance(s).`,
             timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── POST /api/grievance/:id/verify ───────────────────────────────────────────
+router.post('/:id/verify', protect, async (req, res, next) => {
+    try {
+        const { action, citizenNote } = req.body; // action: 'verify' | 'reopen'
+        const db_instance = db.getDb();
+
+        const grievance = db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).value();
+
+        if (!grievance) {
+            return res.status(404).json({ success: false, message: 'Grievance not found.' });
+        }
+
+        if (grievance.userId !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Not authorized to verify this grievance.' });
+        }
+
+        const updates = {
+            status: action === 'verify' ? 'Resolved' : 'Reopened',
+            updatedAt: new Date().toISOString(),
+            citizenFeedback: citizenNote,
+            ...(action === 'verify' && { verifiedAt: new Date().toISOString() })
+        };
+
+        db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).assign(updates).write();
+
+        return res.status(200).json({
+            success: true,
+            data: { ...grievance, ...updates },
+            message: action === 'verify' ? 'Grievance resolution verified.' : 'Grievance reopened.'
         });
     } catch (err) {
         next(err);

@@ -23,7 +23,7 @@ export default function SchemeManagement() {
     const load = async () => {
         setLoading(true);
         const res = await apiGetSchemes({ search, category: filterCat });
-        setSchemes(res.data);
+        setSchemes(Array.isArray(res.data) ? res.data : []);
         setLoading(false);
     };
 
@@ -54,7 +54,7 @@ export default function SchemeManagement() {
                 <div>
                     <h1 className="section-title"><MdSchool className="icon" /> Scheme Management</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: 4 }}>
-                        {schemes.length} government schemes managed on this platform
+                        {(schemes || []).length} government schemes managed on this platform
                     </p>
                 </div>
                 <button className="btn-primary" onClick={openAdd}><MdAdd /> Add New Scheme</button>
@@ -78,8 +78,15 @@ export default function SchemeManagement() {
                 <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: 60 }}>Loading schemes...</div>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-                    {schemes.map((scheme, i) => (
-                        <div key={scheme.id} className="glass-card" style={{
+                    {(schemes || []).filter(s => s).map((rawScheme, i) => {
+                        const scheme = {
+                            ...rawScheme,
+                            benefit: rawScheme.benefit || rawScheme.benefits || 'See details',
+                            eligibility: typeof rawScheme.eligibility === 'string' ? rawScheme.eligibility : 'Check details',
+                            beneficiaries: rawScheme.beneficiaries || 'N/A'
+                        };
+                        return (
+                        <div key={scheme.id || i} className="glass-card" style={{
                             padding: 20,
                             animation: `fadeInUp 0.4s ease ${i * 0.04}s both`,
                             border: `1px solid rgba(255,255,255,0.07)`
@@ -142,7 +149,7 @@ export default function SchemeManagement() {
                                 <MdEdit /> Edit Scheme
                             </button>
                         </div>
-                    ))}
+                    );})}
                 </div>
             )}
 
