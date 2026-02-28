@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MdPerson, MdEdit, MdSave, MdClose, MdLocationOn, MdCake, MdEmail, MdAttachMoney } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { INDIAN_STATES } from '../../mock/mockData';
+import { PROJECT_NAME } from '../../config/constants';
 
 export default function ProfilePage() {
     const { user, login } = useAuth();
@@ -136,7 +137,7 @@ export default function ProfilePage() {
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>
                 <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 12 }}>Data & Privacy</h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 14 }}>
-                    Your personal data is protected under the Digital Personal Data Protection Act, 2023. Project-77 stores only the minimum information required to process your grievances and match you with schemes.
+                    Your personal data is protected under the Digital Personal Data Protection Act, 2023. {PROJECT_NAME} stores only the minimum information required to process your grievances and match you with schemes.
                 </p>
                 <div style={{ display: 'flex', gap: 10 }}>
                     <button className="btn-secondary" style={{ fontSize: '0.8rem' }}>📥 Download My Data</button>

@@ -3,203 +3,217 @@ import {
     MdShowChart, MdAnalytics, MdChat, MdAssignment, MdTimeline, MdAccessTime,
     MdPeople, MdShield, MdDeviceHub, MdAttachMoney, MdFormatListNumbered,
     MdWbCloudy, MdGroupAdd, MdAssessment, MdHistory, MdLock,
-    MdReplay, MdMonetizationOn, MdScreenRotation, MdExplore, MdDirections
+    MdReplay, MdMonetizationOn, MdScreenRotation, MdExplore, MdDirections, MdOutlineMemory
 } from 'react-icons/md';
 import './IntelligenceModules.css';
 
 const MODULES = [
     {
         id: 'M-01',
-        name: 'PreSeva Prevention',
-        icon: <MdShowChart />,
-        color: '#A78BFA',
+        name: 'Multilingual Homepage',
+        icon: <MdWbCloudy />,
+        color: '#38BDF8',
         span: 'span-12',
         viz: 'sparkline',
-        badge: 'PREDICTIVE',
-        desc: 'The worlds first government failure prevention engine. Stops problems before you face them.'
+        badge: 'ACCESSIBILITY',
+        desc: 'Immersive landing portal with live feature ticker to guarantee top-tier digital equity across the nation.'
     },
     {
         id: 'M-02',
-        name: 'Distress Index',
-        icon: <MdAnalytics />,
-        color: '#FF5500',
-        span: 'span-4',
-        viz: 'bars',
-        desc: 'Real-time per-state suffering score with live accountability tracking.'
-    },
-    {
-        id: 'M-03',
-        name: 'AI Chatbot',
-        icon: <MdChat />,
-        color: '#00E5A0',
-        span: 'span-4',
-        viz: 'dots',
-        desc: 'Voice-enabled context-aware AI in 22 Indian languages.'
-    },
-    {
-        id: 'M-04',
-        name: 'Grievance Engine',
-        icon: <MdAssignment />,
-        color: '#5C8EFF',
-        span: 'span-4',
-        viz: 'ring',
-        desc: 'Automatic escalation system with legally binding SLA enforcement.'
-    },
-    {
-        id: 'M-05',
-        name: 'Benefit Roadmap',
-        icon: <MdTimeline />,
-        color: '#FFB800',
-        span: 'span-7',
-        viz: 'roadmap',
-        desc: '30-day AI-generated path to unlock every govt benefit you are entitled to.'
-    },
-    {
-        id: 'M-06',
-        name: 'Officer SLA Tracker',
-        icon: <MdAccessTime />,
-        color: '#FF3B3B',
-        span: 'span-5',
-        viz: 'timer',
-        badge: 'LIVE',
-        desc: 'Real-time countdown to officer escalation. Transparency at every step.'
-    },
-    {
-        id: 'M-07',
-        name: 'JanConnect',
-        icon: <MdPeople />,
-        color: '#EC4899',
-        span: 'span-4',
-        viz: 'avatars',
-        desc: 'Community-driven discussion platform with official officer oversight.'
-    },
-    {
-        id: 'M-08',
-        name: 'Fraud Detection',
+        name: 'Secure Authentication',
         icon: <MdShield />,
         color: '#10B981',
         span: 'span-4',
         viz: 'shield',
-        desc: 'Deep learning system catching duplicate logins and gaming with 94% accuracy.'
+        desc: 'Role-based login and intelligent redirection ensuring that citizens and officers access exactly what they need safely.'
+    },
+    {
+        id: 'M-03',
+        name: 'User Registration',
+        icon: <MdFormatListNumbered />,
+        color: '#F43F5E',
+        span: 'span-4',
+        viz: 'dna',
+        desc: 'Adaptive forms with regional dropdown selections built to be inclusive and friction-free for every citizen.'
+    },
+    {
+        id: 'M-04',
+        name: 'Citizen Dashboard',
+        icon: <MdShowChart />,
+        color: '#3B82F6',
+        span: 'span-4',
+        viz: 'bars',
+        desc: 'Personalized welcome view with quick metrics aggregating all your governmental interactions in one clear hub.'
+    },
+    {
+        id: 'M-05',
+        name: 'Quick Actions Module',
+        icon: <MdTimeline />,
+        color: '#F59E0B',
+        span: 'span-7',
+        viz: 'roadmap',
+        badge: 'FAST',
+        desc: 'Dedicated rapid-access shortcuts dynamically adapting to your most frequent public service needs.'
+    },
+    {
+        id: 'M-06',
+        name: 'Profile Management',
+        icon: <MdPeople />,
+        color: '#8B5CF6',
+        span: 'span-5',
+        viz: 'avatars',
+        desc: 'Complete capability to view, edit, and manage personal data with strict verified identity guardrails.'
+    },
+    {
+        id: 'M-07',
+        name: 'Data Privacy Controls',
+        icon: <MdLock />,
+        color: '#EC4899',
+        span: 'span-4',
+        viz: 'whisper',
+        badge: 'PRIVACY',
+        desc: 'Strict settings for consent and engagement tracking, putting the power of data sovereignty back in the citizen\'s hands.'
+    },
+    {
+        id: 'M-08',
+        name: 'Engagement Dashboard',
+        icon: <MdAnalytics />,
+        color: '#2DD4BF',
+        span: 'span-4',
+        viz: 'ring',
+        desc: 'Personal tracking of schemes claimed and grievances filed, visualizing your direct engagement with the state.'
     },
     {
         id: 'M-09',
-        name: 'Grievance DNA',
-        icon: <MdDeviceHub />,
-        color: '#8B5CF6',
-        span: 'span-4',
-        viz: 'dna',
-        desc: 'Traces the root cause of systemic issues across multiple departments.'
-    },
-    {
-        id: 'M-10',
-        name: 'Benefit Gap Calc',
-        icon: <MdAttachMoney />,
-        color: '#F97316',
-        span: 'span-5',
-        viz: 'gap',
-        desc: 'Calculates the exact monthly value you are missing in government support.'
-    },
-    {
-        id: 'M-11',
-        name: 'Officer Accountability Wall',
-        icon: <MdFormatListNumbered />,
-        color: '#6366F1',
-        span: 'span-7',
-        viz: 'wall',
-        desc: 'Public leaderboard of the highest and lowest performing government officials.'
-    },
-    {
-        id: 'M-12',
-        name: 'Grievance Weather',
-        icon: <MdWbCloudy />,
+        name: 'Scheme Discovery Hub',
+        icon: <MdExplore />,
         color: '#0EA5E9',
         span: 'span-4',
         viz: 'weather',
-        desc: 'Predictive forecast of service disruptions in your locality for the week.'
+        desc: 'Searchable repository of active government schemes spanning agriculture, education, healthcare and more.'
+    },
+    {
+        id: 'M-10',
+        name: 'AI Scheme Match',
+        icon: <MdAssessment />,
+        color: '#F97316',
+        span: 'span-5',
+        viz: 'gap',
+        badge: 'AI-POWERED',
+        desc: 'Intelligent algorithm automatically matching users to eligible benefits based on their precise demographic profile.'
+    },
+    {
+        id: 'M-11',
+        name: 'Benefit Roadmaps',
+        icon: <MdDirections />,
+        color: '#D946EF',
+        span: 'span-7',
+        viz: 'future',
+        badge: 'AI-POWERED',
+        desc: 'Customized, step-by-step AI-generated guides yielding precise instructions to unlock claimed benefits efficiently.'
+    },
+    {
+        id: 'M-12',
+        name: 'AI Chatbot',
+        icon: <MdChat />,
+        color: '#10B981',
+        span: 'span-4',
+        viz: 'dots',
+        badge: 'AI-POWERED',
+        desc: 'Automated 24/7 support resolving minor queries instantly, serving as the first line of digital assistance.'
     },
     {
         id: 'M-13',
-        name: 'Mass Petition Engine',
+        name: 'Multilingual AI',
         icon: <MdGroupAdd />,
-        color: '#8B5CF6',
+        color: '#3B82F6',
         span: 'span-4',
         viz: 'petition',
-        desc: 'Unite with thousands of citizens to force the resolution of shared issues.'
+        desc: 'Dynamic real-time translation across 10 regional languages allowing every citizen to be heard in their mother tongue.'
     },
     {
         id: 'M-14',
-        name: 'Jan Shakti Score',
-        icon: <MdAssessment />,
-        color: '#D946EF',
+        name: 'Voice-to-Text Input',
+        icon: <MdChat />,
+        color: '#A78BFA',
         span: 'span-4',
-        viz: 'shakti',
-        desc: 'Measure your impact on public reform through engagement.'
+        viz: 'dots',
+        badge: 'ACCESSIBILITY',
+        desc: 'Accessibility allowing spoken interaction with the AI, completely sidestepping literacy barriers in rural areas.'
     },
     {
         id: 'M-15',
-        name: 'Scheme Time Machine',
-        icon: <MdHistory />,
-        color: '#F59E0B',
+        name: 'Grievance Filing Flow',
+        icon: <MdAssignment />,
+        color: '#EF4444',
         span: 'span-5',
-        viz: 'history',
-        desc: 'Back-track missing benefits from the last 5 years with AI recovery.'
+        viz: 'wall',
+        desc: 'Complete, validated submission engine for complaints with intelligent categorization routing directly to the right officer.'
     },
     {
         id: 'M-16',
-        name: 'Whisper Mode',
-        icon: <MdLock />,
-        color: '#B8C5D6',
+        name: 'Voice Input (Filing)',
+        icon: <MdChat />,
+        color: '#EAB308',
         span: 'span-7',
-        viz: 'whisper',
-        badge: 'SECURE',
-        desc: 'Submit zero-knowledge proof grievances without revealing your identity.'
+        viz: 'dots',
+        desc: 'Accessibility allowing citizens to actively dictate grievances natively within the complaint flow.'
     },
     {
         id: 'M-17',
-        name: 'Resolution Replay',
-        icon: <MdReplay />,
-        color: '#2DD4BF',
+        name: 'Secure File Uploads',
+        icon: <MdLock />,
+        color: '#14B8A6',
         span: 'span-4',
-        viz: 'replay',
-        desc: 'Visual timeline of exactly how your complaint moved through the system.'
+        viz: 'shield',
+        desc: 'Capability to seamlessly attach evidentiary documents, images, and proof to directly bolster grievance claims.'
     },
     {
         id: 'M-18',
-        name: 'Impact Rupee Counter',
-        icon: <MdMonetizationOn />,
-        color: '#F43F5E',
+        name: 'Unique Tracking IDs',
+        icon: <MdHistory />,
+        color: '#8B5CF6',
         span: 'span-4',
-        viz: 'rupee',
-        desc: 'Total currency value unlocked for citizens in real-time.'
+        viz: 'history',
+        desc: 'Secure ticket generation for real-time monitoring ensuring no complaint is ever lost in the bureaucracy again.'
     },
     {
         id: 'M-19',
-        name: 'Seva Mirror',
-        icon: <MdScreenRotation />,
-        color: '#3B82F6',
+        name: 'Status Timeline',
+        icon: <MdTimeline />,
+        color: '#F43F5E',
         span: 'span-4',
-        viz: 'mirror',
-        desc: 'Dynamic graph of how the government sees your citizen profile.'
+        viz: 'roadmap',
+        desc: 'Visual progress tracker mapping a grievance\'s resolution journey step-by-step from filing to closure.'
     },
     {
         id: 'M-20',
-        name: 'Predict My Future',
-        icon: <MdExplore />,
-        color: '#8B5CF6',
+        name: 'Citizen Escrow Verification',
+        icon: <MdMonetizationOn />,
+        color: '#10B981',
         span: 'span-5',
-        viz: 'future',
-        desc: 'AI predicts your eligibility for next years schemes before they launch.'
+        viz: 'rupee',
+        badge: 'REVOLUTIONARY',
+        desc: 'Users are prompted by the AI to physically verify (via photo) that a grievance in their area was resolved before government funds are released.'
     },
     {
         id: 'M-21',
-        name: 'Threat Corridors',
-        icon: <MdDirections />,
-        color: '#FF5500',
+        name: 'Community Forum',
+        icon: <MdPeople />,
+        color: '#3B82F6',
         span: 'span-7',
-        viz: 'corridors',
-        badge: 'PREDICTIVE',
-        desc: 'The final hero module: Mapping systemic failures as they travel across states.'
+        viz: 'avatars',
+        badge: 'COMMUNITY',
+        desc: 'Social platform enabling peer-to-peer municipal discussion, upvoting, and collective neighborhood action.'
+    },
+    {
+        id: 'M-22',
+        name: 'Seva News Feed',
+        icon: <MdWbCloudy />,
+        color: '#F97316',
+        span: 'span-12',
+        viz: 'weather',
+        desc: 'Live scrolling feed distributing verified government announcements, combating misinformation with truth.'
     }
 ];
 
@@ -464,7 +478,7 @@ export default function IntelligenceModules() {
             <div className="sys-mod-header">
                 <div className="smh-left">
                     <div className="smh-tag">SYSTEM MODULES</div>
-                    <h2 className="smh-title">33 Active Capabilities.<br /><span className="smh-highlight">Zero Competition.</span></h2>
+                    <h2 className="smh-title">22 Features.<br /><span className="smh-highlight">Zero Competition.</span></h2>
                 </div>
                 <div className="smh-right">
                     <div className="smh-status">

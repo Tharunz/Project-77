@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiRegister } from '../../services/api.service';
 import { MdPerson, MdEmail, MdLock, MdLocationOn, MdCake, MdAttachMoney } from 'react-icons/md';
 import { INDIAN_STATES } from '../../mock/mockData';
+import { PROJECT_NAME } from '../../config/constants';
 import './AuthPages.css';
 
 export default function RegisterPage() {
@@ -52,7 +53,7 @@ export default function RegisterPage() {
                     <h1 className="auth-title" style={{ background: 'linear-gradient(135deg, #00C896, #138808)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                         Create Account
                     </h1>
-                    <p className="auth-subtitle">Join 14 crore citizens on Project-77</p>
+                    <p className="auth-subtitle">Join 14 crore citizens on {PROJECT_NAME}</p>
 
                     {error && <div className="auth-error">{error}</div>}
 

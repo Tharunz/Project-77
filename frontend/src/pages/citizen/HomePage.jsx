@@ -4,6 +4,7 @@ import { MdArrowForward, MdShield } from 'react-icons/md';
 import IntelligenceTerminal from '../../components/IntelligenceTerminal';
 import HowItWorksBriefing from '../../components/HowItWorksBriefing';
 import MobileParticles from '../../components/MobileParticles';
+import { PROJECT_NAME } from '../../config/constants';
 import './HomePage.css';
 
 const IndiaMap = lazy(() => import('../../components/IndiaMap'));
@@ -131,14 +132,13 @@ export default function HomePage() {
             <section className="it-hero" style={{ position: 'relative' }}>
                 <MobileParticles />
                 <div className="it-hero-left">
-                    <div className="it-hero-tag">AI-Powered Citizen Services <span>WORLD FIRST</span></div>
+                    <div className="it-hero-tag">AI-Powered Citizen Services</div>
                     <h1 className="it-title">Problems<br /><span className="it-title-a">solved</span><br />before they<br /><span className="it-title-b">happen.</span></h1>
-                    <p className="it-sub">Project-77 is the world's <em>first</em> platform that predicts government service failures before citizens are affected. 500+ schemes, 22 languages, grievance tracking, officer accountability — unified.</p>
+                    <p className="it-sub">{PROJECT_NAME} is an intelligent platform that predicts government service failures before citizens are affected. 500+ schemes, 22 languages, grievance tracking, officer accountability — unified.</p>
                     <div className="it-ctas">
                         <Link to="/register" className="it-cta-p">Access Citizen Portal <MdArrowForward /></Link>
                         <Link to="/login" className="it-cta-s">Officer Login →</Link>
                     </div>
-                    <p className="it-hint">🚀 Demo: <strong>admin@gov.in / admin123</strong> (Admin) · <strong>ramesh@gmail.com / ramesh123</strong> (Citizen)</p>
                 </div>
                 <div className="it-hero-right">
                     <div className="it-map-container">
@@ -282,9 +282,9 @@ export default function HomePage() {
             {/* PreSeva */}
             <section id="preseva" className="it-pv">
                 <div className="sr" ref={sr1}>
-                    <div className="it-pv-tag"><MdShield /> PRESEVA · GLOBAL FIRST</div>
+                    <div className="it-pv-tag"><MdShield /> PRESEVA · ACTIVE</div>
                     <h2 className="it-pv-title">What if the government<br />fixed things <em>before you complained?</em></h2>
-                    <p className="it-pv-desc">PreSeva AI mines 8M+ historical grievances to detect patterns — then <strong>alerts departments before citizens are affected</strong>. This has never been done. Anywhere. By anyone.</p>
+                    <p className="it-pv-desc">PreSeva AI mines 8M+ historical grievances to detect patterns — then <strong>alerts departments before citizens are affected</strong>, ensuring proactive governance.</p>
                     <div className="it-pv-stats">
                         <div className="it-stat-blk" style={{ borderColor: '#FF5500' }}><span className="it-stat-val" style={{ color: '#FF5500' }}>43</span><span className="it-stat-lbl">Problems Prevented</span></div>
                         <div className="it-stat-blk" style={{ borderColor: '#00E5A0' }}><span className="it-stat-val" style={{ color: '#00E5A0' }}>8,743</span><span className="it-stat-lbl">Citizens Unaffected</span></div>
@@ -299,7 +299,7 @@ export default function HomePage() {
             <IntelligenceTerminal />
 
             {/* =========================================
-                3. HOW PROJECT-77 WORKS (OPERATION BRIEFING)
+                3. HOW {PROJECT_NAME.toUpperCase()} WORKS (OPERATION BRIEFING)
             ========================================= */}
             <HowItWorksBriefing />
 
@@ -317,9 +317,9 @@ export default function HomePage() {
 
             {/* Footer */}
             <footer className="it-footer">
-                <Link to="/" className="it-logo"><Chakra size={16} /> Project<strong>-77</strong></Link>
+                <Link to="/" className="it-logo"><Chakra size={16} /> <strong>{PROJECT_NAME}</strong></Link>
                 <p>India's Most Advanced Citizen Intelligence Platform · Digital India Initiative</p>
-                <p>© 2026 Project-77. All rights reserved.</p>
+                <p>© 2026 {PROJECT_NAME}. All rights reserved.</p>
             </footer>
         </div>
     );

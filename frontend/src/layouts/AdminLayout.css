@@ -3,6 +3,7 @@
 .admin-shell {
     display: flex;
     height: 100vh;
+    width: 100vw;
     overflow: hidden;
     background: var(--bg-primary);
 }
@@ -15,7 +16,8 @@
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease, min-width 0.3s ease;
+    transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width, min-width;
     overflow: hidden;
     position: relative;
     z-index: 100;
@@ -33,6 +35,12 @@
     justify-content: space-between;
     padding: 20px 16px 16px;
     border-bottom: 1px solid var(--border);
+    transition: padding 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-shell.sidebar-closed .sidebar-header {
+    padding: 20px 0 16px;
+    justify-content: center;
 }
 
 .sidebar-logo {
@@ -61,15 +69,21 @@
     color: var(--saffron);
 }
 
+.logo-icon svg {
+    flex-shrink: 0;
+}
+
 .admin-shell.sidebar-closed .logo-text,
 .admin-shell.sidebar-closed .nav-label,
 .admin-shell.sidebar-closed .nav-arrow,
 .admin-shell.sidebar-closed .sidebar-badge,
-.admin-shell.sidebar-closed .admin-user-details {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
-    pointer-events: none;
+.admin-shell.sidebar-closed .admin-user-details,
+.admin-shell.sidebar-closed .logout-btn {
+    opacity: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    display: none !important;
 }
 
 .sidebar-toggle {
@@ -246,10 +260,17 @@
 
 /* Main content area */
 .admin-main {
-    flex: 1;
+    width: calc(100vw - 260px);
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
+}
+
+.admin-shell.sidebar-closed .admin-main {
+    width: calc(100vw - 68px);
 }
 
 /* Topbar */
