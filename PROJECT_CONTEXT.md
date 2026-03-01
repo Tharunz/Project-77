@@ -62,7 +62,7 @@
 
 ## BACKEND STATUS (Surya)
 
-### Branch: `feature/surya-backend-group-1`
+### Branch: `feature/surya-backend-group-2`
 ### Server: `http://localhost:5000`
 ### Start: `cd backend && npm run dev`
 
@@ -81,7 +81,23 @@
 | 9 | My Grievances List API | ✅ Complete | GET /api/grievance/my-grievances — pagination + filter |
 | 10 | Scheme Listing + Filtering | ✅ Complete | GET /api/schemes — filter, recommend, eligibility-check, benefit-gap |
 
-#### Additional APIs (bonus, also built in Group 1):
+#### Group 2 — COMPLETE ✅
+
+| # | Feature | Status | Endpoint |
+|---|---------|--------|----------|
+| 11 | Scheme recommendation engine | ✅ Complete | GET /api/schemes/recommend |
+| 12 | Scheme eligibility checker | ✅ Complete | GET /api/schemes/eligibility-check |
+| 13 | Benefit gap calculator | ✅ Complete | POST /api/schemes/benefit-gap |
+| 14 | Scheme time machine | ✅ Complete | GET /api/schemes/time-machine |
+| 15 | Admin grievance management | ✅ Complete | GET /api/admin/grievances + PATCH /api/grievance/update/:id |
+| 16 | Admin dashboard analytics | ✅ Complete | GET /api/admin/analytics |
+| 17 | Officer leaderboard | ✅ Complete | GET /api/admin/officers/leaderboard — composite score, badge (Gold/Silver/Bronze/Warning) |
+| 18 | SLA tracker | ✅ Fixed + Complete | GET /api/admin/sla-tracker — fixed wrong DB collection |
+| 19 | Fraud detection | ✅ Enhanced + Complete | GET /api/admin/fraud-alerts — AI reasoning, similarity grouping, riskLevel |
+| 20 | Grievance search | ✅ Complete | GET /api/grievance/search |
+| — | Benefit roadmap | ✅ Bonus | GET /api/schemes/benefit-roadmap — 3-phase personalized roadmap |
+
+#### Additional APIs (also built, bonus):
 - Admin dashboard — `/api/admin/dashboard` (KPIs, charts, activity feed)
 - Admin analytics — `/api/admin/analytics` (monthly trend, category, sentiment, state)
 - Admin officers — `/api/admin/officers` + PATCH
@@ -106,6 +122,7 @@ backend/
 ├── .env            → local config (copy of .env.example)
 └── package.json
 ```
+
 
 ### AWS Swap Map (March 7)
 | Service File | Current | AWS Target |

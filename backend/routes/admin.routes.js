@@ -83,6 +83,62 @@ router.get('/heatmap', (req, res, next) => {
     }
 });
 
+// ─── GET /api/admin/officers/leaderboard ────────────────────────────────────
+// Feature #17 — Officer Leaderboard API
+// Must be BEFORE /officers and /officers/:id to avoid route conflict
+router.get('/officers/leaderboard', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const officers = db_instance.get('users').filter({ role: 'officer' }).value();
+
+        // Composite score (0–100) per officer
+        // 40% SLA compliance + 30% satisfaction + 20% volume + 10% speed bonus
+        const scored = officers.map(o => {
+            const { password: _, ...rest } = o;
+            const slaPoint = (o.slaCompliance || 0) * 0.40;
+            const satisfyPoint = ((o.satisfactionScore || 0) / 5) * 100 * 0.30;
+            const casePoint = Math.min((o.casesHandled || 0) / 300, 1) * 100 * 0.20;
+            const speedPoint = Math.max(0, (14 - (o.avgResolutionDays || 14)) / 14) * 100 * 0.10;
+            const compositeScore = Math.round(slaPoint + satisfyPoint + casePoint + speedPoint);
+
+            let badge = 'Standard';
+            if (compositeScore >= 85) badge = 'Gold';
+            else if (compositeScore >= 70) badge = 'Silver';
+            else if (compositeScore >= 55) badge = 'Bronze';
+            else if (o.isBreachingSLA) badge = 'Warning';
+
+            return { ...rest, compositeScore, badge, rank: 0 };
+        }).sort((a, b) => b.compositeScore - a.compositeScore)
+            .map((o, i) => ({ ...o, rank: i + 1 }));
+
+        const topPerformer = scored[0] || null;
+        const needsAttention = scored.filter(o => o.isBreachingSLA || o.badge === 'Warning');
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                leaderboard: scored,
+                topPerformer,
+                needsAttention,
+                summary: {
+                    total: scored.length,
+                    gold: scored.filter(o => o.badge === 'Gold').length,
+                    silver: scored.filter(o => o.badge === 'Silver').length,
+                    bronze: scored.filter(o => o.badge === 'Bronze').length,
+                    warning: scored.filter(o => o.badge === 'Warning').length,
+                    avgCompositeScore: parseFloat(
+                        (scored.reduce((s, o) => s + o.compositeScore, 0) / (scored.length || 1)).toFixed(1)
+                    )
+                }
+            },
+            message: `Officer leaderboard — ${scored.length} officers ranked.`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 // ─── GET /api/admin/officers ──────────────────────────────────────────────────
 router.get('/officers', (req, res, next) => {
     try {

@@ -229,6 +229,113 @@ router.post('/benefit-gap', protect, (req, res, next) => {
     }
 });
 
+// ─── GET /api/schemes/benefit-roadmap ────────────────────────────────────────
+// Personalized scheme benefit roadmap for citizen (used by apiGetBenefitRoadmap)
+// → AWS swap: Amazon Personalize or SageMaker recommendation model
+router.get('/benefit-roadmap', protect, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const user = db_instance.get('users').find({ id: req.user.id }).value();
+
+        if (!user) {
+            return res.status(404).json({
+                success: false, data: null,
+                message: 'User profile not found.',
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        const allSchemes = db_instance.get('schemes').filter({ isActive: true }).value();
+
+        // Helper: strict eligibility check
+        const isEligible = (s, u) => {
+            const eli = s.eligibility;
+            if (!eli) return true;
+            if (u.age && eli.minAge !== undefined && u.age < eli.minAge) return false;
+            if (u.age && eli.maxAge !== undefined && eli.maxAge < 99 && u.age > eli.maxAge) return false;
+            if (u.income && eli.maxIncome && eli.maxIncome > 0 && u.income > eli.maxIncome) return false;
+            if (u.gender && eli.gender && eli.gender !== 'all' && eli.gender !== u.gender) return false;
+            if (u.state && s.state !== 'All India' && s.state !== u.state) return false;
+            return true;
+        };
+
+        // Helper: near-eligible (within 20% of income limit, or age just outside by up to 2 years)
+        const isNearEligible = (s, u) => {
+            if (isEligible(s, u)) return false;  // already eligible, skip
+            const eli = s.eligibility;
+            if (!eli) return false;
+
+            // Income near-miss: income is above limit but within 20%
+            if (u.income && eli.maxIncome && eli.maxIncome > 0) {
+                const overshoot = u.income - eli.maxIncome;
+                if (overshoot > 0 && overshoot / eli.maxIncome <= 0.20) return true;
+            }
+            // Age near-miss: outside range by 2 years
+            if (u.age && eli.minAge !== undefined && u.age < eli.minAge && eli.minAge - u.age <= 2) return true;
+            if (u.age && eli.maxAge !== undefined && eli.maxAge < 99 && u.age > eli.maxAge && u.age - eli.maxAge <= 2) return true;
+
+            return false;
+        };
+
+        // Phase 1 — Apply Now: Eligible schemes user hasn't claimed (no claimed list, so show all eligible)
+        const phase1 = allSchemes.filter(s => isEligible(s, user)).map(s => ({
+            ...s,
+            phaseLabel: 'Apply Now',
+            actionText: 'Apply Online',
+            matchScore: calculateMatchScore(s, user)
+        })).sort((a, b) => b.matchScore - a.matchScore).slice(0, 8);
+
+        // Phase 2 — Improve Eligibility: near-miss schemes
+        const phase2 = allSchemes.filter(s => isNearEligible(s, user)).map(s => ({
+            ...s,
+            phaseLabel: 'Almost Eligible',
+            actionText: 'See How to Qualify',
+            matchScore: calculateMatchScore(s, user)
+        })).slice(0, 5);
+
+        // Phase 3 — Long-term: Pension/Savings schemes (open to all)
+        const longTermCategories = ['Social Security', 'Finance'];
+        const phase3 = allSchemes.filter(s =>
+            longTermCategories.includes(s.category) &&
+            !phase1.find(p => p.id === s.id) &&
+            !phase2.find(p => p.id === s.id)
+        ).map(s => ({
+            ...s,
+            phaseLabel: 'Plan Ahead',
+            actionText: 'Learn More'
+        })).slice(0, 5);
+
+        const totalEligible = allSchemes.filter(s => isEligible(s, user)).length;
+        const completionPercentage = allSchemes.length > 0
+            ? Math.round((phase1.length / allSchemes.length) * 100)
+            : 0;
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                phases: [
+                    { phase: 1, label: 'Apply Now', schemes: phase1, count: phase1.length },
+                    { phase: 2, label: 'Almost Eligible', schemes: phase2, count: phase2.length },
+                    { phase: 3, label: 'Plan Ahead', schemes: phase3, count: phase3.length }
+                ],
+                totalEligible,
+                totalSchemes: allSchemes.length,
+                completionPercentage,
+                userProfile: {
+                    name: user.name,
+                    state: user.state,
+                    age: user.age,
+                    income: user.income
+                }
+            },
+            message: `Personalized roadmap: ${phase1.length} ready to apply, ${phase2.length} near-eligible.`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 // ─── GET /api/schemes/:id ─────────────────────────────────────────────────────
 router.get('/:id', (req, res, next) => {
     try {

@@ -180,10 +180,12 @@ const getStateAnalytics = () => {
 
 /**
  * Get officer SLA performance data.
+ * → AWS QuickSight / Comprehend: pull from CloudWatch metrics per officer
  */
 const getSLAData = () => {
     const db_instance = db.getDb();
-    const officers = db_instance.get('officers').value();
+    // Officers are stored in the `users` collection with role: 'officer'
+    const officers = db_instance.get('users').filter({ role: 'officer' }).value();
     return officers;
 };
 
