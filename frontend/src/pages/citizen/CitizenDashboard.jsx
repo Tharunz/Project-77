@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning } from 'react-icons/md';
-import { apiGetMyGrievances, apiGetMatchedSchemes } from '../../services/api.service';
+import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics } from 'react-icons/md';
+import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap } from '../../services/api.service';
 
 const STATUS_ICONS = { Pending: <MdHourglassEmpty />, Resolved: <MdCheckCircle />, Critical: <MdWarning />, 'In Progress': <MdEdit /> };
 const STATUS_COLORS = { Pending: '#F59E0B', Resolved: '#00C896', Critical: '#EF4444', 'In Progress': '#3B82F6' };
@@ -11,23 +11,32 @@ export default function CitizenDashboard() {
     const { user } = useAuth();
     const [grievances, setGrievances] = useState([]);
     const [schemes, setSchemes] = useState([]);
+    const [roadmap, setRoadmap] = useState(null);
+    const [gap, setGap] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(true);
-        Promise.all([
-            apiGetMyGrievances(user?.id),
-            apiGetMatchedSchemes({ age: user?.age, income: user?.income, state: user?.state })
-        ]).then(([g, s]) => {
-            setGrievances(g && Array.isArray(g.data) ? g.data : []);
-            setSchemes(s && Array.isArray(s.data) ? s.data.slice(0, 4) : []);
-            setLoading(false);
-        }).catch(() => {
-            setLoading(false);
-            setGrievances([]);
-            setSchemes([]);
-        });
-    }, [user?.id, user?.age, user?.income, user?.state]);
+        const load = async () => {
+            setLoading(true);
+            try {
+                const [g, s, r, gp] = await Promise.all([
+                    apiGetMyGrievances(),
+                    apiGetMatchedSchemes(),
+                    apiGetBenefitRoadmap(),
+                    apiGetBenefitGap()
+                ]);
+                setGrievances(g && Array.isArray(g.data) ? g.data : []);
+                setSchemes(s && Array.isArray(s.data) ? s.data : []);
+                setRoadmap(r && r.data ? r.data : null);
+                setGap(gp && gp.data ? gp.data : null);
+            } catch (err) {
+                console.error("Dashboard load error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [user?.id]);
 
     const quickActions = [
         { to: '/citizen/file-grievance', icon: <MdEdit />, label: 'File Grievance', color: '#FF6B2C', desc: 'Raise a new complaint' },
@@ -39,8 +48,8 @@ export default function CitizenDashboard() {
     const stats = [
         { label: 'Total Filed', value: (grievances || []).length, color: '#3B82F6' },
         { label: 'Resolved', value: (grievances || []).filter(g => g.status === 'Resolved').length, color: '#00C896' },
-        { label: 'Pending', value: (grievances || []).filter(g => g.status === 'Pending').length, color: '#F59E0B' },
-        { label: 'Matched Schemes', value: (schemes || []).length, color: '#8B5CF6' },
+        { label: 'Missed Benefits', value: gap ? gap.gapCount : 0, color: '#EF4444' },
+        { label: 'Matched Schemes', value: gap ? gap.eligibleCount : (schemes || []).length, color: '#8B5CF6' },
     ];
 
     return (
@@ -56,13 +65,35 @@ export default function CitizenDashboard() {
                     Namaste, <span style={{ color: 'var(--saffron)' }}>{user?.name?.split(' ')[0] || 'Citizen'}</span> 🙏
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                    Your personal dashboard — manage grievances, discover schemes, and stay updated.
+                    Your personal dashboard — 2nd Gen AI features now fully integrated.
                 </p>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                     {user?.state && <span className="badge badge-inprogress">📍 {user.state}</span>}
                     {user?.age && <span className="badge badge-pending">🎂 Age {user.age}</span>}
+                    {gap && <span className="badge badge-critical" style={{ background: 'rgba(239,68,68,0.15)', borderColor: '#EF4444' }}>⚠️ {gap.gapCount} Missed Benefits</span>}
                 </div>
             </div>
+
+            {/* Gap Analysis Card */}
+            {gap && (
+                <div className="glass-card" style={{ padding: '20px 24px', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <MdAnalytics style={{ color: '#EF4444' }} /> Benefit Gap Analysis
+                        </h2>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#EF4444' }}>{gap.gapPercentage}% Gap</span>
+                    </div>
+                    <div style={{ height: 10, background: 'rgba(255, 255, 255, 0.08)', borderRadius: 5, overflow: 'hidden', marginBottom: 14 }}>
+                        <div style={{ width: `${100 - gap.gapPercentage}%`, height: '100%', background: '#00C896', transition: 'width 1s ease' }} />
+                    </div>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        You are currently missing out on <strong style={{ color: '#EF4444' }}>{gap.gapCount}</strong> schemes you are eligible for. Your profile qualifies for {gap.eligibleCount} benefits, but only {gap.claimedCount} are registered.
+                    </p>
+                    <Link to="/citizen/schemes" className="btn-secondary" style={{ marginTop: 14, alignSelf: 'flex-start', color: '#EF4444', borderColor: '#EF4444' }}>
+                        Resolve Benefit Gaps <MdArrowForward />
+                    </Link>
+                </div>
+            )}
 
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14 }}>
@@ -73,6 +104,37 @@ export default function CitizenDashboard() {
                     </div>
                 ))}
             </div>
+
+            {/* Roadmap */}
+            {roadmap && (
+                <div>
+                    <h2 style={{ fontSize: '1.1rem', marginBottom: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <MdTimeline style={{ color: 'var(--saffron)' }} /> Your Personalized Benefit Roadmap
+                    </h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+                        {roadmap.phases.map((phase) => (
+                            <div key={phase.phase} className="glass-card" style={{ padding: 20, borderTop: `4px solid ${phase.phase === 1 ? '#00C896' : phase.phase === 2 ? '#F59E0B' : '#3B82F6'}` }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Phase {phase.phase}</span>
+                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.06)' }}>{phase.count} items</span>
+                                </div>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 14 }}>{phase.label}</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                    {phase.schemes.slice(0, 3).map(s => (
+                                        <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                            <MdCheckCircle style={{ color: phase.phase === 1 ? '#00C896' : '#6B7280', flexShrink: 0 }} />
+                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Link to="/citizen/schemes" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.82rem', color: 'var(--saffron)', textDecoration: 'none', fontWeight: 700 }}>
+                                    View Phase Details <MdArrowForward />
+                                </Link>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Quick Actions */}
             <div>
@@ -103,7 +165,7 @@ export default function CitizenDashboard() {
                         View All <MdArrowForward />
                     </Link>
                 </div>
-                {loading ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading...</p> : (
+                {loading ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading intelligence data...</p> : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {(grievances || []).slice(0, 4).map(g => (
                             <Link
@@ -135,36 +197,6 @@ export default function CitizenDashboard() {
                             </Link>
                         ))}
                         {(grievances || []).length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No grievances filed yet. <Link to="/citizen/file-grievance" style={{ color: 'var(--saffron)' }}>File your first →</Link></p>}
-                    </div>
-                )}
-            </div>
-
-            {/* Matched Schemes */}
-            <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>🤖 AI-Matched Schemes for You</h2>
-                    <Link to="/citizen/schemes" style={{ fontSize: '0.82rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        Explore All <MdArrowForward />
-                    </Link>
-                </div>
-                {loading ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Analyzing your profile...</p> : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
-                        {(schemes || []).map(rawS => {
-                            const s = {
-                                ...rawS,
-                                benefit: rawS.benefit || rawS.benefits || 'See details',
-                                category: rawS.category || 'General'
-                            };
-                            return (
-                            <div key={s.id} className="glass-card" style={{ padding: '16px 18px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                                    <span style={{ fontSize: '0.78rem', background: 'rgba(0,200,150,0.1)', color: 'var(--teal)', border: '1px solid rgba(0,200,150,0.2)', padding: '2px 8px', borderRadius: 100, fontWeight: 700 }}>{s.category}</span>
-                                    <span className="badge badge-resolved">✓ Eligible</span>
-                                </div>
-                                <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 6, lineHeight: 1.3 }}>{s.name}</h4>
-                                <p style={{ fontSize: '0.78rem', color: 'var(--teal)', fontWeight: 600 }}>{s.benefit}</p>
-                            </div>
-                        );})}
                     </div>
                 )}
             </div>

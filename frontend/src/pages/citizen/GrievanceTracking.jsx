@@ -34,10 +34,10 @@ function EscrowVerificationPanel({ grievanceId, onSuccess, showToast }) {
             position: 'relative', overflow: 'hidden'
         }}>
             <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--teal)' }} />
-            
+
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 20 }}>
-                <div style={{ 
-                    width: 40, height: 40, borderRadius: 12, background: 'rgba(0, 200, 150, 0.1)', 
+                <div style={{
+                    width: 40, height: 40, borderRadius: 12, background: 'rgba(0, 200, 150, 0.1)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--teal)'
                 }}>
                     <MdVerifiedUser style={{ fontSize: '1.4rem' }} />
@@ -125,8 +125,8 @@ function EscrowVerificationPanel({ grievanceId, onSuccess, showToast }) {
 }
 
 function StatusTimeline({ timeline }) {
-    if (!timeline || !Array.isArray(timeline)) return <p style={{color: 'var(--text-muted)'}}>No timeline data available.</p>;
-    
+    if (!timeline || !Array.isArray(timeline)) return <p style={{ color: 'var(--text-muted)' }}>No timeline data available.</p>;
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 20 }}>
             {timeline.map((event, i) => {
@@ -199,9 +199,9 @@ export default function GrievanceTracking() {
 
     const handleSelectGrievance = (id) => {
         setTrackingId(id);
-        setResult(null); 
+        setResult(null);
         setError('');
-        
+
         // Use a timeout to ensure state updates before tracking
         // Or better yet, call tracking directly with the ID
         setLoading(true);
@@ -221,11 +221,11 @@ export default function GrievanceTracking() {
         setShowMine(true);
     };
 
-    const statusColor = { 
-        Pending: '#F59E0B', 
-        Resolved: '#00C896', 
-        Critical: '#EF4444', 
-        'In Progress': '#3B82F6', 
+    const statusColor = {
+        Pending: '#F59E0B',
+        Resolved: '#00C896',
+        Critical: '#EF4444',
+        'In Progress': '#3B82F6',
         Escalated: '#8B5CF6',
         'Resolved (Pending Verification)': '#FF6B2C'
     };
@@ -233,25 +233,25 @@ export default function GrievanceTracking() {
     const handleVerifyResolution = async (grievanceData, uploadedPhoto) => {
         const currentGrievance = grievanceData || result;
         if (!currentGrievance) return;
-        
+
         setLoading(true);
         // Call the verification API
         const note = uploadedPhoto ? 'Citizen verified resolution and uploaded photo proof.' : 'Citizen confirmed resolution via portal.';
         const res = await apiVerifyResolution(currentGrievance.id, 'verify', note);
         setLoading(false);
         if (res.success) {
-            setResult({ 
-                ...currentGrievance, 
-                status: 'Resolved', 
+            setResult({
+                ...currentGrievance,
+                status: 'Resolved',
                 timeline: [
-                    ...(currentGrievance.timeline || []), 
-                    { 
-                        status: 'Verified', 
-                        date: new Date().toISOString().split('T')[0], 
+                    ...(currentGrievance.timeline || []),
+                    {
+                        status: 'Verified',
+                        date: new Date().toISOString().split('T')[0],
                         note: note,
                         image: uploadedPhoto // Use the photo passed from the child
                     }
-                ] 
+                ]
             });
             showToast('success', 'Resolution verified successfully! Funds have been released from Escrow.');
         } else {
@@ -288,10 +288,6 @@ export default function GrievanceTracking() {
                     </div>
                 )}
 
-                <p style={{ marginTop: 14, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    💡 Try: <span style={{ fontFamily: 'monospace', color: 'var(--saffron)', cursor: 'pointer' }}
-                        onClick={() => setTrackingId('GRV-2601001')}>GRV-2601001</span>
-                </p>
             </div>
 
             {/* Tracked Result */}
@@ -307,15 +303,15 @@ export default function GrievanceTracking() {
                             </p>
                         </div>
                         <div style={{
-                                padding: '8px 16px', borderRadius: 100, fontWeight: 700, fontSize: '0.85rem',
-                                background: `${statusColor[result.status] || '#F59E0B'}15`,
-                                color: statusColor[result.status] || '#F59E0B',
-                                border: `1px solid ${statusColor[result.status] || '#F59E0B'}35`,
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0
-                            }}>
-                                {result.status === 'Resolved (Pending Verification)' ? 'Awaiting User' : result.status}
-                            </div>
+                            padding: '8px 16px', borderRadius: 100, fontWeight: 700, fontSize: '0.85rem',
+                            background: `${statusColor[result.status] || '#F59E0B'}15`,
+                            color: statusColor[result.status] || '#F59E0B',
+                            border: `1px solid ${statusColor[result.status] || '#F59E0B'}35`,
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
+                        }}>
+                            {result.status === 'Resolved (Pending Verification)' ? 'Awaiting User' : result.status}
+                        </div>
                     </div>
 
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 8, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
@@ -335,9 +331,9 @@ export default function GrievanceTracking() {
 
                     {/* Escrow Verification Section */}
                     {result.status === 'Resolved (Pending Verification)' && (
-                        <EscrowVerificationPanel 
-                            grievanceId={result.id} 
-                            onSuccess={(uploadedPhoto) => handleVerifyResolution(result, uploadedPhoto)} 
+                        <EscrowVerificationPanel
+                            grievanceId={result.id}
+                            onSuccess={(uploadedPhoto) => handleVerifyResolution(result, uploadedPhoto)}
                             showToast={showToast}
                         />
                     )}

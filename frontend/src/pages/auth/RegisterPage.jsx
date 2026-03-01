@@ -65,9 +65,9 @@ export default function RegisterPage() {
                                     value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} />
                             </div>
                         ))}
-                        <div style={{ position: 'relative' }}>
-                            <MdLocationOn className="auth-input-icon" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '1.1rem' }} />
-                            <select className="auth-input" style={{ paddingLeft: 42 }} required
+                        <div className="auth-input-group">
+                            <span className="auth-input-icon"><MdLocationOn /></span>
+                            <select className="auth-input" required
                                 value={form.state} onChange={e => setForm(p => ({ ...p, state: e.target.value }))}>
                                 <option value="">Select State *</option>
                                 {INDIAN_STATES.map(s => <option key={s}>{s}</option>)}

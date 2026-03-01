@@ -282,43 +282,43 @@ export const mockCategoryBreakdown = [
 
 // --- Notifications ---
 export const mockNotifications = [
-  { id: 1, type: 'resolution', title: 'Grievance Resolved', message: 'GRV-2600089 — Road repair in Uttar Pradesh has been resolved.', citizen: 'Ramesh Kumar', time: '2026-02-27 09:14', read: false, priority: 'normal' },
-  { id: 2, type: 'critical', title: 'Critical Alert', message: 'High distress grievance filed — No water supply, Bihar for 2 weeks.', citizen: 'Priya Sharma', time: '2026-02-27 08:52', read: false, priority: 'critical' },
-  { id: 3, type: 'escalation', title: 'Escalation Notice', message: 'GRV-2600078 has been escalated to District Collector, Madhya Pradesh.', citizen: 'Arvind Mishra', time: '2026-02-27 08:30', read: true, priority: 'high' },
-  { id: 4, type: 'duplicate', title: 'Duplicate Detected', message: 'GRV-2600112 flagged as potential duplicate of GRV-2600098.', citizen: 'Meena Joshi', time: '2026-02-27 07:45', read: true, priority: 'medium' },
-  { id: 5, type: 'resolution', title: 'Grievance Resolved', message: 'GRV-2600067 — Electricity outage in Karnataka resolved.', citizen: 'Kavitha Nair', time: '2026-02-26 18:30', read: true, priority: 'normal' },
-  { id: 6, type: 'new_scheme', title: 'New Scheme Added', message: 'PM Garib Kalyan Ann Yojana updated with new eligibility for FY2026.', citizen: null, time: '2026-02-26 16:00', read: true, priority: 'normal' },
-  { id: 7, type: 'critical', title: 'Critical Alert', message: 'Cluster of grievances from Rajasthan about PHC closures — possible systemic issue.', citizen: null, time: '2026-02-26 14:20', read: true, priority: 'critical' },
-  { id: 8, type: 'resolution', title: 'Batch Resolution', message: '47 irrigation-related grievances in Gujarat resolved via collective order.', citizen: null, time: '2026-02-26 11:00', read: true, priority: 'normal' },
-  { id: 9, type: 'fraud', title: 'Fraud Alert', message: 'GRV-2600134 flagged by AI as potentially fraudulent — same phone, different names.', citizen: 'Multiple', time: '2026-02-25 22:10', read: true, priority: 'high' },
-  { id: 10, type: 'escalation', title: 'Escaled to State Level', message: 'GRV-2600045 — Land dispute TB case escalated to State Revenue Board.', citizen: 'Vikram Singh', time: '2026-02-25 15:30', read: true, priority: 'high' },
+  { id: 1, type: 'resolution', title: 'Critical Resolution', message: 'GRV-2600089 — Road repair in Uttar Pradesh has been resolved and verified.', citizen: 'Ramesh Kumar', sentAt: '2026-03-01T22:30:00.000Z', isRead: false, priority: 'normal' },
+  { id: 2, type: 'critical', title: 'Critical Alert', message: 'High distress grievance filed — No water supply, Bihar for 2 weeks.', citizen: 'Priya Sharma', sentAt: '2026-03-01T21:15:00.000Z', isRead: false, priority: 'critical' },
+  { id: 3, type: 'escalation', title: 'Escalation Notice', message: 'GRV-2600078 has been escalated to District Collector, Madhya Pradesh.', citizen: 'Arvind Mishra', sentAt: '2026-03-01T19:40:00.000Z', isRead: true, priority: 'high' },
+  { id: 4, type: 'duplicate', title: 'Duplicate Detected', message: 'GRV-2600112 flagged as potential duplicate of GRV-2600098.', citizen: 'Meena Joshi', sentAt: '2026-03-01T18:20:00.000Z', isRead: true, priority: 'medium' },
+  { id: 5, type: 'resolution', title: 'Grievance Resolved', message: 'GRV-2600067 — Electricity outage in Karnataka resolved.', citizen: 'Kavitha Nair', sentAt: '2026-03-01T17:05:00.000Z', isRead: true, priority: 'normal' },
+  { id: 6, type: 'scheme', title: 'New Scheme Added', message: 'PM Garib Kalyan Ann Yojana updated with new eligibility for FY2026.', citizen: null, sentAt: '2026-03-01T16:00:00.000Z', isRead: true, priority: 'normal' },
+  { id: 7, type: 'critical', title: 'System Security Alert', message: 'Anomaly detected in API traffic from West Bengal region. AI Firewall active.', citizen: null, sentAt: '2026-03-01T14:20:00.000Z', isRead: true, priority: 'critical' },
+  { id: 8, type: 'resolution', title: 'Batch Resolution', message: '47 irrigation-related grievances in Gujarat resolved via collective order.', citizen: null, sentAt: '2026-03-01T11:00:00.000Z', isRead: true, priority: 'normal' },
+  { id: 9, type: 'fraud', title: 'Fraud Alert', message: 'GRV-2600134 flagged by AI as potentially fraudulent — same phone pattern.', citizen: 'Multiple', sentAt: '2026-02-28T22:10:00.000Z', isRead: true, priority: 'high' },
+  { id: 10, type: 'escalation', title: 'Escalated to State Level', message: 'GRV-2600045 — Land dispute TB case escalated to State Revenue Board.', citizen: 'Vikram Singh', sentAt: '2026-02-28T15:30:00.000Z', isRead: true, priority: 'high' },
 ];
 
 // --- Duplicate/Fraud Grievances ---
 export const mockFraudDuplicates = [
   {
-    id: 'FRD-001', type: 'duplicate',
-    primary: { id: 'GRV-2600089', citizen: 'Ramesh Kumar', description: 'Road broken in village for 3 months', state: 'Uttar Pradesh', date: '2026-02-15' },
-    secondary: { id: 'GRV-2600112', citizen: 'Suresh Kumar', description: 'Village road damaged since December, no repairs', state: 'Uttar Pradesh', date: '2026-02-20' },
-    similarity: 94, status: 'Pending Review', aiReason: 'Same location, same issue, 6-day gap. Likely duplicate filing.'
+    id: 'FRD-001', type: 'Duplicate', similarity: 94, status: 'Pending Review', riskLevel: 'Extreme',
+    aiReason: 'Same location, same issue, 6-day gap. Likely duplicate filing from the same biometric profile.',
+    primary: { id: 'GRV-046', title: 'Local government office very corrupt', description: 'The taluk office is highly corrupt. Mid-level officers demand money for signatures.', state: 'Uttar Pradesh', citizen: 'Ramesh Kumar' },
+    secondary: { id: 'GRV-031', title: 'Bribery demanded at taluk office', description: 'Revenue officer asking for 2000 bribe for mutation records.', state: 'Uttar Pradesh', citizen: 'Ramesh Mali' }
   },
   {
-    id: 'FRD-002', type: 'fraud',
-    primary: { id: 'GRV-2600134', citizen: 'Priya M', description: 'No ration supply for 2 months, family starving', state: 'Bihar', date: '2026-02-10' },
-    secondary: { id: 'GRV-2600135', citizen: 'Priya Mali', description: 'Ration shop closed, not distributing grain', state: 'Bihar', date: '2026-02-10' },
-    similarity: 87, status: 'Pending Review', aiReason: 'Same phone number, same district, filed within minutes. Possible coordinated fraud.'
+    id: 'FRD-002', type: 'Fraud', similarity: 87, status: 'Pending Review', riskLevel: 'High',
+    aiReason: 'AI detected same beneficiary claiming identical pension from 3 state offices using different Aadhaar aliases.',
+    primary: { id: 'GRV-014', title: 'Old age pension not received', description: 'Application pending since 8 months, no update from social welfare dept.', state: 'Bihar', citizen: 'Priya M' },
+    secondary: null
   },
   {
-    id: 'FRD-003', type: 'duplicate',
-    primary: { id: 'GRV-2600098', citizen: 'Lakshmi Devi', description: 'Electricity outage for 12 hours daily', state: 'Maharashtra', date: '2026-02-18' },
-    secondary: { id: 'GRV-2600103', citizen: 'Lakshmi D', description: 'No power supply whole day in our area', state: 'Maharashtra', date: '2026-02-19' },
-    similarity: 91, status: 'Confirmed Duplicate', aiReason: 'Same person, slight name variation. Confirmed duplicate after manual review.'
+    id: 'FRD-003', type: 'Duplicate', similarity: 91, status: 'Confirmed', riskLevel: 'Extreme',
+    aiReason: 'Same person, slight name variation. Confirmed duplicate after manual cross-verification of GPS tags.',
+    primary: { id: 'GRV-031', title: 'Local dam not maintained, flood risk high', description: 'Cracks in the embankment never repaired after last monsoon.', state: 'Maharashtra', citizen: 'Lakshmi Devi' },
+    secondary: { id: 'GRV-032', title: 'Dam safety concerns in our village', description: 'Water level rising, crack in the main wall needs urgent repair.', state: 'Maharashtra', citizen: 'Lakshmi D' }
   },
   {
-    id: 'FRD-004', type: 'fraud',
-    primary: { id: 'GRV-2600145', citizen: 'Officer A', description: 'Claiming pension under 3 different names and addresses', state: 'Rajasthan', date: '2026-02-22' },
-    secondary: null,
-    similarity: null, status: 'Under Investigation', aiReason: 'AI detected same beneficiary claiming identical pension from 3 state offices using different Aadhaar numbers.'
+    id: 'FRD-004', type: 'Fraud', similarity: 72, status: 'Under Investigation', riskLevel: 'Moderate',
+    aiReason: 'Anomaly detected in IP address clustering. Coordinated submission of 50 grievances from a single tower location.',
+    primary: { id: 'GRV-088', title: 'Hospital charging extra for operations', description: 'State insurance patients being forced to pay cash for medicines.', state: 'Rajasthan', citizen: 'Multiple' },
+    secondary: null
   },
 ];
 
@@ -445,21 +445,21 @@ export const mockPreSevaStats = {
 
 // --- Feature 18: SLA Tracker ---
 export const mockSLAData = [
-  { id: 'GRV-2601034', title: 'Road repair — Lucknow bypass', category: 'Infrastructure', state: 'UP', assignedTo: 'Officer Mehta', filedDate: '2026-02-18', slaDeadline: '2026-02-25', status: 'Breached', hoursLeft: -48, priority: 'High', breachCount: 1 },
-  { id: 'GRV-2601067', title: 'No water supply — Sitapur district', category: 'Water Supply', state: 'UP', assignedTo: 'Officer Rao', filedDate: '2026-02-20', slaDeadline: '2026-02-27', status: 'Due Today', hoursLeft: 6, priority: 'Critical', breachCount: 0 },
-  { id: 'GRV-2601089', title: 'PHC closed for 3 months', category: 'Healthcare', state: 'Bihar', assignedTo: 'Officer Sharma', filedDate: '2026-02-21', slaDeadline: '2026-02-28', status: 'At Risk', hoursLeft: 30, priority: 'High', breachCount: 0 },
-  { id: 'GRV-2601012', title: 'Pension delayed — 6 months', category: 'Pension', state: 'Rajasthan', assignedTo: 'Unassigned', filedDate: '2026-02-15', slaDeadline: '2026-02-22', status: 'Breached', hoursLeft: -120, priority: 'High', breachCount: 2 },
-  { id: 'GRV-2601098', title: 'School roof collapse risk', category: 'Education', state: 'Jharkhand', assignedTo: 'Officer Bose', filedDate: '2026-02-24', slaDeadline: '2026-03-02', status: 'On Track', hoursLeft: 84, priority: 'Critical', breachCount: 0 },
-  { id: 'GRV-2601103', title: 'Sewage overflow — city center', category: 'Sanitation', state: 'Maharashtra', assignedTo: 'Officer Rao', filedDate: '2026-02-23', slaDeadline: '2026-03-01', status: 'At Risk', hoursLeft: 18, priority: 'Medium', breachCount: 0 },
-  { id: 'GRV-2601114', title: 'Wage theft — construction workers', category: 'Labour', state: 'Gujarat', assignedTo: 'Officer Mehta', filedDate: '2026-02-25', slaDeadline: '2026-03-04', status: 'On Track', hoursLeft: 168, priority: 'Medium', breachCount: 0 },
-  { id: 'GRV-2601122', title: 'Crop insurance unpaid — 8 months', category: 'Agriculture', state: 'MP', assignedTo: 'Unassigned', filedDate: '2026-02-10', slaDeadline: '2026-02-17', status: 'Breached', hoursLeft: -240, priority: 'High', breachCount: 3 },
+  { id: 'GRV-034', trackingId: 'GRV-2026034', title: 'Road repair — Lucknow bypass', state: 'Uttar Pradesh', officer: 'Officer Anita Mehta', slaDeadline: '2026-03-02T10:00:00.000Z', status: 'Breached', hoursLeft: -48, breachCount: 1 },
+  { id: 'GRV-067', trackingId: 'GRV-2026067', title: 'No water supply — Sitapur district', state: 'Uttar Pradesh', officer: 'Officer Mohan Rao', slaDeadline: '2026-03-01T23:59:59.000Z', status: 'Due Today', hoursLeft: 0, breachCount: 0 },
+  { id: 'GRV-089', trackingId: 'GRV-2026089', title: 'PHC closed for 3 months', state: 'Bihar', officer: 'Officer Kavitha Sharma', slaDeadline: '2026-03-02T14:00:00.000Z', status: 'At Risk', hoursLeft: 14, breachCount: 0 },
+  { id: 'GRV-012', trackingId: 'GRV-2026012', title: 'Pension delayed — 6 months', state: 'Rajasthan', officer: 'Unassigned', slaDeadline: '2026-03-01T08:00:00.000Z', status: 'Breached', hoursLeft: -120, breachCount: 2 },
+  { id: 'GRV-098', trackingId: 'GRV-2026098', title: 'School roof collapse risk', state: 'Jharkhand', officer: 'Officer Rahul Bose', slaDeadline: '2026-03-04T09:00:00.000Z', status: 'On Track', hoursLeft: 57, breachCount: 0 },
+  { id: 'GRV-103', trackingId: 'GRV-2026103', title: 'Sewage overflow — city center', state: 'Maharashtra', officer: 'Officer Mohan Rao', slaDeadline: '2026-03-02T08:00:00.000Z', status: 'At Risk', hoursLeft: 8, breachCount: 0 },
+  { id: 'GRV-114', trackingId: 'GRV-2026114', title: 'Wage theft — construction workers', state: 'Gujarat', officer: 'Officer Anita Mehta', slaDeadline: '2026-03-05T17:00:00.000Z', status: 'On Track', hoursLeft: 89, breachCount: 0 },
+  { id: 'GRV-122', trackingId: 'GRV-2026122', title: 'Crop insurance unpaid — 8 months', state: 'Madhya Pradesh', officer: 'Unassigned', slaDeadline: '2026-02-28T10:00:00.000Z', status: 'Breached', hoursLeft: -24, breachCount: 3 },
 ];
 
 export const mockOfficerSLA = [
-  { officer: 'Officer Mehta', totalAssigned: 23, onTime: 19, breaches: 2, inProgress: 2, avgResolutionDays: 3.2, rating: 94 },
-  { officer: 'Officer Rao', totalAssigned: 31, onTime: 24, breaches: 4, inProgress: 3, avgResolutionDays: 4.1, rating: 81 },
-  { officer: 'Officer Sharma', totalAssigned: 18, onTime: 15, breaches: 1, inProgress: 2, avgResolutionDays: 2.8, rating: 96 },
-  { officer: 'Officer Bose', totalAssigned: 27, onTime: 20, breaches: 5, inProgress: 2, avgResolutionDays: 5.3, rating: 74 },
+  { id: 'OFC-001', name: 'Officer Anita Mehta', casesHandled: 142, slaCompliance: 94, breaches: 2, avgResolutionDays: 3.2, compositeScore: 94, badge: 'Gold' },
+  { id: 'OFC-002', name: 'Officer Mohan Rao', casesHandled: 98, slaCompliance: 78, breaches: 4, avgResolutionDays: 6.1, compositeScore: 81, badge: 'Silver' },
+  { id: 'OFC-003', name: 'Officer Kavitha Sharma', casesHandled: 213, slaCompliance: 98, breaches: 1, avgResolutionDays: 2.1, compositeScore: 98, badge: 'Gold' },
+  { id: 'OFC-004', name: 'Officer Rahul Bose', casesHandled: 67, slaCompliance: 62, breaches: 8, avgResolutionDays: 10.4, compositeScore: 68, badge: 'Warning' },
 ];
 
 // --- Feature 16: JanConnect Community Forum ---

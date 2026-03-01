@@ -13,7 +13,6 @@ import {
     mockSLAData, mockOfficerSLA, mockCommunityPosts, mockSevaNews, mockBenefitRoadmap,
     mockEscrowProjects, mockGhostAuditAlerts
 } from '../mock/mockData';
-import { apiVerifyResolution as apiVerifyResolutionImport } from './api.service'; // Self-import for name consistency if needed, but defining it is better.
 
 // Simulate async delay (only used for pending mock features now)
 const delay = (ms = 400) => new Promise(res => setTimeout(res, ms));
@@ -144,6 +143,11 @@ export const apiGetCategoryBreakdown = async () => {
     return { success: true, data: mockCategoryBreakdown };
 };
 
+export const apiGetStateAnalytics = async () => {
+    await delay(300);
+    return { success: true, data: mockStateAnalytics };
+};
+
 export const apiGetSentimentTrend = async () => {
     await delay(300);
     return { success: true, data: mockSentimentTrend };
@@ -245,45 +249,11 @@ export const apiUpdateScheme = async (id, data) => {
 };
 
 // ==============================
-//  NOTIFICATIONS
-// ==============================
-export const apiGetNotifications = async () => {
-    await delay(300);
-    return { success: true, data: mockNotifications };
-};
-
-export const apiMarkNotificationRead = async (id) => {
-    await delay(200);
-    return { success: true };
-};
-
-// ==============================
-//  FRAUD & DUPLICATES
-// ==============================
-export const apiGetFraudDuplicates = async () => {
-    await delay(400);
-    return { success: true, data: mockFraudDuplicates };
-};
-
-export const apiReviewFraud = async (id, action) => {
-    await delay(400);
-    return { success: true, data: { id, action } };
-};
-
-// ==============================
 //  HEATMAP
 // ==============================
 export const apiGetHeatmapData = async () => {
     await delay(400);
     return { success: true, data: mockHeatmapData };
-};
-
-// ==============================
-//  ANALYTICS
-// ==============================
-export const apiGetStateAnalytics = async () => {
-    await delay(400);
-    return { success: true, data: mockStateAnalytics };
 };
 
 // ==============================
@@ -298,30 +268,107 @@ export const apiGetCriticalGrievances = async () => {
 };
 
 // ==============================
-//  CITIZEN SPECIFICS
+//  CITIZEN SPECIFICS (Integrated Group 2)
 // ==============================
 export const apiGetMyGrievances = async () => {
     const res = await apiFetch('/grievance/my-grievances');
-    if (res.success && res.data) return res;
-    return { success: false, data: [] };
+    return res.success ? res : { success: false, data: [] };
 };
 
 export const apiGetMatchedSchemes = async () => {
-    // Fallback to mock data if API fails
-    const res = await apiFetch('/schemes/recommend');
-    if (res.success && res.data) return res;
-    
-    // Mock fallback
-    await delay(400);
-    return { success: true, data: mockSchemes.slice(0, 5) };
+    return await apiFetch('/schemes/recommend');
+};
+
+export const apiGetSchemesEligibilityCheck = async (params) => {
+    const qs = new URLSearchParams(params).toString();
+    return await apiFetch(`/schemes/eligibility-check?${qs}`);
+};
+
+export const apiGetBenefitGap = async (claimedSchemeIds = []) => {
+    return await apiFetch('/schemes/benefit-gap', {
+        method: 'POST',
+        body: JSON.stringify({ claimedSchemeIds })
+    });
+};
+
+export const apiGetSchemesTimeMachine = async (year) => {
+    return await apiFetch(`/schemes/time-machine?year=${year}`);
+};
+
+export const apiGetBenefitRoadmap = async () => {
+    return await apiFetch('/schemes/benefit-roadmap');
 };
 
 export const apiTrackGrievance = async (trackingId) => {
     return await apiFetch(`/grievance/track/${trackingId}`);
 };
 
+export const apiSearchGrievances = async (query = {}, page = 1, limit = 20) => {
+    const qs = new URLSearchParams({ ...query, page, limit }).toString();
+    return await apiFetch(`/grievance/search?${qs}`);
+};
+
 // ==============================
-//  NEW FEATURE APIs
+//  ADMIN SPECIFICS (Integrated Group 2)
+// ==============================
+
+// Feature 17: Officer Leaderboard
+export const apiGetOfficerLeaderboard = async () => {
+    const res = await apiFetch('/admin/officers/leaderboard');
+    if (!res.success || !res.data || !res.data.leaderboard || res.data.leaderboard.length === 0) {
+        return { success: true, data: mockOfficerSLA };
+    }
+    return { success: true, data: res.data.leaderboard };
+};
+
+// Feature 18: SLA Tracker
+export const apiGetSLAData = async () => {
+    const res = await apiFetch('/admin/sla-tracker');
+    // For the demo, we always prefer our rich mock data if the live data lacks full detail
+    if (!res.success || !res.data || !Array.isArray(res.data) || res.data.length < 5 || !res.data[0].trackingId) {
+        return { success: true, data: mockSLAData };
+    }
+    return res;
+};
+
+// Feature 19: Fraud & Duplicate Alerts
+export const apiGetFraudDuplicates = async () => {
+    const res = await apiFetch('/admin/fraud-alerts');
+    // Prototype fallback — always use rich mock data if reasoning is missing
+    if (!res.success || !res.data || (Array.isArray(res.data) && (res.data.length === 0 || !res.data[0].aiReason))) {
+        return { success: true, data: mockFraudDuplicates };
+    }
+    return res;
+};
+
+export const apiReviewFraud = async (id, action) => {
+    return await apiFetch(`/admin/fraud-alerts/${id}/review`, {
+        method: 'PATCH',
+        body: JSON.stringify({ action })
+    });
+};
+
+// Feature 16: Admin Analytics (Advanced)
+export const apiGetAdminAnalytics = async () => {
+    return await apiFetch('/admin/analytics');
+};
+
+// Admin Notifications (Shared for Citizen & Admin)
+export const apiGetNotifications = async () => {
+    const res = await apiFetch('/notification');
+    // If API returns empty or fails, use the rich mock data for demonstration purposes
+    if (!res.success || !res.data || res.data.length === 0) {
+        return { success: true, data: mockNotifications };
+    }
+    return res;
+};
+
+export const apiMarkNotificationRead = async (id) => {
+    return await apiFetch(`/notification/${id}/read`, { method: 'PATCH' });
+};
+
+// ==============================
+//  NEW FEATURE APIs (Stubs/Others)
 // ==============================
 
 // Feature 21: PreSeva — AI Grievance Prevention
@@ -337,13 +384,6 @@ export const apiMarkPrevented = async (id) => {
 
 // Feature 15: Bharat Distress Index
 export const apiGetDistressIndex = async () => { await delay(400); return { success: true, data: mockDistressIndex }; };
-
-// Feature 18: SLA Tracker
-export const apiGetSLAData = async () => { await delay(400); return { success: true, data: mockSLAData }; };
-export const apiGetOfficerSLA = async () => { await delay(300); return { success: true, data: mockOfficerSLA }; };
-
-// Feature 17: SchemePath / Benefit Roadmap
-export const apiGetBenefitRoadmap = async (userId) => { await delay(600); return { success: true, data: mockBenefitRoadmap }; };
 
 // Feature 16: JanConnect Community
 export const apiGetCommunityPosts = async () => { await delay(400); return { success: true, data: mockCommunityPosts }; };
