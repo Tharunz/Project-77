@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { MdTimerOff, MdTimer, MdWarning, MdCheckCircle, MdPerson } from 'react-icons/md';
-import { apiGetSLAData, apiGetOfficerSLA } from '../../services/api.service';
+import { MdTimerOff, MdTimer, MdWarning, MdCheckCircle, MdPerson, MdStars, MdVerified } from 'react-icons/md';
+import { apiGetSLAData, apiGetOfficerLeaderboard } from '../../services/api.service';
 
 const STATUS_CFG = {
     'Breached': { color: '#EF4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.2)', icon: <MdTimerOff /> },
     'Due Today': { color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', icon: <MdWarning /> },
     'At Risk': { color: '#F97316', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.2)', icon: <MdWarning /> },
     'On Track': { color: '#00C896', bg: 'rgba(0,200,150,0.1)', border: 'rgba(0,200,150,0.2)', icon: <MdCheckCircle /> },
+};
+
+const BADGE_CONFIG = {
+    Gold: { icon: <MdStars style={{ color: '#FFD700' }} />, label: 'Top Performer', bg: 'rgba(255,215,0,0.1)' },
+    Silver: { icon: <MdStars style={{ color: '#C0C0C0' }} />, label: 'Exceeding SLA', bg: 'rgba(192,192,192,0.1)' },
+    Bronze: { icon: <MdStars style={{ color: '#CD7F32' }} />, label: 'On Track', bg: 'rgba(205,127,50,0.1)' },
+    Warning: { icon: <MdWarning style={{ color: '#EF4444' }} />, label: 'Probation', bg: 'rgba(239,68,68,0.1)' },
 };
 
 function HoursDisplay({ hours }) {
@@ -23,11 +30,19 @@ export default function SLATracker() {
     const [filterStatus, setFilterStatus] = useState('All');
 
     useEffect(() => {
-        Promise.all([apiGetSLAData(), apiGetOfficerSLA()]).then(([s, o]) => {
-            setSlaData(s.data);
-            setOfficerData(o.data);
-            setLoading(false);
-        });
+        const load = async () => {
+            setLoading(true);
+            try {
+                const [s, o] = await Promise.all([apiGetSLAData(), apiGetOfficerLeaderboard()]);
+                setSlaData(Array.isArray(s.data) ? s.data : []);
+                setOfficerData(Array.isArray(o.data) ? o.data : []);
+            } catch (err) {
+                console.error("SLA Data Error:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
     }, []);
 
     const breached = slaData.filter(s => s.status === 'Breached').length;
@@ -43,7 +58,7 @@ export default function SLATracker() {
                 <div>
                     <h1 className="section-title"><MdTimer className="icon" style={{ color: '#F59E0B' }} /> SLA & Officer Accountability</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: 4 }}>
-                        Radical transparency — every officer's performance is tracked and publicly accountable. Breach SLA = auto-escalation.
+                        Live monitoring of officer response times. Badges are auto-assigned by AI based on composite performance scores.
                     </p>
                 </div>
             </div>
@@ -80,20 +95,19 @@ export default function SLATracker() {
             {/* SLA Table */}
             <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
                 <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Grievance SLA Monitor</h3>
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Active Grievance SLA Monitor</h3>
                 </div>
-                {loading ? <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div> : (
+                {loading ? <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Querying Service Level Engine...</div> : (
                     <div style={{ overflowX: 'auto' }}>
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>Grievance ID</th>
-                                    <th>Title</th>
-                                    <th>State</th>
+                                    <th>Tracking ID</th>
+                                    <th>Brief</th>
+                                    <th>Region</th>
                                     <th>Officer</th>
-                                    <th>Priority</th>
-                                    <th>SLA Deadline</th>
-                                    <th>Time Left</th>
+                                    <th>Deadline</th>
+                                    <th>Compliance</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -102,14 +116,13 @@ export default function SLATracker() {
                                     const cfg = STATUS_CFG[item.status] || STATUS_CFG['On Track'];
                                     return (
                                         <tr key={item.id} style={{ animation: `fadeInUp 0.3s ease ${i * 0.04}s both` }}>
-                                            <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--saffron)' }}>{item.id}</td>
+                                            <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--saffron)' }}>{item.trackingId || item.id}</td>
                                             <td style={{ fontSize: '0.82rem', fontWeight: 600, maxWidth: 200 }}>{item.title}</td>
                                             <td style={{ fontSize: '0.78rem' }}>{item.state}</td>
-                                            <td style={{ fontSize: '0.78rem', color: item.assignedTo === 'Unassigned' ? '#EF4444' : 'var(--text-secondary)', fontWeight: item.assignedTo === 'Unassigned' ? 700 : 400 }}>
-                                                {item.assignedTo}
+                                            <td style={{ fontSize: '0.78rem', color: item.officer === 'Unassigned' ? '#EF4444' : 'var(--text-secondary)', fontWeight: item.officer === 'Unassigned' ? 700 : 400 }}>
+                                                {item.officer || item.assignedTo}
                                             </td>
-                                            <td><span className={`badge badge-${item.priority.toLowerCase()}`}>{item.priority}</span></td>
-                                            <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.slaDeadline}</td>
+                                            <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{new Date(item.slaDeadline).toLocaleString()}</td>
                                             <td><HoursDisplay hours={item.hoursLeft} /></td>
                                             <td>
                                                 <span style={{
@@ -134,50 +147,53 @@ export default function SLATracker() {
             <div>
                 <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 14 }}>
                     <MdPerson style={{ verticalAlign: 'middle', color: 'var(--saffron)', marginRight: 6 }} />
-                    Officer Accountability Leaderboard
+                    Officer Accountability Leaderboard (Live Rankings)
                 </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
-                    {officerData.sort((a, b) => b.rating - a.rating).map((o, i) => (
-                        <div key={o.officer} className="glass-card" style={{ padding: '18px 20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <div style={{
-                                        width: 36, height: 36, borderRadius: '50%',
-                                        background: i === 0 ? 'linear-gradient(135deg, #F59E0B, #FF6B2C)' : 'rgba(255,255,255,0.08)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: '0.9rem', fontWeight: 800, color: i === 0 ? 'white' : 'var(--text-muted)'
-                                    }}>#{i + 1}</div>
-                                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>{o.officer}</h4>
-                                </div>
-                                <div style={{
-                                    fontFamily: 'Space Grotesk', fontSize: '1.3rem', fontWeight: 900,
-                                    color: o.rating >= 90 ? '#00C896' : o.rating >= 75 ? '#F59E0B' : '#EF4444'
-                                }}>{o.rating}</div>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                                {[
-                                    { label: 'Assigned', value: o.totalAssigned, color: '#3B82F6' },
-                                    { label: 'On Time', value: o.onTime, color: '#00C896' },
-                                    { label: 'Breaches', value: o.breaches, color: '#EF4444' },
-                                    { label: 'Avg Days', value: `${o.avgResolutionDays}d`, color: '#F59E0B' },
-                                ].map(stat => (
-                                    <div key={stat.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{stat.label}</span>
-                                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: stat.color }}>{stat.value}</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+                    {officerData.map((o, i) => {
+                        const badge = BADGE_CONFIG[o.badge] || BADGE_CONFIG.Bronze;
+                        const rankColor = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'var(--text-muted)';
+                        return (
+                            <div key={o.id} className="glass-card" style={{ padding: '20px', position: 'relative', borderLeft: `4px solid ${rankColor}` }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ fontSize: '1.2rem', fontWeight: 900, color: rankColor }}>#{i + 1}</div>
+                                        <div>
+                                            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{o.name}</h4>
+                                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>ID: {o.id}</div>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                            <div style={{ marginTop: 12 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Performance Score</span>
-                                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: o.rating >= 90 ? '#00C896' : o.rating >= 75 ? '#F59E0B' : '#EF4444' }}>{o.rating}/100</span>
+                                    <div style={{ background: badge.bg, color: badge.icon.props.style.color, padding: '4px 10px', borderRadius: 6, fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        {badge.icon} {o.badge}
+                                    </div>
                                 </div>
-                                <div style={{ height: 6, background: 'rgba(255, 255, 255, 0.12)', borderRadius: 3, overflow: 'hidden' }}>
-                                    <div style={{ width: `${o.rating}%`, height: '100%', borderRadius: 3, background: o.rating >= 90 ? '#00C896' : o.rating >= 75 ? '#F59E0B' : '#EF4444' }} />
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, background: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: 8 }}>
+                                    {[
+                                        { label: 'Files', value: o.casesHandled || 0 },
+                                        { label: 'On-Time', value: `${o.slaCompliance || 0}%` },
+                                        { label: 'Breaches', value: o.breaches ?? 0 },
+                                        { label: 'Speed', value: `${o.avgResolutionDays || 0}d` }
+                                    ].map(s => (
+                                        <div key={s.label} style={{ textAlign: 'center' }}>
+                                            <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 700 }}>{s.label}</div>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>{s.value}</div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Composite Score</span>
+                                        <span style={{ fontSize: '0.85rem', fontWeight: 900, color: o.compositeScore >= 90 ? '#00C896' : o.compositeScore >= 75 ? '#F59E0B' : '#EF4444' }}>{o.compositeScore}/100</span>
+                                    </div>
+                                    <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 100, overflow: 'hidden' }}>
+                                        <div style={{ width: `${o.compositeScore}%`, height: '100%', background: `linear-gradient(90deg, ${rankColor}, #00C896)`, transition: 'width 1s ease' }} />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </div>

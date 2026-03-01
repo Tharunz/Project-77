@@ -9,7 +9,7 @@ import {
     MdRefresh, MdNotificationsActive, MdListAlt
 } from 'react-icons/md';
 import {
-    apiGetDashboardStats, apiGetActivityFeed,
+    apiGetAdminAnalytics, apiGetDashboardStats, apiGetActivityFeed,
     apiGetMonthlyTrend, apiGetCategoryBreakdown
 } from '../../services/api.service';
 import './AdminDashboard.css';
@@ -43,7 +43,7 @@ const ActivityItem = ({ item }) => {
             <div className="activity-dot" style={{ background: colors[item.type] || colors.default }} />
             <div className="activity-content">
                 <p className="activity-message">{item.message}</p>
-                <span className="activity-time">{item.time}</span>
+                <span className="activity-time">{item.time || new Date(item.timestamp).toLocaleTimeString()}</span>
             </div>
             <span className="activity-state">{item.state}</span>
         </div>
@@ -73,21 +73,30 @@ export default function AdminDashboard() {
     const [feed, setFeed] = useState([]);
     const [trend, setTrend] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [topStates, setTopStates] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const load = async () => {
-            const [s, f, t, c] = await Promise.all([
-                apiGetDashboardStats(), apiGetActivityFeed(),
-                apiGetMonthlyTrend(), apiGetCategoryBreakdown()
-            ]);
-            setStats(s.data);
-            setFeed(f.data);
-            setTrend(t.data);
-            setCategories(c.data);
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const res = await apiGetAdminAnalytics();
+            if (res.success && res.data) {
+                const { kpis, monthlyTrend, categoryBreakdown, activityFeed, topStates: ts } = res.data;
+                setStats(kpis);
+                setTrend(monthlyTrend || []);
+                setCategories(categoryBreakdown || []);
+                setFeed(activityFeed || []);
+                setTopStates(ts || []);
+            }
+        } catch (err) {
+            console.error("Dashboard Load Error:", err);
+        } finally {
             setLoading(false);
-        };
-        load();
+        }
+    };
+
+    useEffect(() => {
+        loadData();
     }, []);
 
     const [isResizing, setIsResizing] = useState(false);
@@ -112,14 +121,15 @@ export default function AdminDashboard() {
         };
     }, []);
 
-    if (loading) return (
+    if (loading || !stats) return (
         <div className="dash-loading">
-            <div className="spinner" /><span>Loading intelligence data...</span>
+            <div className="spinner" /><span>Synchronizing with National Data Lake...</span>
         </div>
     );
 
-    const resolutionPct = stats.totalGrievances > 0
-        ? Math.round((stats.resolved / stats.totalGrievances) * 100)
+    const total = stats.totalGrievances || (stats.resolved + stats.pending + stats.critical + stats.inProgress);
+    const resolutionPct = total > 0
+        ? Math.round((stats.resolved / total) * 100)
         : 0;
 
     return (
@@ -128,17 +138,17 @@ export default function AdminDashboard() {
             <div className="dash-header">
                 <div>
                     <h1 className="dash-title">
-                        <MdDashboard className="icon" /> Platform Overview
+                        <MdDashboard className="icon" /> National Intelligence Center
                     </h1>
-                    <p className="dash-subtitle">Real-time intelligence across all 28 states & UTs</p>
+                    <p className="dash-subtitle">Unified dashboard for surveillance, sentiment, and scheme delivery</p>
                 </div>
                 <div className="dash-header-right">
                     <div className="platform-health">
                         <span className="health-dot" />
-                        All systems operational
+                        AI Guardians Active
                     </div>
-                    <button className="btn-secondary" style={{ fontSize: '0.8rem' }}>
-                        <MdRefresh /> Refresh
+                    <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={loadData}>
+                        <MdRefresh /> Sync Live
                     </button>
                 </div>
             </div>
@@ -175,33 +185,33 @@ export default function AdminDashboard() {
             <div className="kpi-grid stagger">
                 <KPICard
                     label="Total Grievances" value={stats.totalGrievances.toLocaleString()}
-                    sub={`+${stats.todayFiled} today`} icon={<MdListAlt style={{ fontSize: '1.4rem' }} />}
-                    color="#3B82F6" trend="12.4%" trendUp={true}
+                    sub={`Active cases: ${stats.pending + stats.inProgress}`} icon={<MdListAlt style={{ fontSize: '1.4rem' }} />}
+                    color="#3B82F6" trend={stats.trend?.total} trendUp={true}
                 />
                 <KPICard
                     label="Resolved" value={stats.resolved.toLocaleString()}
-                    sub={`+${stats.todayResolved} today`} icon={<MdCheckCircle style={{ fontSize: '1.4rem' }} />}
-                    color="#00C896" trend="8.2%" trendUp={true}
+                    sub="Lifetime resolution" icon={<MdCheckCircle style={{ fontSize: '1.4rem' }} />}
+                    color="#00C896" trend={stats.trend?.resolved} trendUp={true}
                 />
                 <KPICard
                     label="Pending" value={stats.pending.toLocaleString()}
-                    sub="Awaiting action" icon={<MdHourglassEmpty style={{ fontSize: '1.4rem' }} />}
-                    color="#F59E0B" trend="3.1%" trendUp={false}
+                    sub="Awaiting triage" icon={<MdHourglassEmpty style={{ fontSize: '1.4rem' }} />}
+                    color="#F59E0B" trend={stats.trend?.pending} trendUp={false}
                 />
                 <KPICard
-                    label="Critical / High Distress" value={stats.critical.toLocaleString()}
-                    sub="AI-flagged urgent" icon={<MdWarning style={{ fontSize: '1.4rem' }} />}
-                    color="#EF4444" trend="5.7%" trendUp={true}
+                    label="Critical Alerts" value={stats.critical.toLocaleString()}
+                    sub="Urgent attention req." icon={<MdWarning style={{ fontSize: '1.4rem' }} />}
+                    color="#EF4444" trend={stats.trend?.critical} trendUp={true}
                 />
                 <KPICard
                     label="In Progress" value={stats.inProgress.toLocaleString()}
-                    sub="By officer" icon={<MdBolt style={{ fontSize: '1.4rem' }} />}
-                    color="#8B5CF6" trend="2.3%" trendUp={true}
+                    sub="Currently handled" icon={<MdBolt style={{ fontSize: '1.4rem' }} />}
+                    color="#8B5CF6" trend={stats.trend?.inProgress} trendUp={true}
                 />
                 <KPICard
-                    label="Avg Response Time" value={stats.avgResponseTime}
-                    sub="Target: 3 days" icon={<MdTrendingUp style={{ fontSize: '1.4rem' }} />}
-                    color="#FF6B2C" trend="0.4d" trendUp={false}
+                    label="Avg Resolution" value={`${stats.avgResponseTime}d`}
+                    sub="SLA Performance" icon={<MdTrendingUp style={{ fontSize: '1.4rem' }} />}
+                    color="#FF6B2C" trend="On Track" trendUp={true}
                 />
             </div>
 
@@ -344,18 +354,13 @@ export default function AdminDashboard() {
                     {/* Top States */}
                     <div className="top-states">
                         <h4>Top States by Volume</h4>
-                        {[
-                            { state: 'Uttar Pradesh', count: 2847, pct: 85 },
-                            { state: 'Maharashtra', count: 2134, pct: 64 },
-                            { state: 'Bihar', count: 1923, pct: 57 },
-                            { state: 'West Bengal', count: 1654, pct: 49 },
-                        ].map(s => (
+                        {topStates.map(s => (
                             <div key={s.state} className="state-bar-item">
-                                <span className="state-name">{s.state}</span>
+                                <span className="state-name" style={{ fontSize: '0.78rem' }}>{s.state}</span>
                                 <div className="state-bar-track">
                                     <div className="state-bar-fill" style={{ width: `${s.pct}%` }} />
                                 </div>
-                                <span className="state-count">{s.count.toLocaleString()}</span>
+                                <span className="state-count" style={{ fontSize: '0.78rem' }}>{s.count.toLocaleString()}</span>
                             </div>
                         ))}
                     </div>

@@ -52,7 +52,6 @@ const STATE_MOCK_DATA = {
     'Punjab': { g: 2321, top: 'Agriculture', rr: '85%', pred: 'Crop Yield Opt', resp: '24h' },
     'Haryana': { g: 2109, top: 'Livestock', rr: '84%', pred: 'Fodder Scarcity', resp: '26h' },
     'Chhattisgarh': { g: 1987, top: 'Mining', rr: '78%', pred: 'Safety Protocol', resp: '32h' },
-    'Jharkhand': { g: 1876, top: 'Welfare', rr: '80%', pred: 'Direct Transfer', resp: '48h' },
     'Uttarakhand': { g: 1765, top: 'Hydropower', rr: '82%', pred: 'Turbine Maint', resp: '24h' },
     'Himachal Pradesh': { g: 1543, top: 'Horticulture', rr: '86%', pred: 'Apple Export', resp: '20h' },
     'Jammu and Kashmir': { g: 1321, top: 'Connectivity', rr: '72%', pred: 'Network Blackout', resp: '48h' },
