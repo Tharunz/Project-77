@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, Suspense, lazy, useCallback } from 'react';
+import React, { useEffect, useRef, useState, Suspense, lazy, useCallback, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { MdArrowForward, MdShield } from 'react-icons/md';
 import IntelligenceTerminal from '../../components/IntelligenceTerminal';
@@ -60,9 +60,36 @@ function Ring({ prob, color }) {
 const Chakra = ({ size = 28 }) => (<svg width={size} height={size} viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="rgba(255,85,0,.1)" /><circle cx="20" cy="20" r="11.5" stroke="#FF5500" strokeWidth="1.8" fill="none" /><circle cx="20" cy="20" r="2.8" fill="#FF5500" />{Array.from({ length: 24 }).map((_, i) => <line key={i} x1="20" y1="9.5" x2="20" y2="12.5" stroke="#FF5500" strokeWidth="1.1" strokeLinecap="round" transform={`rotate(${i * 15} 20 20)`} />)}</svg>);
 
 
-export default function HomePage() {
+const TickerItem = memo(({ text, isNew }) => (
+    <span className="ticker-item" style={{ animation: isNew ? 'slideInNew 0.5s cubic-bezier(0.16, 1, 0.3, 1)' : 'none' }}>
+        {text}
+    </span>
+));
+
+const ItNav = memo(() => {
     const [scrolled, setScrolled] = useState(false);
-    useEffect(() => { const fn = () => setScrolled(window.scrollY > 32); window.addEventListener('scroll', fn, { passive: true }); return () => window.removeEventListener('scroll', fn); }, []);
+    useEffect(() => {
+        const fn = () => setScrolled(window.scrollY > 32);
+        window.addEventListener('scroll', fn, { passive: true });
+        return () => window.removeEventListener('scroll', fn);
+    }, []);
+
+    return (
+        <nav className={`it-nav ${scrolled ? 'scrolled' : ''}`}>
+            <Link to="/" className="it-logo"><Chakra size={26} /> Project<strong>-77</strong><div className="it-live"><div className="it-live-dot" /> LIVE</div></Link>
+            <div className="it-nav-links">
+                <a href="#preseva" className="it-nav-a">PreSeva</a>
+                <a href="#caps" className="it-nav-a">Seva Modules</a>
+                <a href="#how" className="it-nav-a">System Protocol</a>
+                <div className="it-sep" />
+                <Link to="/login" className="it-ghost">Citizen Login</Link>
+                <Link to="/register" className="it-solid">Access Portal <MdArrowForward /></Link>
+            </div>
+        </nav>
+    );
+});
+
+export default function HomePage() {
     const [vC, rC] = useCounter(142, 2400); const [vS, rS] = useCounter(500, 1900);
     const [vL, rL] = useCounter(22, 1600); const [vA, rA] = useCounter(91, 2100);
     const sr1 = useSR(), sr2 = useSR(), sr3 = useSR(), sr4 = useSR(), sr5 = useSR();
@@ -86,9 +113,12 @@ export default function HomePage() {
         return () => { clearInterval(t1); clearInterval(t2); }
     }, []);
 
-    const handleMapPulse = (msg) => {
-        setTickerQueue(prev => [msg, ...prev].slice(0, 15));
-    };
+    const handleMapPulse = useCallback((msg) => {
+        setTickerQueue(prev => {
+            if (prev[0] === msg) return prev;
+            return [msg, ...prev].slice(0, 15);
+        });
+    }, []);
 
     const mapLegend = [
         { lbl: 'SAFE', c: '#00E5A0', lvl: 0 },
@@ -98,36 +128,31 @@ export default function HomePage() {
         { lbl: 'CRITICAL', c: '#FF3B3B', lvl: 4 },
     ];
 
+    // Memoize the ticker entries to prevent reset of animation
+    const tickerContent = useMemo(() => (
+        <div className="ticker-inner">
+            {tickerQueue.map((a, i) => (
+                <TickerItem key={`q-${i}-${a.substring(0, 10)}`} text={a} isNew={i === 0} />
+            ))}
+            {tickerQueue.map((a, i) => (
+                <TickerItem key={`d-${i}-${a.substring(0, 10)}`} text={a} />
+            ))}
+        </div>
+    ), [tickerQueue]);
+
     return (
         <div className="it">
             {/* Ticker */}
             <div className="ticker">
                 <div className="ticker-badge"><div className="ticker-badge-dot" />LIVE INTELLIGENCE</div>
                 <div className="ticker-track">
-                    <div className="ticker-inner">
-                        {tickerQueue.map((a, i) => (
-                            <span key={i + '-' + a.substring(0, 8)} className="ticker-item" style={{ animation: i === 0 ? 'slideInNew 0.5s cubic-bezier(0.16, 1, 0.3, 1)' : 'none' }}>{a}</span>
-                        ))}
-                        {/* Duplicate for infinite feel although prepending handles it mostly, let's just show the queue */}
-                        {tickerQueue.map((a, i) => (
-                            <span key={'dup-' + i + '-' + a.substring(0, 8)} className="ticker-item">{a}</span>
-                        ))}
-                    </div>
+                    {tickerContent}
                 </div>
             </div>
 
-            {/* Nav */}
-            <nav className={`it-nav ${scrolled ? 'scrolled' : ''}`}>
-                <Link to="/" className="it-logo"><Chakra size={26} /> Project<strong>-77</strong><div className="it-live"><div className="it-live-dot" /> LIVE</div></Link>
-                <div className="it-nav-links">
-                    <a href="#preseva" className="it-nav-a">PreSeva</a>
-                    <a href="#caps" className="it-nav-a">Capabilities</a>
-                    <a href="#how" className="it-nav-a">How it Works</a>
-                    <div className="it-sep" />
-                    <Link to="/login" className="it-ghost">Citizen Login</Link>
-                    <Link to="/register" className="it-solid">Access Portal <MdArrowForward /></Link>
-                </div>
-            </nav>
+
+
+            <ItNav />
 
             {/* Hero — Split */}
             <section className="it-hero" style={{ position: 'relative' }}>
@@ -135,11 +160,38 @@ export default function HomePage() {
                 <MobileParticles />
                 <div className="it-hero-left" style={{ position: 'relative', zIndex: 10 }}>
                     <div className="it-hero-tag">AI-Powered Citizen Services</div>
-                    <h1 className="it-title">Problems<br /><span className="it-title-a">solved</span><br />before they<br /><span className="it-title-b">happen.</span></h1>
-                    <p className="it-sub">{PROJECT_NAME} is an intelligent platform that predicts government service failures before citizens are affected. 500+ schemes, 22 languages, grievance tracking, officer accountability — unified.</p>
-                    <div className="it-ctas">
-                        <Link to="/register" className="it-cta-p">Access Citizen Portal <MdArrowForward /></Link>
-                        <Link to="/login" className="it-cta-s">Officer Login →</Link>
+                    <h1 className="it-title" style={{ display: 'flex', flexDirection: 'column', gap: '0.2em' }}>
+                        <span style={{ color: 'white' }}>India's Voice.</span>
+                        <span style={{ color: '#FF6B2C' }}>India's Power.</span>
+                        <span style={{ color: '#00C896' }}>India's Platform.</span>
+                    </h1>
+                    <div className="hero-cinematic-desc sr ae-levitate" ref={useSR()}>
+                        <div className="text-line">
+                            <span className="line-content ae-laser-text" data-text="Project-77 unifies every citizen service, predicts every">
+                                Project-77 unifies <span className="ae-flicker delay-1">every citizen service</span>, predicts every
+                            </span>
+                        </div>
+                        <div className="text-line">
+                            <span className="line-content ae-laser-text" data-text="governance failure, and holds every rupee accountable —">
+                                governance failure, and holds every rupee <span className="ae-flicker delay-2">accountable</span> —
+                            </span>
+                        </div>
+                        <div className="text-line">
+                            <span className="line-content ae-laser-text" data-text="in one AWS-powered ecosystem.">
+                                in one <span className="highlight-gradient ae-flicker delay-3">AWS-powered ecosystem.</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="hero-precision-ctas sr" ref={useSR()}>
+                        <Link to="/register" className="btn-precision-primary">
+                            <span>Citizen Gateway</span>
+                        </Link>
+
+                        <Link to="/login" className="btn-precision-secondary">
+                            <span>Department Console</span>
+                            <div className="btn-underline-glow"></div>
+                        </Link>
                     </div>
                 </div>
                 <div className="it-hero-right" style={{ position: 'relative', zIndex: 10 }}>
@@ -286,7 +338,9 @@ export default function HomePage() {
                 <div className="sr" ref={sr1}>
                     <div className="it-pv-tag"><MdShield /> PRESEVA · ACTIVE</div>
                     <h2 className="it-pv-title">What if the government<br />fixed things <em>before you complained?</em></h2>
-                    <p className="it-pv-desc">PreSeva AI mines 8M+ historical grievances to detect patterns — then <strong>alerts departments before citizens are affected</strong>, ensuring proactive governance.</p>
+                    <p className="it-pv-desc">
+                        PreSeva is India's first predictive governance intelligence engine. Deployed on AWS, it analyzes patterns across millions of historical service records to detect systemic failures before they manifest. When a risk is identified, the responsible government department is automatically notified and given a structured response protocol. Citizens are protected. Departments are empowered. Problems are solved before they become crises. This is not reactive governance. This is governance at the speed of intelligence.
+                    </p>
                     <div className="it-pv-stats">
                         <div className="it-stat-blk" style={{ borderColor: '#FF5500' }}><span className="it-stat-val" style={{ color: '#FF5500' }}>43</span><span className="it-stat-lbl">Problems Prevented</span></div>
                         <div className="it-stat-blk" style={{ borderColor: '#00E5A0' }}><span className="it-stat-val" style={{ color: '#00E5A0' }}>8,743</span><span className="it-stat-lbl">Citizens Unaffected</span></div>
@@ -294,6 +348,64 @@ export default function HomePage() {
                 </div>
                 <div className="it-pv-right sr" ref={sr2}>
                     {PREDS.map((p, i) => { const rc = p.prob > 88 ? '#FF5500' : p.prob > 80 ? '#FFB800' : '#5C8EFF'; return (<div key={i} className="it-pred"><Ring prob={p.prob} color={rc} /><div className="it-pred-info"><h4>{p.title}</h4><p>{p.sub}</p></div><span className="it-pred-badge" style={{ background: `${p.sc}18`, color: p.sc, border: `1px solid ${p.sc}30` }}>{p.status}</span></div>); })}
+                </div>
+            </section>
+
+            {/* Change 3: Three Guarantees Section */}
+            <section className="guarantees-section">
+                <div className="sr" ref={sr3}>
+                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.65rem', color: '#334155', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 16 }}>// CIVIC COMMITMENT</p>
+                    <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 900, fontSize: 'clamp(2.2rem,4vw,3.2rem)', lineHeight: 1.1 }}>
+                        <span style={{ color: 'white' }}>Three Promises.</span><br />
+                        <span style={{ color: '#FF6B2C' }}>Backed by Technology.</span>
+                    </h2>
+                    <p style={{ fontSize: '0.9rem', color: '#94A3B8', lineHeight: 1.75, maxWidth: 600, marginTop: 16 }}>
+                        For the first time in India's history, these are not just policy commitments. They are technically enforced guarantees — powered by AWS and impossible to bypass.
+                    </p>
+                </div>
+
+                <div className="guarantees-grid">
+                    <div className="guarantee-card sr" ref={useSR()} style={{ '--card-color': '#00C896', '--card-rgb': '0,200,150', transitionDelay: '0ms' }}>
+                        <div className="guarantee-card-body">
+                            <p className="guarantee-tag">GUARANTEE</p>
+                            <div className="guarantee-number">01</div>
+                            <h3 className="guarantee-title">No Complaint Goes Unresolved.</h3>
+                            <p className="guarantee-desc">
+                                Our AI Ghost Audit engine continuously monitors every officer action. A grievance closed without genuine resolution is automatically detected, reopened, and escalated — without any human intervention. The system enforces accountability so officials don't have to.
+                            </p>
+                        </div>
+                        <div className="guarantee-footer">
+                            <span className="aws-tag">⚡ AWS COMPREHEND + STEP FUNCTIONS</span>
+                        </div>
+                    </div>
+
+                    <div className="guarantee-card sr" ref={useSR()} style={{ '--card-color': '#FF6B2C', '--card-rgb': '255,107,44', transitionDelay: '120ms' }}>
+                        <div className="guarantee-card-body">
+                            <p className="guarantee-tag">GUARANTEE</p>
+                            <div className="guarantee-number">02</div>
+                            <h3 className="guarantee-title">Every Rupee Reaches Its Destination.</h3>
+                            <p className="guarantee-desc">
+                                Digital Budget Escrow automatically locks allocated government funds in a verified AWS ledger. Funds are released only when citizens themselves confirm work is completed on the ground. No officer can release funds prematurely. The money is safe by design.
+                            </p>
+                        </div>
+                        <div className="guarantee-footer">
+                            <span className="aws-tag">⚡ AWS QLDB + LAMBDA + SNS</span>
+                        </div>
+                    </div>
+
+                    <div className="guarantee-card sr" ref={useSR()} style={{ '--card-color': '#8B5CF6', '--card-rgb': '139,92,246', transitionDelay: '240ms' }}>
+                        <div className="guarantee-card-body">
+                            <p className="guarantee-tag">GUARANTEE</p>
+                            <div className="guarantee-number">03</div>
+                            <h3 className="guarantee-title">Problems Are Resolved Before They Begin.</h3>
+                            <p className="guarantee-desc">
+                                PreSeva mines patterns across millions of historical governance events to predict systemic failures up to 48 hours in advance. The responsible department is automatically alerted and resources deployed — before a single citizen is affected or files a complaint.
+                            </p>
+                        </div>
+                        <div className="guarantee-footer">
+                            <span className="aws-tag">⚡ AWS SAGEMAKER + EVENTBRIDGE + KINESIS</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -308,8 +420,16 @@ export default function HomePage() {
             {/* CTA */}
             <section className="it-cta">
                 <div className="it-cta-box sr" ref={sr5}>
-                    <h2>Digital Governance.<br /><span>Redefined for Bharat.</span></h2>
-                    <p>500+ schemes · 22 languages · AI prevention · officer accountability · community — unified for 1.4 billion Indians.</p>
+                    <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 900 }}>
+                        <span style={{ color: 'white' }}>Project-77.</span><br />
+                        <span style={{ color: '#FF6B2C' }}>India's Digital Governance Revolution.</span>
+                    </h2>
+                    <p>
+                        A Digital India initiative powered by AWS.<br />
+                        36 features · 500+ schemes · 22 Indian languages ·<br />
+                        AI-powered prediction · Citizen-verified accountability.<br />
+                        Built for every Indian. Deployed for the nation.
+                    </p>
                     <div className="it-cta-btns">
                         <Link to="/register" className="it-cta-p">Citizen Access <MdArrowForward /></Link>
                         <Link to="/login" className="it-cta-s">Department Login</Link>
@@ -320,9 +440,345 @@ export default function HomePage() {
             {/* Footer */}
             <footer className="it-footer">
                 <Link to="/" className="it-logo"><Chakra size={16} /> <strong>{PROJECT_NAME}</strong></Link>
-                <p>India's Most Advanced Citizen Intelligence Platform · Digital India Initiative</p>
-                <p>© 2026 {PROJECT_NAME}. All rights reserved.</p>
+                <div style={{ marginTop: 20 }}>
+                    <p style={{ color: 'white', marginBottom: 4 }}>Project-77 · India's Civic Operating System</p>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>A Digital India Initiative · Powered by AWS · Serving 1.4 Billion Citizens</p>
+                </div>
+                <p style={{ marginTop: 20, fontSize: '0.75rem', opacity: 0.5 }}>© 2026 {PROJECT_NAME}. All rights reserved.</p>
             </footer>
+
+            <style>{`
+
+                
+                .guarantees-section {
+                    padding: 100px 48px;
+                    max-width: 1300px;
+                    margin: 0 auto;
+                }
+                .guarantees-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 20px;
+                    margin-top: 48px;
+                    align-items: stretch; /* Ensure cards have the same height */
+                }
+                .guarantee-card {
+                    border-radius: 16px;
+                    background: rgba(var(--card-rgb), 0.03);
+                    border: 1px solid rgba(var(--card-rgb), 0.1);
+                    border-top: 3px solid var(--card-color);
+                    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                    display: flex;
+                    flex-direction: column;
+                    opacity: 0;
+                    transform: translateY(24px);
+                    will-change: transform, opacity;
+                    overflow: hidden;
+                }
+                .guarantee-card-body {
+                    padding: 32px;
+                    flex: 1; /* Pushes footer to bottom */
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .guarantee-tag {
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.6rem;
+                    color: #475569;
+                    letter-spacing: 1px;
+                }
+                .guarantee-number {
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-weight: 900;
+                    font-size: 2.8rem;
+                    color: var(--card-color);
+                    margin-bottom: -5px;
+                    line-height: 1;
+                }
+                .guarantee-title {
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-weight: 700;
+                    font-size: 1.2rem;
+                    color: white;
+                }
+                .guarantee-desc {
+                    font-size: 0.85rem;
+                    color: #94A3B8;
+                    line-height: 1.7;
+                    margin: 0;
+                }
+                .guarantee-footer {
+                    background: rgba(var(--card-rgb), 0.08);
+                    border-top: 1px solid rgba(var(--card-rgb), 0.12);
+                    padding: 16px 32px;
+                    display: flex;
+                    align-items: center;
+                }
+                .aws-tag {
+                    font-family: 'JetBrains Mono', monospace;
+                    font-size: 0.6rem;
+                    color: rgba(255,255,255,0.7);
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .guarantee-card.in {
+                    opacity: 1 !important;
+                    transform: translateY(0) !important;
+                }
+                .guarantee-card:hover {
+                    transform: translateY(-8px);
+                    background: rgba(var(--card-rgb), 0.05);
+                    border-color: rgba(var(--card-rgb), 0.2);
+                    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.45);
+                }
+                
+                @media (max-width: 900px) {
+                    .guarantees-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .guarantees-section {
+                        padding: 60px 24px;
+                    }
+                }
+
+                /* --- Cinematic Typography Details --- */
+                .hero-cinematic-desc {
+                    margin-top: 48px;
+                    margin-bottom: 48px;
+                    max-width: 580px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    position: relative;
+                    padding: 6px 0;
+                }
+
+                /* AE Animation 1: Smooth Levitation */
+                .ae-levitate {
+                    animation: subtleFloat 6s ease-in-out infinite alternate;
+                }
+                @keyframes subtleFloat {
+                    0% { transform: translateY(0px); }
+                    100% { transform: translateY(-8px); }
+                }
+
+                /* AE Animation 2: Typographic Pure Light Laser Sweep + Tricolor Bloom */
+                .ae-laser-text {
+                    position: relative;
+                    display: inline-block;
+                    color: transparent; /* Keep text transparent to show gradient mask */
+                    background: linear-gradient(
+                        100deg, 
+                        #64748B 0%, 
+                        #64748B 40%, 
+                        #FF6B2C 48%,     /* Saffron Core */
+                        #FFFFFF 50%,     /* Pure White Core */
+                        #00C896 52%,     /* Green Core */
+                        #64748B 60%, 
+                        #64748B 100%
+                    );
+                    background-size: 300% 100%;
+                    background-position: 100% 0;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    animation: laserWipe 6s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+                    z-index: 2; /* Ensure original text is above the bloom */
+                }
+
+                /* The Synchronized Emissive Bloom (Corona) */
+                .ae-laser-text::after {
+                    content: attr(data-text);
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    color: transparent;
+                    /* Same gradient as text to perfectly mirror the light source */
+                    background: linear-gradient(
+                        100deg, 
+                        transparent 0%, 
+                        transparent 40%, 
+                        #FF6B2C 45%,     /* Wide Saffron Bloom */
+                        #FFFFFF 50%,     /* Intense White Bloom Center */
+                        #00C896 55%,     /* Wide Green Bloom */
+                        transparent 60%, 
+                        transparent 100%
+                    );
+                    background-size: 300% 100%;
+                    background-position: 100% 0;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    /* Heavy blur to turn text shape into purely volumetric light */
+                    filter: blur(12px); 
+                    opacity: 0.9;
+                    z-index: -1; 
+                    /* Identical animation to perfectly sync with the laser passing through the text */
+                    animation: laserWipe 6s cubic-bezier(0.8, 0, 0.2, 1) infinite;
+                }
+
+                /* Staggering the laser wipe line by line so light flows downwards */
+                .text-line:nth-child(1) .ae-laser-text, .text-line:nth-child(1) .ae-laser-text::after { animation-delay: 0s; }
+                .text-line:nth-child(2) .ae-laser-text, .text-line:nth-child(2) .ae-laser-text::after { animation-delay: 0.2s; }
+                .text-line:nth-child(3) .ae-laser-text, .text-line:nth-child(3) .ae-laser-text::after { animation-delay: 0.4s; }
+
+                @keyframes laserWipe {
+                    0% { background-position: 100% 0; }
+                    25% { background-position: 0% 0; }
+                    100% { background-position: 0% 0; }
+                }
+
+                /* AE Animation 3: Micro-glitching */
+                .ae-flicker {
+                    position: relative;
+                    animation: dataFlicker 3s infinite;
+                }
+                .ae-flicker.delay-1 { animation-delay: 0.5s; }
+                .ae-flicker.delay-2 { animation-delay: 2.1s; }
+                .ae-flicker.delay-3 { animation-delay: 1.4s; }
+
+                @keyframes dataFlicker {
+                    0%, 96%, 100% { opacity: 1; filter: sepia(0) hue-rotate(0deg); }
+                    97% { opacity: 0.8; filter: sepia(100%) hue-rotate(340deg); }
+                    98% { opacity: 1; }
+                    99% { opacity: 0.5; filter: sepia(100%) hue-rotate(180deg); }
+                }
+
+                .text-line {
+                    overflow: hidden; 
+                    display: inline-block;
+                    line-height: 1.5;
+                }
+
+                .line-content {
+                    display: inline-block;
+                    font-size: 1.15rem;
+                    font-weight: 400;
+                    color: #94A3B8;
+                    letter-spacing: -0.01em;
+                    transform: translateY(110%);
+                    opacity: 0;
+                    animation: slideUpReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+
+                .text-line:nth-child(2) .line-content { animation-delay: 0.1s; }
+                .text-line:nth-child(3) .line-content { animation-delay: 0.25s; }
+                .text-line:nth-child(4) .line-content { animation-delay: 0.4s; }
+
+                @keyframes slideUpReveal {
+                    0% { transform: translateY(110%); opacity: 0; }
+                    100% { transform: translateY(0); opacity: 1; }
+                }
+
+                .highlight-gradient {
+                    font-weight: 700;
+                    color: transparent;
+                    background: linear-gradient(90deg, #fff 0%, #E2E8F0 50%, #94A3B8 100%);
+                    background-size: 200% auto;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    animation: shineWords 4s linear infinite;
+                }
+                @keyframes shineWords {
+                    0% { background-position: 0% center; }
+                    100% { background-position: 200% center; }
+                }
+
+                /* --- Precision CTAs --- */
+                .hero-precision-ctas {
+                    display: flex;
+                    align-items: center;
+                    gap: 32px;
+                    margin-top: 10px;
+                    animation: ctaFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+                }
+                
+                @keyframes ctaFadeIn {
+                    0% { opacity: 0; transform: translateY(15px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+
+                /* Robust Hardware-Accelerated Primary Button */
+                .btn-precision-primary {
+                    position: relative;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px 40px;
+                    background: linear-gradient(135deg, #FF8D4A 0%, #FF5A1C 100%);
+                    background-size: 200% 200%;
+                    background-position: 0% 0%;
+                    color: white;
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    letter-spacing: 0.04em;
+                    text-decoration: none;
+                    border-radius: 100px;
+                    box-shadow: 0 8px 24px rgba(255, 107, 44, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                                box-shadow 0.3s ease, 
+                                background-position 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
+
+                .btn-precision-primary:hover {
+                    transform: translateY(-3px) scale(1.02);
+                    background-position: 100% 100%;
+                    box-shadow: 0 16px 40px rgba(255, 107, 44, 0.5), inset 0 2px 0 rgba(255,255,255,0.4);
+                }
+
+                /* Secondary Button (Ghost/Line style) */
+                .btn-precision-secondary {
+                    position: relative;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 12px 16px;
+                    color: #94A3B8;
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    text-decoration: none;
+                    letter-spacing: 0.02em;
+                    transition: color 0.3s ease;
+                }
+
+                .btn-precision-secondary:hover {
+                    color: white;
+                }
+
+                .btn-underline-glow {
+                    position: absolute;
+                    bottom: 4px; left: 16px; right: 16px;
+                    height: 1px;
+                    background: rgba(92, 142, 255, 0.3);
+                    box-shadow: 0 0 10px rgba(92, 142, 255, 0);
+                    transition: all 0.4s ease;
+                }
+
+                .btn-precision-secondary:hover .btn-underline-glow {
+                    background: rgba(92, 142, 255, 1);
+                    box-shadow: 0 0 15px rgba(92, 142, 255, 0.6);
+                    left: 0; right: 0; /* Expands outwards */
+                }
+
+                @media (max-width: 640px) {
+                    .hero-cinematic-desc {
+                        margin-top: 32px;
+                        margin-bottom: 32px;
+                    }
+                    .text-line {
+                        font-size: 1rem;
+                    }
+                    .hero-precision-ctas {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 20px;
+                    }
+                    .btn-precision-primary {
+                        width: 100%;
+                    }
+                }
+            `}</style>
         </div>
     );
 }

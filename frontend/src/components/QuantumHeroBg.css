@@ -317,3 +317,10 @@
     z-index: 5;
     background: radial-gradient(circle at center, transparent 30%, #050b1a 100%);
 }
+
+/* Hide on Mobile/Tablet to allow MobileParticles to show exclusively */
+@media (max-width: 1024px) {
+    .hq-hero-bg {
+        display: none !important;
+    }
+}
