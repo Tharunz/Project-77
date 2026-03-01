@@ -8,6 +8,7 @@ const TYPE_CONFIG = {
     escalation: { icon: <MdArrowUpward />, color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.25)', label: 'Escalation' },
     duplicate: { icon: <MdInfo />, color: '#3B82F6', bg: 'rgba(59,130,246,0.1)', border: 'rgba(59,130,246,0.25)', label: 'Duplicate' },
     new_scheme: { icon: <MdInfo />, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.25)', label: 'Scheme' },
+    scheme: { icon: <MdInfo />, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.25)', label: 'Scheme' },
     fraud: { icon: <MdSecurity />, color: '#EC4899', bg: 'rgba(236,72,153,0.1)', border: 'rgba(236,72,153,0.25)', label: 'Fraud' },
 };
 
@@ -25,16 +26,16 @@ export default function NotificationsPanel() {
 
     const markRead = async (id) => {
         await apiMarkNotificationRead(id);
-        setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+        setNotifications(ns => ns.map(n => n.id === id ? { ...n, isRead: true } : n));
     };
 
-    const markAllRead = () => setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+    const markAllRead = () => setNotifications(ns => ns.map(n => ({ ...n, isRead: true })));
 
     const filtered = filter === 'all' ? notifications
-        : filter === 'unread' ? notifications.filter(n => !n.read)
+        : filter === 'unread' ? notifications.filter(n => !n.isRead)
             : notifications.filter(n => n.type === filter);
 
-    const unreadCount = notifications.filter(n => !n.read).length;
+    const unreadCount = notifications.filter(n => !n.isRead).length;
 
     return (
         <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -105,12 +106,12 @@ export default function NotificationsPanel() {
                     const cfg = TYPE_CONFIG[notif.type] || TYPE_CONFIG.resolution;
                     return (
                         <div key={notif.id} style={{
-                            background: notif.read ? 'rgba(255,255,255,0.02)' : cfg.bg,
-                            border: `1px solid ${notif.read ? 'rgba(255, 255, 255, 0.12)' : cfg.border}`,
+                            background: notif.isRead ? 'rgba(255,255,255,0.02)' : cfg.bg,
+                            border: `1px solid ${notif.isRead ? 'rgba(255, 255, 255, 0.12)' : cfg.border}`,
                             borderRadius: 'var(--radius)', padding: '16px 20px',
                             display: 'flex', alignItems: 'flex-start', gap: 14,
                             animation: `fadeInUp 0.3s ease ${i * 0.04}s both`,
-                            opacity: notif.read ? 0.75 : 1,
+                            opacity: notif.isRead ? 0.75 : 1,
                             transition: 'all 0.2s'
                         }}>
                             <div style={{
@@ -127,18 +128,18 @@ export default function NotificationsPanel() {
                                         background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`,
                                         padding: '2px 8px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700
                                     }}>{cfg.label}</span>
-                                    {!notif.read && (
+                                    {!notif.isRead && (
                                         <span style={{ background: '#3B82F6', color: 'white', padding: '2px 8px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700 }}>NEW</span>
                                     )}
                                 </div>
                                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{notif.message}</p>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
-                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{notif.time}</span>
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{new Date(notif.sentAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
                                     {notif.citizen && <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>· {notif.citizen}</span>}
                                 </div>
                             </div>
 
-                            {!notif.read && (
+                            {!notif.isRead && (
                                 <button onClick={() => markRead(notif.id)} style={{
                                     background: 'none', border: '1px solid var(--border)', color: 'var(--text-muted)',
                                     borderRadius: 6, padding: '6px 12px', fontSize: '0.78rem', cursor: 'pointer',

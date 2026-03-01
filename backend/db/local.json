@@ -65,6 +65,7 @@
       "slaCompliance": 94.3,
       "satisfactionScore": 4.7,
       "isBreachingSLA": false,
+      "breaches": 2,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -80,6 +81,7 @@
       "slaCompliance": 78.1,
       "satisfactionScore": 3.9,
       "isBreachingSLA": true,
+      "breaches": 7,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -95,6 +97,7 @@
       "slaCompliance": 97.8,
       "satisfactionScore": 4.9,
       "isBreachingSLA": false,
+      "breaches": 1,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -110,6 +113,7 @@
       "slaCompliance": 62.4,
       "satisfactionScore": 3.2,
       "isBreachingSLA": true,
+      "breaches": 12,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -125,6 +129,7 @@
       "slaCompliance": 88.6,
       "satisfactionScore": 4.3,
       "isBreachingSLA": false,
+      "breaches": 4,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -140,6 +145,7 @@
       "slaCompliance": 91.2,
       "satisfactionScore": 4.5,
       "isBreachingSLA": false,
+      "breaches": 3,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -155,6 +161,7 @@
       "slaCompliance": 99.1,
       "satisfactionScore": 4.95,
       "isBreachingSLA": false,
+      "breaches": 0,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -170,6 +177,7 @@
       "slaCompliance": 48.7,
       "satisfactionScore": 2.8,
       "isBreachingSLA": true,
+      "breaches": 15,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -185,6 +193,7 @@
       "slaCompliance": 92.5,
       "satisfactionScore": 4.6,
       "isBreachingSLA": false,
+      "breaches": 2,
       "createdAt": "2026-01-01T00:00:00.000Z"
     },
     {
@@ -200,10 +209,49 @@
       "slaCompliance": 73.8,
       "satisfactionScore": 3.7,
       "isBreachingSLA": false,
+      "breaches": 5,
       "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "USR-072EBC2B",
+      "name": "aaa",
+      "email": "a@gmail.com",
+      "password": "$2a$10$jD1rACcXa.8cnCPOBGjHQeKB0abAbNk40Cj4FX2sdDxUK4EhO7qKW",
+      "state": "Puducherry",
+      "district": null,
+      "age": 43,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-01T18:55:26.739Z"
     }
   ],
   "grievances": [
+    {
+      "id": "GRV-CDF0C668",
+      "userId": "USR-072EBC2B",
+      "citizenName": "aaa",
+      "title": "asfdsdf",
+      "description": "sfdsdfsdfsfsdfsdfsfsfsfsfsfsfsdfsd",
+      "category": "Electricity",
+      "state": "Puducherry",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-01T18:55:56.599Z",
+      "updatedAt": "2026-03-01T18:56:34.522Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-01T18:56:34.522Z"
+    },
     {
       "id": "GRV-050",
       "userId": "USR-CIT-001",
@@ -1821,13 +1869,78 @@
   ],
   "notifications": [
     {
-      "id": "NOTIF-F772F2E7",
+      "id": "NOTIF-001",
+      "userId": "USR-ADMIN-001",
+      "type": "critical",
+      "title": "Critical Service Failure Alert",
+      "message": "AI predicted water failure in Patna North within 48 hours based on citizen chatter.",
+      "isRead": false,
+      "sentAt": "2026-03-01T22:30:00.000Z"
+    },
+    {
+      "id": "NOTIF-002",
+      "userId": "USR-ADMIN-001",
+      "type": "resolution",
+      "title": "SLA Milestone Met",
+      "message": "Officer Anita Singh resolved 100% of critical grievances in UP this week.",
+      "isRead": false,
+      "sentAt": "2026-03-01T21:15:00.000Z"
+    },
+    {
+      "id": "NOTIF-003",
+      "userId": "USR-ADMIN-001",
+      "type": "escalation",
+      "title": "Escalation to High Command",
+      "message": "GRV-045 (Land Dispute) escalated to PMO after 5 state-level delays.",
+      "grievanceId": "GRV-045",
+      "isRead": true,
+      "sentAt": "2026-03-01T19:40:00.000Z"
+    },
+    {
+      "id": "NOTIF-004",
+      "userId": "USR-ADMIN-001",
+      "type": "fraud",
+      "title": "Fraud Pattern Detected",
+      "message": "Same biometric profile found across 3 different pension applications in Rajasthan.",
+      "isRead": false,
+      "sentAt": "2026-03-01T18:20:00.000Z"
+    },
+    {
+      "id": "NOTIF-005",
       "userId": "USR-CIT-001",
+      "type": "resolution",
+      "title": "Resolution Confirmed",
+      "message": "Your request for NH-27 repairs has been successfully completed and funds disbursed from escrow.",
       "grievanceId": "GRV-050",
-      "message": "Your grievance GRV-050 status updated to: Resolved (Pending Verification)",
+      "isRead": false,
+      "sentAt": "2026-03-01T17:05:41.209Z"
+    },
+    {
+      "id": "NOTIF-006",
+      "userId": "USR-CIT-001",
+      "type": "info",
+      "title": "Benefit Roadmap Update",
+      "message": "Two new schemes (PMAY-G) are now available in your district. Your eligibility score is 92%.",
+      "isRead": true,
+      "sentAt": "2026-03-01T11:05:41.209Z"
+    },
+    {
+      "id": "NOTIF-99896169",
+      "userId": "USR-072EBC2B",
+      "grievanceId": "GRV-CDF0C668",
+      "message": "Your grievance \"asfdsdf\" has been filed. Tracking ID: GRV-CDF0C668",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-01T18:55:56.600Z"
+    },
+    {
+      "id": "NOTIF-1693E3CE",
+      "userId": "USR-072EBC2B",
+      "grievanceId": "GRV-CDF0C668",
+      "message": "Your grievance GRV-CDF0C668 status updated to: Resolved (Pending Verification)",
       "type": "info",
       "isRead": false,
-      "sentAt": "2026-03-01T11:05:41.209Z"
+      "sentAt": "2026-03-01T18:56:09.542Z"
     }
   ],
   "communityPosts": [

@@ -109,7 +109,7 @@ const startServer = async () => {
         console.log(`║   Health:    http://localhost:${PORT}/api/health          ║`);
         console.log(`║   Env:       ${(process.env.NODE_ENV || 'development').padEnd(42)}║`);
         console.log('╠══════════════════════════════════════════════════════╣');
-        console.log('║   Routes:                                             ║');
+        console.log('║   GROUP 1 Routes:                                     ║');
         console.log(`║   POST  /api/auth/register                            ║`);
         console.log(`║   POST  /api/auth/login                               ║`);
         console.log(`║   POST  /api/grievance/file                           ║`);
@@ -118,6 +118,19 @@ const startServer = async () => {
         console.log(`║   GET   /api/admin/dashboard                          ║`);
         console.log(`║   POST  /api/chatbot/message                          ║`);
         console.log(`║   GET   /api/preseva/alerts                           ║`);
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log('║   GROUP 2 Routes:                                     ║');
+        console.log(`║   GET   /api/schemes/recommend          [#11]         ║`);
+        console.log(`║   GET   /api/schemes/eligibility-check  [#12]         ║`);
+        console.log(`║   POST  /api/schemes/benefit-gap        [#13]         ║`);
+        console.log(`║   GET   /api/schemes/time-machine       [#14]         ║`);
+        console.log(`║   GET   /api/schemes/benefit-roadmap    [NEW]         ║`);
+        console.log(`║   GET   /api/admin/grievances           [#15]         ║`);
+        console.log(`║   GET   /api/admin/analytics            [#16]         ║`);
+        console.log(`║   GET   /api/admin/officers/leaderboard [#17]         ║`);
+        console.log(`║   GET   /api/admin/sla-tracker          [#18]         ║`);
+        console.log(`║   GET   /api/admin/fraud-alerts         [#19]         ║`);
+        console.log(`║   GET   /api/grievance/search           [#20]         ║`);
         console.log('╚══════════════════════════════════════════════════════╝');
         console.log('');
     });

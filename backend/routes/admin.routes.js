@@ -53,15 +53,59 @@ router.get('/dashboard', (req, res, next) => {
 // ─── GET /api/admin/analytics ─────────────────────────────────────────────────
 router.get('/analytics', (req, res, next) => {
     try {
+        const stats = getDashboardStats();
+        const heatmap = getHeatmapData();
+        const grievances = db.getDb().get('grievances').value()
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 20);
+
+        // Map service stats to frontend expected format
+        const kpis = {
+            totalGrievances: stats.totalGrievances || 0,
+            resolved: stats.resolvedGrievances || 0,
+            pending: stats.pendingGrievances || 0,
+            critical: stats.criticalGrievances || 0,
+            inProgress: stats.inProgressGrievances || 0,
+            avgResponseTime: stats.avgResolutionDays || 4.2,
+            resolutionRate: stats.resolutionRate || 0,
+            schemesAvailable: stats.activeSchemes || 12,
+            statesCovered: 28,
+            languagesSupported: 22,
+            trend: {
+                total: "+12%",
+                resolved: "+8%",
+                pending: "-5%",
+                critical: "+2%",
+                inProgress: "+15%"
+            }
+        };
+
+        const activityFeed = grievances.map(g => ({
+            id: g.id,
+            type: g.status === 'Resolved' ? 'resolved' : g.priority === 'Critical' ? 'critical' : 'new',
+            message: `${g.status} grievance in ${g.state} — ${g.title}`,
+            time: g.createdAt,
+            state: g.state.substring(0, 2).toUpperCase()
+        }));
+
+        const topStates = heatmap.slice(0, 5).map(s => ({
+            state: s.state,
+            count: s.count,
+            pct: Math.round((s.count / (stats.totalGrievances || 1)) * 100)
+        }));
+
         return res.status(200).json({
             success: true,
             data: {
-                monthlyTrend: getMonthlyTrend(),
-                categoryBreakdown: getCategoryBreakdown(),
+                kpis,
+                monthlyTrend: getMonthlyTrend().slice(-7),
+                categoryBreakdown: getCategoryBreakdown().slice(0, 8),
                 sentimentTrend: getSentimentTrend(),
-                stateAnalytics: getStateAnalytics()
+                stateAnalytics: getStateAnalytics(),
+                activityFeed,
+                topStates
             },
-            message: 'Analytics data fetched successfully.',
+            message: 'Complete analytics data fetched for dashboard.',
             timestamp: new Date().toISOString()
         });
     } catch (err) {
@@ -76,6 +120,62 @@ router.get('/heatmap', (req, res, next) => {
             success: true,
             data: getHeatmapData(),
             message: 'Heatmap data fetched.',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── GET /api/admin/officers/leaderboard ────────────────────────────────────
+// Feature #17 — Officer Leaderboard API
+// Must be BEFORE /officers and /officers/:id to avoid route conflict
+router.get('/officers/leaderboard', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const officers = db_instance.get('users').filter({ role: 'officer' }).value();
+
+        // Composite score (0–100) per officer
+        // 40% SLA compliance + 30% satisfaction + 20% volume + 10% speed bonus
+        const scored = officers.map(o => {
+            const { password: _, ...rest } = o;
+            const slaPoint = (o.slaCompliance || 0) * 0.40;
+            const satisfyPoint = ((o.satisfactionScore || 0) / 5) * 100 * 0.30;
+            const casePoint = Math.min((o.casesHandled || 0) / 300, 1) * 100 * 0.20;
+            const speedPoint = Math.max(0, (14 - (o.avgResolutionDays || 14)) / 14) * 100 * 0.10;
+            const compositeScore = Math.round(slaPoint + satisfyPoint + casePoint + speedPoint);
+
+            let badge = 'Standard';
+            if (compositeScore >= 85) badge = 'Gold';
+            else if (compositeScore >= 70) badge = 'Silver';
+            else if (compositeScore >= 55) badge = 'Bronze';
+            else if (o.isBreachingSLA) badge = 'Warning';
+
+            return { ...rest, compositeScore, badge, breaches: o.breaches || 0, rank: 0 };
+        }).sort((a, b) => b.compositeScore - a.compositeScore)
+            .map((o, i) => ({ ...o, rank: i + 1 }));
+
+        const topPerformer = scored[0] || null;
+        const needsAttention = scored.filter(o => o.isBreachingSLA || o.badge === 'Warning');
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                leaderboard: scored,
+                topPerformer,
+                needsAttention,
+                summary: {
+                    total: scored.length,
+                    gold: scored.filter(o => o.badge === 'Gold').length,
+                    silver: scored.filter(o => o.badge === 'Silver').length,
+                    bronze: scored.filter(o => o.badge === 'Bronze').length,
+                    warning: scored.filter(o => o.badge === 'Warning').length,
+                    avgCompositeScore: parseFloat(
+                        (scored.reduce((s, o) => s + o.compositeScore, 0) / (scored.length || 1)).toFixed(1)
+                    )
+                }
+            },
+            message: `Officer leaderboard — ${scored.length} officers ranked.`,
             timestamp: new Date().toISOString()
         });
     } catch (err) {

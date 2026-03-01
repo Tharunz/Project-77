@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MdListAlt, MdSearch, MdFilterList, MdEdit, MdCheck, MdClose, MdArrowUpward, MdRefresh, MdDownload } from 'react-icons/md';
-import { apiGetGrievances, apiUpdateGrievance } from '../../services/api.service';
+import { apiGetGrievances, apiUpdateGrievance, apiSearchGrievances } from '../../services/api.service';
 import { INDIAN_STATES, GRIEVANCE_CATEGORIES } from '../../mock/mockData';
 
 const STATUS_COLORS = {
@@ -42,20 +42,42 @@ export default function GrievanceManagement() {
     const [editAssign, setEditAssign] = useState('');
     const PER_PAGE = 15;
 
-    useEffect(() => {
-        loadGrievances();
-    }, [filters]);
-
-    const loadGrievances = async () => {
+    const loadGrievances = useCallback(async () => {
         setLoading(true);
-        const res = await apiGetGrievances(filters);
-        setGrievances(res.data);
-        setLoading(false);
-        setPage(1);
-    };
+        try {
+            const res = await apiSearchGrievances({
+                q: filters.search,
+                status: filters.status,
+                state: filters.state,
+                category: filters.category,
+                priority: filters.priority
+            }, page);
+
+            if (res.success) {
+                // Backend might return { grievances: [], total: 0 } or just the array
+                const data = Array.isArray(res.data) ? res.data : (res.data.grievances || []);
+                setGrievances(data);
+                // If it's the search endpoint, it might return total in res.data.total or res.total
+                const count = res.total || (res.data && res.data.total) || data.length;
+                // Note: we don't setPage(1) here to avoid loops, only when filters change
+            }
+        } catch (err) {
+            console.error("Grievance Search Error:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, [filters, page]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadGrievances();
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [loadGrievances]);
 
     const handleFilter = (key, val) => {
         setFilters(f => ({ ...f, [key]: val }));
+        setPage(1); // Reset page on filter change
     };
 
     const openEdit = (g) => {
@@ -155,8 +177,8 @@ export default function GrievanceManagement() {
                             </thead>
                             <tbody>
                                 {paginated.map(g => (
-                                    <tr key={g.id}>
-                                        <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--saffron)' }}>{g.id}</td>
+                                    <tr key={g.id || g._id}>
+                                        <td style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--saffron)' }}>{g.trackingId || g.id || g._id}</td>
                                         <td style={{ fontWeight: 600, fontSize: '0.85rem' }}>{g.citizenName}</td>
                                         <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{g.state}</td>
                                         <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{g.category}</td>
@@ -166,7 +188,7 @@ export default function GrievanceManagement() {
                                             </div>
                                         </td>
                                         <td style={{ minWidth: 100 }}>
-                                            <SentimentBar score={g.sentimentScore} />
+                                            <SentimentBar score={g.sentimentScore ?? 0.5} />
                                         </td>
                                         <td><span className={`badge ${PRIORITY_COLORS[g.priority] || 'badge-medium'}`}>{g.priority}</span></td>
                                         <td>
@@ -177,7 +199,7 @@ export default function GrievanceManagement() {
                                         <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                                             {g.assignedTo || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>}
                                         </td>
-                                        <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.createdAt}</td>
+                                        <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{new Date(g.createdAt).toLocaleDateString()}</td>
                                         <td>
                                             <button
                                                 style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)', color: '#3B82F6', borderRadius: 6, padding: '5px 12px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
