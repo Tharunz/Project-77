@@ -31,6 +31,11 @@ export default function PreSeva() {
     const markPrevented = async (id) => {
         await apiMarkPrevented(id);
         setAlerts(as => as.map(a => a.id === id ? { ...a, prevented: true, status: 'Action Taken' } : a));
+        setStats(prev => prev ? {
+            ...prev,
+            prevented: (prev.prevented || 0) + 1,
+            activePredictions: Math.max(0, (prev.activePredictions || 0) - 1)
+        } : prev);
     };
 
     if (loading) return (

@@ -2,7 +2,7 @@ import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { ComposableMap, Geographies, Geography, Marker, Line } from 'react-simple-maps';
 import { geoCentroid, geoMercator } from 'd3-geo';
 
-const GEO_URL = "https://raw.githubusercontent.com/india-in-data/india-states-2019/master/india_states.geojson";
+const GEO_URL = "/india_states.geojson";
 let globalGeoCache = null;
 
 const normalizeStateName = (name) => {

@@ -225,9 +225,67 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-01T18:55:26.739Z"
+    },
+    {
+      "id": "USR-BA0D1BB7",
+      "name": "t",
+      "email": "t@gmail.com",
+      "password": "$2a$10$istXGubvqYmtahO4DCbZROMphEp/KxQ322hvPSFat9OPngltdufjG",
+      "state": "Tamil Nadu",
+      "district": null,
+      "age": 35,
+      "income": 150000,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-02T04:02:43.225Z"
     }
   ],
   "grievances": [
+    {
+      "id": "GRV-F6167A58",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "jbhuguguihhgyugyuguygygugu",
+      "description": "[Voice input: मेरे गाँव में पिछले तीन महीने से सड़क टूटी हुई है।]jjihjkhjihi",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-02T04:20:55.408Z",
+      "updatedAt": "2026-03-02T04:20:55.408Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-0AF74DFC",
+      "userId": "USR-BA0D1BB7",
+      "citizenName": "t",
+      "title": "dfsfafsff",
+      "description": "[Voice input: मेरे गाँव में पिछले तीन महीने से सड़क टूटी हुई है।]",
+      "category": "Roads & Infrastructure",
+      "state": "Tamil Nadu",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-02T04:08:24.420Z",
+      "updatedAt": "2026-03-02T04:08:24.420Z",
+      "resolvedAt": null
+    },
     {
       "id": "GRV-CDF0C668",
       "userId": "USR-072EBC2B",
@@ -1799,9 +1857,10 @@
       "departmentAlerted": "Water & Sanitation",
       "alertSentAt": "2026-02-28 10:00 AM",
       "description": "AI model predicts 85%+ probability of flood-related grievance surge in next 14 days based on IMD data and historical patterns.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-20T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-20T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:51:55.342Z"
     },
     {
       "id": "PRESEVA-002",
@@ -1820,9 +1879,10 @@
       "departmentAlerted": "Agriculture",
       "alertSentAt": "2026-02-28 11:30 AM",
       "description": "Unusual drought pattern detected. Historical data shows 300% grievance increase in this corridor during similar weather conditions.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-22T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-22T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:51:57.255Z"
     },
     {
       "id": "PRESEVA-003",
@@ -1841,9 +1901,10 @@
       "departmentAlerted": "Healthcare",
       "alertSentAt": "2026-02-28 09:15 AM",
       "description": "Vector disease pattern detected from health complaints. Dengue or malaria outbreak probability high in next 7-10 days.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-24T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-24T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:55:45.626Z"
     },
     {
       "id": "PRESEVA-004",
@@ -1862,9 +1923,10 @@
       "departmentAlerted": "Infrastructure",
       "alertSentAt": "2026-02-28 02:45 PM",
       "description": "Multiple bridge and road complaints in same corridor. Systemic infrastructure failure predicted without intervention.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-25T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-25T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:55:47.262Z"
     }
   ],
   "notifications": [
@@ -1941,6 +2003,24 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-01T18:56:09.542Z"
+    },
+    {
+      "id": "NOTIF-A914DBC6",
+      "userId": "USR-BA0D1BB7",
+      "grievanceId": "GRV-0AF74DFC",
+      "message": "Your grievance \"dfsfafsff\" has been filed. Tracking ID: GRV-0AF74DFC",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-02T04:08:24.421Z"
+    },
+    {
+      "id": "NOTIF-29DE9CAA",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-F6167A58",
+      "message": "Your grievance \"jbhuguguihhgyugyuguygygugu\" has been filed. Tracking ID: GRV-F6167A58",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-02T04:20:55.409Z"
     }
   ],
   "communityPosts": [

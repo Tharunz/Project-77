@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 import { PROJECT_NAME } from '../config/constants';
 import './IntelligenceTerminal.css';
@@ -261,7 +261,7 @@ const MODULES_DATA = [
     }
 ];
 
-export default function IntelligenceTerminal() {
+function IntelligenceTerminal() {
     const [spinIndex, setSpinIndex] = useState(0);
     const numItems = MODULES_DATA.length;
     const theta = 360 / numItems;
@@ -566,3 +566,5 @@ export default function IntelligenceTerminal() {
         </section>
     );
 }
+
+export default memo(IntelligenceTerminal);

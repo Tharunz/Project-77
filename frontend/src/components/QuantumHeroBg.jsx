@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import './QuantumHeroBg.css';
 
-export default function QuantumHeroBg() {
+function QuantumHeroBg() {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const workerRef = useRef(null);
@@ -115,3 +115,5 @@ export default function QuantumHeroBg() {
         </div>
     );
 }
+
+export default memo(QuantumHeroBg);

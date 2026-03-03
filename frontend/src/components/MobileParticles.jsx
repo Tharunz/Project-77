@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import './MobileParticles.css';
 
-export default function MobileParticles() {
+function MobileParticles() {
     const canvasRef = useRef(null);
     const workerRef = useRef(null);
     // Force fresh canvas on remount (prevents InvalidStateError on transferControlToOffscreen)
@@ -53,3 +53,5 @@ export default function MobileParticles() {
         </div>
     );
 }
+
+export default memo(MobileParticles);

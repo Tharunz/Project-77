@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import './HowItWorksBriefing.css';
 
 const PHASES = [
@@ -96,7 +96,7 @@ const LiveIndicator = ({ type, color }) => {
     return null;
 };
 
-export default function HowItWorksBriefing() {
+function HowItWorksBriefing() {
     const sectionRef = useRef(null);
     const [isVisible, setIsVisible] = useState(false);
 
@@ -153,3 +153,5 @@ export default function HowItWorksBriefing() {
         </section>
     );
 }
+
+export default memo(HowItWorksBriefing);

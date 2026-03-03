@@ -1,30 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { PROJECT_NAME } from '../config/constants';
 import './IntelligenceTerminalViz.css';
 
-export default function TerminalViz({ vizType, color }) {
-    const [score, setScore] = useState(847);
-    const [rupee, setRupee] = useState(24783291);
-    const [petitionCount, setPetitionCount] = useState(1204);
+function TerminalViz({ vizType, color }) {
+    // Use refs for high-frequency counters to avoid re-renders
+    const scoreRef = useRef(847);
+    const rupeeRef = useRef(24783291);
+    const petitionRef = useRef(1204);
+    const scoreDomRef = useRef(null);
+    const rupeeDomRef = useRef(null);
+    const petitionDomRef = useRef(null);
 
     useEffect(() => {
         let intShakti, intRupee, intPetition;
 
         if (vizType === 'shakti') {
             intShakti = setInterval(() => {
-                setScore(s => s > 900 ? 840 : s + Math.floor(Math.random() * 5));
+                scoreRef.current = scoreRef.current > 900 ? 840 : scoreRef.current + Math.floor(Math.random() * 5);
+                if (scoreDomRef.current) scoreDomRef.current.textContent = scoreRef.current;
             }, 800);
         }
 
         if (vizType === 'rupee') {
             intRupee = setInterval(() => {
-                setRupee(r => r + Math.floor(Math.random() * 100));
+                rupeeRef.current = rupeeRef.current + Math.floor(Math.random() * 100);
+                if (rupeeDomRef.current) rupeeDomRef.current.textContent = '₹' + rupeeRef.current.toLocaleString('en-IN');
             }, 50);
         }
 
         if (vizType === 'petition') {
             intPetition = setInterval(() => {
-                setPetitionCount(p => p > 9900 ? 1204 : p + Math.floor(Math.random() * 15) + 1);
+                petitionRef.current = petitionRef.current > 9900 ? 1204 : petitionRef.current + Math.floor(Math.random() * 15) + 1;
+                if (petitionDomRef.current) petitionDomRef.current.textContent = petitionRef.current.toLocaleString('en-IN') + ' citizens';
             }, 100);
         }
 
@@ -280,7 +287,7 @@ export default function TerminalViz({ vizType, color }) {
         return (
             <div className="viz-petition">
                 <div className="vpe-counter">
-                    <span className="vpe-num live">{petitionCount.toLocaleString('en-IN')} citizens</span>
+                    <span ref={petitionDomRef} className="vpe-num live">{petitionRef.current.toLocaleString('en-IN')} citizens</span>
                 </div>
                 <div className="vpe-bar-wrap">
                     <div className="vpe-bar" />
@@ -302,7 +309,7 @@ export default function TerminalViz({ vizType, color }) {
                         <circle cx="100" cy="100" r="60" className="vs-r2" />
                         <circle cx="100" cy="100" r="40" className="vs-r3" />
                     </svg>
-                    <div className="vs-score">{score}</div>
+                    <div ref={scoreDomRef} className="vs-score">{scoreRef.current}</div>
                 </div>
                 <div className="vs-lvl">⭐ Level 4 — {PROJECT_NAME} Guardian</div>
             </div>
@@ -372,7 +379,7 @@ export default function TerminalViz({ vizType, color }) {
     if (vizType === 'rupee') {
         return (
             <div className="viz-rupee">
-                <div className="vru-val">₹{rupee.toLocaleString('en-IN')}</div>
+                <div ref={rupeeDomRef} className="vru-val">₹{rupeeRef.current.toLocaleString('en-IN')}</div>
                 <div className="vru-sub">saved for 47,382 citizens this month</div>
                 <svg className="vru-spark" viewBox="0 0 200 40" preserveAspectRatio="none">
                     <path d="M0 40 L40 35 L80 30 L120 20 L160 25 L200 5" fill="none" stroke="#F43F5E" strokeWidth="2" />
@@ -969,3 +976,5 @@ export default function TerminalViz({ vizType, color }) {
         </div>
     );
 }
+
+export default memo(TerminalViz);

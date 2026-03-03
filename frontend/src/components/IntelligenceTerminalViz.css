@@ -176,19 +176,20 @@
 
 .pulse-danger {
     animation: dangerPulse 2.5s infinite;
+    will-change: transform, opacity;
 }
 
 @keyframes dangerPulse {
 
     0%,
     100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        transform: scale(1);
+        opacity: 1;
     }
 
     50% {
-        box-shadow: 0 0 15px 2px rgba(239, 68, 68, 0.6);
-        z-index: 2;
-        border: 1px solid #fff;
+        transform: scale(1.15);
+        opacity: 0.85;
     }
 }
 
@@ -543,11 +544,11 @@
 
 @keyframes dotTravel {
     0% {
-        top: 0;
+        transform: translateY(0);
     }
 
     100% {
-        top: 100%;
+        transform: translateY(calc(100cqh - 10px));
     }
 }
 
@@ -627,27 +628,19 @@
 
     0%,
     30% {
-        background: rgba(255, 255, 255, 0.03);
-        transform: translateY(0);
-        color: #E2E8F0;
-        z-index: 1;
+        transform: translateY(0) scale(1);
+        opacity: 1;
     }
 
     35%,
     85% {
-        background: rgba(239, 68, 68, 0.2);
         transform: translateY(-70px) scale(1.02);
-        color: #FECACA;
-        border: 1px solid #EF4444;
-        z-index: 10;
-        box-shadow: 0 13px 26px rgba(0, 0, 0, 0.5);
+        opacity: 0.9;
     }
 
     100% {
-        background: rgba(255, 255, 255, 0.03);
-        transform: translateY(0);
-        color: #E2E8F0;
-        z-index: 1;
+        transform: translateY(0) scale(1);
+        opacity: 1;
     }
 }
 
@@ -663,7 +656,6 @@
     80% {
         opacity: 1;
         transform: translate(-50%, 0);
-        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
     }
 
     100% {

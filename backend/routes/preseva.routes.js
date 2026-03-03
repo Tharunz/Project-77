@@ -34,7 +34,7 @@ router.get('/stats', protect, (req, res, next) => {
         const predictions = getPredictions();
         const alerts = getAlerts();
 
-        const preventedCount = db_instance.get('preSevaAlerts').filter({ status: 'prevented' }).value().length;
+        const preventedCount = db_instance.get('preSevaAlerts').filter({ prevented: true }).value().length;
 
         return res.status(200).json({
             success: true,
@@ -156,7 +156,7 @@ router.patch('/alerts/:id/mark-prevented', protect, adminOnly, (req, res, next) 
         }
 
         db_instance.get('preSevaAlerts').find({ id: req.params.id })
-            .assign({ status: 'prevented', resolvedAt: new Date().toISOString() })
+            .assign({ status: 'prevented', prevented: true, resolvedAt: new Date().toISOString() })
             .write();
 
         return res.status(200).json({
