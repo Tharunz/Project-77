@@ -19,6 +19,10 @@ const ocrRoutes = require('./routes/ocr.routes');
 const presevaRoutes = require('./routes/preseva.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const notificationRoutes = require('./routes/notification.routes');
+// Group 3 Routes
+const translateRoutes = require('./routes/translate.routes');
+const heatmapRoutes = require('./routes/heatmap.routes');
+const communityRoutes = require('./routes/community.routes');
 
 // ─── Import Middleware ────────────────────────────────────────────────────────
 const { errorHandler, notFound } = require('./middleware/errorHandler.middleware');
@@ -88,6 +92,10 @@ app.use('/api/ocr', ocrRoutes);
 app.use('/api/preseva', presevaRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notification', notificationRoutes);
+// Group 3
+app.use('/api/translate', translateRoutes);
+app.use('/api/heatmap', heatmapRoutes);
+app.use('/api/community', communityRoutes);
 
 // ─── 404 + Error Handlers ─────────────────────────────────────────────────────
 app.use(notFound);
@@ -109,15 +117,26 @@ const startServer = async () => {
         console.log(`║   Health:    http://localhost:${PORT}/api/health          ║`);
         console.log(`║   Env:       ${(process.env.NODE_ENV || 'development').padEnd(42)}║`);
         console.log('╠══════════════════════════════════════════════════════╣');
-        console.log('║   Routes:                                             ║');
-        console.log(`║   POST  /api/auth/register                            ║`);
-        console.log(`║   POST  /api/auth/login                               ║`);
-        console.log(`║   POST  /api/grievance/file                           ║`);
-        console.log(`║   GET   /api/grievance/track/:id                      ║`);
-        console.log(`║   GET   /api/schemes                                  ║`);
-        console.log(`║   GET   /api/admin/dashboard                          ║`);
-        console.log(`║   POST  /api/chatbot/message                          ║`);
-        console.log(`║   GET   /api/preseva/alerts                           ║`);
+        console.log('║   GROUP 1 & 2 Core Routes:                           ║');
+        console.log(`║   POST /api/auth/register|login                      ║`);
+        console.log(`║   GET  /api/schemes + /api/admin/dashboard            ║`);
+        console.log(`║   GET  /api/schemes/recommend|eligibility-check       ║`);
+        console.log(`║   GET  /api/admin/officers/leaderboard|sla-tracker    ║`);
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log('║   GROUP 3 Routes (NEW):                              ║');
+        console.log(`║   POST /api/chatbot/message              [#21]       ║`);
+        console.log(`║   POST /api/translate                    [#22]       ║`);
+        console.log(`║   GET  /api/translate/languages          [#22]       ║`);
+        console.log(`║   POST /api/ocr/extract                  [#23]       ║`);
+        console.log(`║   POST /api/notification/send            [#25]       ║`);
+        console.log(`║   GET  /api/preseva/predictions          [#26]       ║`);
+        console.log(`║   GET  /api/preseva/threat-corridors     [#27]       ║`);
+        console.log(`║   GET  /api/heatmap                      [#28]       ║`);
+        console.log(`║   GET  /api/heatmap/summary              [#28]       ║`);
+        console.log(`║   GET  /api/community/posts              [#29]       ║`);
+        console.log(`║   POST /api/community/posts/:id/vote     [#29]       ║`);
+        console.log(`║   GET  /api/community/petitions          [#30]       ║`);
+        console.log(`║   POST /api/community/petitions/:id/sign [#30]       ║`);
         console.log('╚══════════════════════════════════════════════════════╝');
         console.log('');
     });

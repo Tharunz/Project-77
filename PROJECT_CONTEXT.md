@@ -4,9 +4,9 @@
 
 ---
 
-## Last Updated: 2026-02-28
-## Active Branch: feature/surya-backend-group-1
-## Current Phase: Backend Group 1 COMPLETE — Frontend complete + Backend Group 1 APIs live
+## Last Updated: 2026-03-03
+## Active Branch: feature/surya-backend-group-3
+## Current Phase: Backend Group 3 COMPLETE — All 30 APIs live (10 groups × 3 groups)
 
 ---
 
@@ -93,12 +93,27 @@
 - PreSeva — `/api/preseva/predictions`, `/api/preseva/alerts`, `/api/preseva/threat-corridors`
 - Notifications — `/api/notification/send`, `/api/notification/history/:userId`
 
+#### Group 3 — COMPLETE ✅
+
+| # | Feature | Status | Endpoint |
+|---|---------|--------|----------|
+| 21 | AI Chatbot API (rule-based) | ✅ Complete | POST /api/chatbot/message |
+| 22 | Multilingual translation API | ✅ Complete | POST /api/translate + GET /api/translate/languages |
+| 23 | OCR document extraction | ✅ Complete | POST /api/ocr/extract |
+| 24 | Voice text processing | ✅ Complete | Pass-through (voice→text→chatbot, frontend handles STT) |
+| 25 | Notification system (Nodemailer) | ✅ Complete | POST /api/notification/send + GET /api/notification |
+| 26 | PreSeva predictions API | ✅ Complete | GET /api/preseva/predictions |
+| 27 | PreSeva threat corridors API | ✅ Complete | GET /api/preseva/threat-corridors |
+| 28 | India distress heatmap data API | ✅ Complete | GET /api/heatmap + /summary + /state/:name (public) |
+| 29 | Community posts + voting API | ✅ Complete | GET+POST /api/community/posts + /:id/vote + /:id/respond |
+| 30 | Mass petition engine | ✅ Complete | GET+POST /api/community/petitions + /:id/sign (no duplicates) |
+
 ### Backend Folder Structure
 
 ```
 backend/
 ├── services/       → 9 services (all local, AWS-swap-ready)
-├── routes/         → 9 route files
+├── routes/         → 12 route files (Group 3: +translate, +heatmap, +community)
 ├── middleware/     → auth.middleware.js, errorHandler.middleware.js
 ├── db/             → database.js (lowdb), local.json, seed.js
 ├── uploads/        → multer file storage
@@ -228,6 +243,14 @@ backend/
 ---
 
 ## SESSION NOTES
+
+### 2026-03-03 (Backend Group 3 — 10 APIs Completed)
+- **Translation API**: `POST /api/translate` (10 Indian languages, static phrase map → AWS Translate swap-ready), `GET /api/translate/languages`, `POST /api/translate/batch` (up to 20 texts)
+- **India Distress Heatmap** (`/api/heatmap`): Public endpoint computing live distress index from DB grievances per state. Includes `/summary` (national index + top 5) and `/state/:name` (granular breakdown + recent grievances). No auth required for frontend homepage use.
+- **Community Posts + Voting** (`/api/community/posts`): Full CRUD with upvote toggle (one-vote-per-user, reversible), response/reply system, pagination, search.
+- **Mass Petition Engine** (`/api/community/petitions`): Create petitions with target signature count, sign endpoint with duplicate-signer prevention (409 on re-sign), automatic `target_reached` status when goal hit.
+- **DB reseeded**: 5 community posts (2 community tips + 3 petitions with realistic signature counts).
+- **Branch**: `feature/surya-backend-group-3` → PR raised to dev
 
 ### 2026-02-27 (UI/UX Overhaul & Cinematic Polish)
 - **Intelligence Terminal Replacement**: Completely rewrote the homepage features section into a split-screen "Intelligence Terminal" layout with a Process Index and a cinematic Feature Viewport featuring 21 custom SVG/CSS mini-visualizations.
