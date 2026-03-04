@@ -440,4 +440,38 @@ router.patch('/fraud-alerts/:id/review', (req, res, next) => {
     }
 });
 
+// ─── Feature 28: AI Ghost Audits API ──────────────────────────────────────────
+router.get('/ghost-audits', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const alerts = db_instance.get('ghostAuditAlerts').value() || [];
+
+        return res.status(200).json({
+            success: true,
+            data: alerts,
+            message: "Ghost audit alerts fetched successfully.",
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── Feature 27 & 20: Digital Budget Escrow APIs (Admin) ─────────────────────
+router.get('/escrow', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const escrowProjects = db_instance.get('escrowProjects').value() || [];
+
+        return res.status(200).json({
+            success: true,
+            data: escrowProjects,
+            message: "Admin escrow projects fetched successfully.",
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;

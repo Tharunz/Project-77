@@ -139,6 +139,13 @@ const startServer = async () => {
         console.log(`║   GET   /api/citizen/footprint          [#32]         ║`);
         console.log(`║   GET   /api/citizen/predict-future     [#33]         ║`);
         console.log(`║   GET   /api/admin/officers/wall        [#34]         ║`);
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log('║   GROUP 5 Routes:                                     ║');
+        console.log(`║   GET   /api/citizen/news               [#19]         ║`);
+        console.log(`║   GET   /api/citizen/escrow             [#27]         ║`);
+        console.log(`║   POST  /api/citizen/escrow/:id/verify  [#20]         ║`);
+        console.log(`║   GET   /api/admin/escrow               [#27]         ║`);
+        console.log(`║   GET   /api/admin/ghost-audits         [#28]         ║`);
         console.log('╚══════════════════════════════════════════════════════╝');
         console.log('');
     });

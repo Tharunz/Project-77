@@ -106,6 +106,16 @@
 | 33 | Predict My Future AI planning API | ✅ Complete | GET /api/citizen/predict-future |
 | 34 | Officer accountability wall API | ✅ Complete | GET /api/admin/officers/wall |
 
+#### Group 5 — COMPLETE ✅
+
+| # | Feature | Status | Endpoint |
+|---|---------|--------|----------|
+| 35 | Seva News Vernacular Feed | ✅ Complete | GET /api/citizen/news |
+| 36 | Digital Budget Escrow (Citizen) | ✅ Complete | GET /api/citizen/escrow |
+| 37 | Escrow Citizen Verification | ✅ Complete | POST /api/citizen/escrow/:id/verify |
+| 38 | Digital Budget Escrow (Admin) | ✅ Complete | GET /api/admin/escrow |
+| 39 | AI Ghost Audits API | ✅ Complete | GET /api/admin/ghost-audits |
+
 #### Additional APIs (also built, bonus):
 - Admin dashboard — `/api/admin/dashboard` (KPIs, charts, activity feed)
 - Admin analytics — `/api/admin/analytics` (monthly trend, category, sentiment, state)
