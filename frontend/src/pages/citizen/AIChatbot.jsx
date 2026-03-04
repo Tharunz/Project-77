@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MdChat, MdSend, MdMic, MdTranslate, MdStop, MdRefresh } from 'react-icons/md';
+import { apiGetChatbotResponse } from '../../services/api.service';
 
 const LANGUAGES = [
     { code: 'en', label: 'English' }, { code: 'hi', label: 'हिन्दी' },
@@ -82,14 +83,24 @@ export default function AIChatbot() {
         setInput('');
         setTyping(true);
 
-        setTimeout(() => {
+        try {
+            // Call real backend chatbot API
+            const res = await apiGetChatbotResponse(text, language);
+            const resp = (res.success && res.data?.response) ? res.data.response : getAIResponse(text);
+            setMessages(m => [...m, {
+                id: Date.now() + 1, role: 'assistant', text: resp,
+                time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            }]);
+        } catch {
+            // Fallback to local responses if server is unavailable
             const resp = getAIResponse(text);
             setMessages(m => [...m, {
                 id: Date.now() + 1, role: 'assistant', text: resp,
                 time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
             }]);
+        } finally {
             setTyping(false);
-        }, 1200 + Math.random() * 800);
+        }
     };
 
     const handleVoice = () => {

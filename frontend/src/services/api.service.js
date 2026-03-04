@@ -249,22 +249,111 @@ export const apiUpdateScheme = async (id, data) => {
 };
 
 // ==============================
-//  HEATMAP
+//  HEATMAP (Group 3 — Feature 28)
 // ==============================
 export const apiGetHeatmapData = async () => {
+    const res = await apiFetch('/heatmap');
+    if (res.success && Array.isArray(res.data)) return res;
+    // Fallback to mock if backend empty
     await delay(400);
     return { success: true, data: mockHeatmapData };
+};
+
+export const apiGetHeatmapSummary = async () => {
+    return await apiFetch('/heatmap/summary');
+};
+
+export const apiGetHeatmapStateDetail = async (stateName) => {
+    return await apiFetch(`/heatmap/state/${encodeURIComponent(stateName)}`);
 };
 
 // ==============================
 //  SENTIMENT
 // ==============================
 export const apiGetCriticalGrievances = async () => {
+    const res = await apiFetch('/grievance/critical');
+    if (res.success && Array.isArray(res.data)) return res;
+    // Fallback to mock if backend returns error (e.g. not admin)
     await delay(400);
     const data = mockGrievances
         .filter(g => g.sentimentScore < 0.3 || g.status === 'Critical')
         .sort((a, b) => a.sentimentScore - b.sentimentScore);
     return { success: true, data };
+};
+
+// ==============================
+//  COMMUNITY (Group 3 — Features 29 & 30)
+// ==============================
+export const apiGetCommunityPosts = async (filters = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    const endpoint = `/community/posts${qs ? '?' + qs : ''}`;
+    const res = await apiFetch(endpoint);
+    if (res.success && Array.isArray(res.data)) return res;
+    // Fallback to mock
+    await delay(400);
+    return { success: true, data: mockCommunityPosts };
+};
+
+export const apiCreateCommunityPost = async (data) => {
+    return await apiFetch('/community/posts', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+};
+
+export const apiUpvotePost = async (id) => {
+    return await apiFetch(`/community/posts/${id}/vote`, { method: 'POST' });
+};
+
+export const apiAddPostResponse = async (id, content) => {
+    return await apiFetch(`/community/posts/${id}/respond`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+    });
+};
+
+export const apiGetPetitions = async (filters = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    return await apiFetch(`/community/petitions${qs ? '?' + qs : ''}`);
+};
+
+export const apiCreatePetition = async (data) => {
+    return await apiFetch('/community/petitions', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+};
+
+export const apiSignPetition = async (id) => {
+    return await apiFetch(`/community/petitions/${id}/sign`, { method: 'POST' });
+};
+
+// ==============================
+//  CHATBOT (Group 3 — Feature 21)
+// ==============================
+export const apiGetChatbotResponse = async (message, lang = 'en') => {
+    return await apiFetch('/chatbot/message', {
+        method: 'POST',
+        body: JSON.stringify({ message, lang })
+    });
+};
+
+export const apiClearChatHistory = async (userId) => {
+    return await apiFetch(`/chatbot/history/${userId}`, { method: 'DELETE' });
+};
+
+// ==============================
+//  TRANSLATE (Group 3 — Feature 22)
+// ==============================
+export const apiTranslateText = async (text, targetLang) => {
+    return await apiFetch('/translate', {
+        method: 'POST',
+        body: JSON.stringify({ text, targetLang })
+    });
+};
+
+export const apiGetSupportedLanguages = async () => {
+    return await apiFetch('/translate/languages');
 };
 
 // ==============================
@@ -384,10 +473,6 @@ export const apiMarkPrevented = async (id) => {
 
 // Feature 15: Bharat Distress Index
 export const apiGetDistressIndex = async () => { await delay(400); return { success: true, data: mockDistressIndex }; };
-
-// Feature 16: JanConnect Community
-export const apiGetCommunityPosts = async () => { await delay(400); return { success: true, data: mockCommunityPosts }; };
-export const apiUpvotePost = async (id) => { await delay(200); return { success: true }; };
 
 // Feature 19: Seva News
 export const apiGetSevaNews = async () => { await delay(400); return { success: true, data: mockSevaNews }; };
