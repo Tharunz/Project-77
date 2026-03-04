@@ -28,7 +28,7 @@ export default function SevaNews() {
     const [bookmarked, setBookmarked] = useState({});
 
     useEffect(() => {
-        apiGetSevaNews().then(res => { setNews(res.data); setLoading(false); });
+        apiGetSevaNews().then(res => { setNews(res.data || []); setLoading(false); });
     }, []);
 
     const getTitle = (item) => {

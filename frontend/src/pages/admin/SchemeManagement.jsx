@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdSchool, MdAdd, MdEdit, MdSearch, MdCheck, MdClose } from 'react-icons/md';
-import { apiGetSchemes, apiAddScheme, apiUpdateScheme } from '../../services/api.service';
+import { apiGetSchemes, apiAddScheme, apiUpdateScheme, apiDeleteScheme } from '../../services/api.service';
 
 const SCHEME_CATEGORIES = ['Agriculture', 'Healthcare', 'Housing', 'Education', 'Labour & Employment', 'Pension & Social Security', 'Women & Child', 'Others'];
 
@@ -15,6 +15,7 @@ export default function SchemeManagement() {
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(emptyScheme);
     const [editId, setEditId] = useState(null);
+    const [deleting, setDeleting] = useState(null);
 
     useEffect(() => {
         load();
@@ -29,6 +30,14 @@ export default function SchemeManagement() {
 
     const openAdd = () => { setForm(emptyScheme); setEditMode(false); setEditId(null); setModal(true); };
     const openEdit = (s) => { setForm({ ...s }); setEditMode(true); setEditId(s.id); setModal(true); };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Deactivate this scheme? It will no longer appear to citizens.')) return;
+        setDeleting(id);
+        await apiDeleteScheme(id);
+        setSchemes(ss => ss.filter(s => s.id !== id));
+        setDeleting(null);
+    };
 
     const handleSave = async () => {
         if (editMode) {
@@ -52,7 +61,7 @@ export default function SchemeManagement() {
             {/* Header */}
             <div className="section-header">
                 <div>
-                    <h1 className="section-title"><MdSchool className="icon" /> Scheme Management</h1>
+                    <h1 className="section-title"><MdSchool className="icon" /> Scheme Management — NAGRIQ</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: 4 }}>
                         {(schemes || []).length} government schemes managed on this platform
                     </p>
@@ -145,9 +154,14 @@ export default function SchemeManagement() {
                                 </div>
                             )}
 
-                            <button className="btn-secondary" onClick={() => openEdit(scheme)} style={{ width: '100%', justifyContent: 'center', fontSize: '0.82rem' }}>
-                                <MdEdit /> Edit Scheme
-                            </button>
+                            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                                <button className="btn-secondary" onClick={() => openEdit(scheme)} style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem' }}>
+                                    <MdEdit /> Edit
+                                </button>
+                                <button onClick={() => handleDelete(scheme.id)} disabled={deleting === scheme.id} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600, fontFamily: 'Inter' }}>
+                                    {deleting === scheme.id ? '...' : <MdClose />}
+                                </button>
+                            </div>
                         </div>
                     );})}
                 </div>

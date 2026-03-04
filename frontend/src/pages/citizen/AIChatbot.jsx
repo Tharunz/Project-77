@@ -1,6 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MdChat, MdSend, MdMic, MdTranslate, MdStop, MdRefresh } from 'react-icons/md';
+import { MdChat, MdSend, MdMic, MdTranslate, MdStop, MdRefresh, MdArrowForward, MdPlayArrow } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
 import { apiGetChatbotResponse } from '../../services/api.service';
+
+// Navigation intent detection — maps keywords to routes
+const NAV_INTENTS = [
+    { keywords: ['file grievance', 'file a grievance', 'file complaint', 'register grievance', 'File Grievance', 'File a Grievance'], route: '/citizen/file-grievance', label: 'Go to File Grievance' },
+    { keywords: ['track grievance', 'track your grievance', 'Track Grievance', 'grievance tracking', 'tracking id'], route: '/citizen/track', label: 'Go to Track Grievance' },
+    { keywords: ['scheme discovery', 'explore schemes', 'schemes', 'Scheme Discovery', 'find schemes', 'eligible'], route: '/citizen/schemes', label: 'Explore Schemes' },
+    { keywords: ['benefit roadmap', 'roadmap', 'Benefit Roadmap'], route: '/citizen/roadmap', label: 'View Benefit Roadmap' },
+    { keywords: ['community', 'Community', 'ask the community', 'petition'], route: '/citizen/community', label: 'Go to Community' },
+    { keywords: ['my profile', 'profile', 'update profile'], route: '/citizen/profile', label: 'View My Profile' },
+    { keywords: ['dashboard', 'my dashboard', 'home'], route: '/citizen', label: 'Go to Dashboard' },
+];
+
+function detectNavIntent(text) {
+    if (!text) return null;
+    const lower = text.toLowerCase();
+    for (const intent of NAV_INTENTS) {
+        if (intent.keywords.some(kw => lower.includes(kw.toLowerCase()))) return intent;
+    }
+    return null;
+}
 
 const LANGUAGES = [
     { code: 'en', label: 'English' }, { code: 'hi', label: 'हिन्दी' },
@@ -48,6 +69,7 @@ function TypingDot() {
 }
 
 export default function AIChatbot() {
+    const navigate = useNavigate();
     const [messages, setMessages] = useState([
         {
             id: 1, role: 'assistant',
@@ -59,6 +81,8 @@ export default function AIChatbot() {
     const [typing, setTyping] = useState(false);
     const [language, setLanguage] = useState('en');
     const [recording, setRecording] = useState(false);
+    const [audioRecorder, setAudioRecorder] = useState(null);
+    const [audioUrl, setAudioUrl] = useState(null);
     const bottomRef = useRef();
 
     useEffect(() => {
@@ -103,13 +127,73 @@ export default function AIChatbot() {
         }
     };
 
+    const recognitionRef = useRef(null);
+
     const handleVoice = () => {
-        if (recording) {
-            setRecording(false);
-            sendMessage('मेरे गाँव में पानी की समस्या है। नल नहीं आता पिछले दो हफ्ते से।');
-        } else {
-            setRecording(true);
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            setMessages(m => [...m, {
+                id: Date.now(), role: 'assistant',
+                text: '⚠️ Voice input is not supported in this browser. Please use Chrome or Edge, or type your message.',
+                time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            }]);
+            return;
         }
+
+        if (recording) {
+            recognitionRef.current?.stop();
+            setRecording(false);
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.lang = language === 'hi' ? 'hi-IN'
+            : language === 'ta' ? 'ta-IN'
+            : language === 'te' ? 'te-IN'
+            : language === 'bn' ? 'bn-IN'
+            : language === 'mr' ? 'mr-IN'
+            : language === 'gu' ? 'gu-IN'
+            : language === 'kn' ? 'kn-IN'
+            : language === 'ml' ? 'ml-IN'
+            : language === 'pa' ? 'pa-IN'
+            : 'en-IN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => setRecording(true);
+        recognition.onend = () => setRecording(false);
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (transcript.trim()) {
+                setInput(transcript);
+                sendMessage(transcript);
+            }
+        };
+        recognition.onerror = () => {
+            setRecording(false);
+            // Fallback to MediaRecorder for languages where STT is unavailable
+            // → AWS swap: Amazon Transcribe for multi-language STT
+            if (navigator.mediaDevices) {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    const recorder = new MediaRecorder(stream);
+                    const chunks = [];
+                    recorder.ondataavailable = e => chunks.push(e.data);
+                    recorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'audio/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const langLabel = LANGUAGES.find(l => l.code === language)?.label || language;
+                        setMessages(m => [...m, { id: Date.now(), role: 'user', text: `🎙️ Voice message recorded in ${langLabel}`, audioUrl: url, time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }]);
+                        sendMessage(`[Voice message in ${langLabel}]`);
+                    };
+                    recorder.start();
+                    setAudioRecorder(recorder);
+                    setRecording(true);
+                    setTimeout(() => { recorder.stop(); stream.getTracks().forEach(t => t.stop()); setRecording(false); }, 5000);
+                }).catch(() => {});
+            }
+        };
+        recognition.start();
     };
 
     const clearChat = () => {
@@ -149,30 +233,31 @@ export default function AIChatbot() {
                 flex: 1, overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-lg)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16
             }}>
-                {messages.map(msg => (
+                {messages.map(msg => {
+                    const navIntent = msg.role === 'assistant' ? detectNavIntent(msg.text) : null;
+                    return (
                     <div key={msg.id} style={{ display: 'flex', gap: 12, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', animation: 'fadeInUp 0.3s ease' }}>
                         {/* Avatar */}
-                        <div style={{
-                            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                            background: msg.role === 'assistant' ? 'linear-gradient(135deg, var(--saffron), var(--gold))' : 'linear-gradient(135deg, var(--teal), #138808)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '1rem', color: 'white', fontWeight: 700
-                        }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: msg.role === 'assistant' ? 'linear-gradient(135deg, var(--saffron), var(--gold))' : 'linear-gradient(135deg, var(--teal), #138808)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: 'white', fontWeight: 700 }}>
                             {msg.role === 'assistant' ? '🤖' : '👤'}
                         </div>
                         <div style={{ maxWidth: '75%' }}>
-                            <div style={{
-                                background: msg.role === 'user' ? 'rgba(0,200,150,0.12)' : 'rgba(255, 255, 255, 0.10)',
-                                border: `1px solid ${msg.role === 'user' ? 'rgba(0,200,150,0.25)' : 'var(--border)'}`,
-                                borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-                                padding: '12px 16px',
-                            }}>
+                            <div style={{ background: msg.role === 'user' ? 'rgba(0,200,150,0.12)' : 'rgba(255, 255, 255, 0.10)', border: `1px solid ${msg.role === 'user' ? 'rgba(0,200,150,0.25)' : 'var(--border)'}`, borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px', padding: '12px 16px' }}>
                                 <p style={{ fontSize: '0.87rem', color: 'var(--text-primary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.text}</p>
+                                {msg.audioUrl && (
+                                    <audio controls src={msg.audioUrl} style={{ marginTop: 8, width: '100%', height: 32 }} />
+                                )}
                             </div>
+                            {navIntent && (
+                                <button onClick={() => navigate(navIntent.route)} style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,107,44,0.12)', border: '1px solid rgba(255,107,44,0.3)', color: 'var(--saffron)', borderRadius: 8, padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter', transition: 'all 0.2s' }}>
+                                    <MdArrowForward /> {navIntent.label}
+                                </button>
+                            )}
                             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '4px 4px 0', display: 'block', textAlign: msg.role === 'user' ? 'right' : 'left' }}>{msg.time}</span>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
                 {typing && (
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--saffron), var(--gold))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🤖</div>

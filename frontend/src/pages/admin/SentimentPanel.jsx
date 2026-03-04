@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MdPsychology, MdWarning, MdSentimentVeryDissatisfied, MdArrowUpward } from 'react-icons/md';
+import { MdPsychology, MdWarning, MdSentimentVeryDissatisfied, MdArrowUpward, MdClose } from 'react-icons/md';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
-import { apiGetCriticalGrievances, apiGetSentimentTrend } from '../../services/api.service';
+import { apiGetCriticalGrievances, apiGetSentimentTrend, apiUpdateGrievance } from '../../services/api.service';
 
 function SentimentBadge({ score }) {
     if (score < 0.25) return <span className="badge badge-critical">🔴 Critical Distress</span>;
@@ -47,6 +47,11 @@ export default function SentimentPanel() {
     const [trend, setTrend] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [actionModal, setActionModal] = useState(null); // { grievance }
+    const [actionNote, setActionNote] = useState('');
+    const [actionType, setActionType] = useState('escalate');
+    const [actionDoing, setActionDoing] = useState(false);
+    const [actionDone, setActionDone] = useState({});
 
     useEffect(() => {
         const load = async () => {
@@ -158,13 +163,63 @@ export default function SentimentPanel() {
                                 </div>
                                 <div style={{ width: 200, flexShrink: 0 }}>
                                     <SentimentMeter score={g.sentimentScore} />
-                                    <button className="btn-primary" style={{ width: '100%', marginTop: 12, fontSize: '0.78rem', justifyContent: 'center' }}>
-                                        Take Action
-                                    </button>
+                                    {actionDone[g.id] ? (
+                                        <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 8, fontSize: '0.78rem', color: 'var(--teal)', textAlign: 'center' }}>✓ Action Taken</div>
+                                    ) : (
+                                        <button className="btn-primary" onClick={() => { setActionModal({ grievance: g }); setActionNote(''); setActionType('escalate'); }} style={{ width: '100%', marginTop: 12, fontSize: '0.78rem', justifyContent: 'center' }}>
+                                            ⚡ Take Action
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Take Action Modal */}
+            {actionModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, maxWidth: 480, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>⚡ Take Action</h3>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>{actionModal.grievance.id} — {actionModal.grievance.category}</p>
+                            </div>
+                            <button onClick={() => setActionModal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}><MdClose /></button>
+                        </div>
+                        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: 12 }}>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{actionModal.grievance.description}</p>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Action Type</label>
+                            <select className="form-input" value={actionType} onChange={e => setActionType(e.target.value)}>
+                                <option value="escalate">🔺 Escalate to Critical Priority</option>
+                                <option value="assign">👮 Assign to Senior Officer</option>
+                                <option value="expedite">⏩ Mark for Expedited Resolution (48h)</option>
+                                <option value="review">🔍 Flag for Manual Review</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Action Note</label>
+                            <textarea className="form-input" rows={3} placeholder="Add a note explaining the action taken..." value={actionNote} onChange={e => setActionNote(e.target.value)} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setActionModal(null)}>Cancel</button>
+                            <button className="btn-primary" style={{ flex: 1 }} disabled={actionDoing} onClick={async () => {
+                                setActionDoing(true);
+                                const update = actionType === 'escalate' ? { priority: 'Critical', status: 'Escalated' }
+                                    : actionType === 'expedite' ? { priority: 'High', status: 'In Progress' }
+                                    : actionType === 'review' ? { status: 'Under Review' }
+                                    : { status: 'Assigned' };
+                                await apiUpdateGrievance(actionModal.grievance.id, { ...update, actionNote, actionType });
+                                setActionDone(d => ({ ...d, [actionModal.grievance.id]: true }));
+                                setCritical(c => c.map(g => g.id === actionModal.grievance.id ? { ...g, ...update } : g));
+                                setActionDoing(false);
+                                setActionModal(null);
+                            }}>{actionDoing ? 'Saving...' : '✓ Confirm Action'}</button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

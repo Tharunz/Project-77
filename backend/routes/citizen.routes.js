@@ -9,7 +9,7 @@ const db = require('../db/database');
 
 router.use(protect); // All citizen routes require login
 
-// ─── 31. Jan Shakti Score calculation ─────────────────────────────────────────
+// ─── 31. CI Score (Civic Intelligence Score) calculation ──────────────────────
 router.get('/score', (req, res, next) => {
     try {
         const db_instance = db.getDb();
@@ -20,31 +20,41 @@ router.get('/score', (req, res, next) => {
 
         // Add points for grievances
         const grievances = db_instance.get('grievances').filter({ userId }).value() || [];
+        const resolvedGrievances = grievances.filter(g => g.status === 'Resolved');
         score += grievances.length * 10;
+        score += resolvedGrievances.length * 5; // bonus for resolved
 
         // Mock points for community/petitions if they exist in DB
         const petitions = db_instance.get('petitions')?.value() || [];
         const signed = petitions.filter(p => p.signatures && p.signatures.includes(userId));
         score += signed.length * 5;
 
-        // Define belt/level
+        // Scheme matches add engagement points
+        const user = db_instance.get('users').find({ id: userId }).value();
+        const schemesMatched = (user?.bookmarkedSchemes || []).length;
+        score += schemesMatched * 3;
+
+        // Define level
         let level = 'Beginner';
-        if (score >= 200) level = 'Jan Shakti Champion';
+        if (score >= 200) level = 'CI Champion';
         else if (score >= 100) level = 'Active Citizen';
         else if (score >= 70) level = 'Aware Citizen';
 
         return res.status(200).json({
             success: true,
             data: {
-                janShaktiScore: score,
+                ciScore: score,
+                janShaktiScore: score, // backward compat
                 level,
                 breakdown: {
                     base: 50,
                     grievances: grievances.length * 10,
-                    communityParticipation: signed.length * 5
+                    resolved: resolvedGrievances.length * 5,
+                    communityParticipation: signed.length * 5,
+                    schemesEngaged: schemesMatched * 3
                 }
             },
-            message: "Jan Shakti Score calculated successfully.",
+            message: "CI Score (Civic Intelligence Score) calculated successfully.",
             timestamp: new Date().toISOString()
         });
     } catch (err) {
@@ -67,7 +77,7 @@ router.get('/footprint', (req, res, next) => {
             footprint.push({
                 id: 'evt_acc_create',
                 type: 'account_created',
-                title: 'Joined Project-77',
+                title: 'Joined Project NCIE',
                 description: `Registered as a citizen from ${user.state || 'India'}`,
                 date: user.createdAt || "2026-01-01T10:00:00Z"
             });

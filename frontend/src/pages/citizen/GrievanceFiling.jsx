@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { MdEdit, MdSend, MdMic, MdAttachFile, MdCheckCircle, MdCopyAll } from 'react-icons/md';
+import React, { useState, useRef } from 'react';
+import { MdEdit, MdSend, MdMic, MdAttachFile, MdCheckCircle, MdCopyAll, MdClose } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
-import { apiFileGrievance } from '../../services/api.service';
 import { INDIAN_STATES, GRIEVANCE_CATEGORIES } from '../../mock/mockData';
+
+const API_BASE = '/api';
+const getToken = () => localStorage.getItem('token');
 
 export default function GrievanceFiling() {
     const { user } = useAuth();
@@ -19,6 +21,9 @@ export default function GrievanceFiling() {
     const [errors, setErrors] = useState({});
     const [recordingVoice, setRecordingVoice] = useState(false);
     const [charCount, setCharCount] = useState(0);
+    const [attachedFiles, setAttachedFiles] = useState([]);
+    const fileInputRef = useRef(null);
+    const recognitionRef = useRef(null);
 
     const validate = () => {
         const e = {};
@@ -35,17 +40,59 @@ export default function GrievanceFiling() {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
-        const res = await apiFileGrievance({ ...form, citizenId: user?.id });
-        setLoading(false);
-        if (res.success) setSubmitted(res.data);
+
+        try {
+            const formData = new FormData();
+            formData.append('title', form.title);
+            formData.append('description', form.description);
+            formData.append('category', form.category);
+            formData.append('state', form.state);
+            formData.append('priority', form.priority);
+            if (user?.district) formData.append('district', user.district);
+            attachedFiles.forEach(file => formData.append('documents', file));
+
+            const token = getToken();
+            const response = await fetch(`${API_BASE}/grievance/file`, {
+                method: 'POST',
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                body: formData
+            });
+            const res = await response.json();
+            if (res.success) setSubmitted(res.data);
+        } catch (err) {
+            console.error('Grievance submit error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const toggleVoice = () => {
-        setRecordingVoice(!recordingVoice);
-        if (recordingVoice) {
-            // Simulate voice → text
-            setForm(f => ({ ...f, description: f.description + ' [Voice input: मेरे गाँव में पिछले तीन महीने से सड़क टूटी हुई है।]' }));
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Voice input is not supported in this browser. Please use Chrome or Edge.');
+            return;
         }
+        if (recordingVoice) {
+            recognitionRef.current?.stop();
+            setRecordingVoice(false);
+            return;
+        }
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.lang = 'en-IN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onstart = () => setRecordingVoice(true);
+        recognition.onend = () => setRecordingVoice(false);
+        recognition.onerror = () => setRecordingVoice(false);
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (transcript.trim()) {
+                setForm(f => ({ ...f, description: f.description + (f.description ? ' ' : '') + transcript }));
+                setCharCount(prev => prev + transcript.length + 1);
+            }
+        };
+        recognition.start();
     };
 
     const handleDescChange = (e) => {
@@ -168,20 +215,52 @@ export default function GrievanceFiling() {
                 </div>
 
                 {/* Upload */}
-                <div style={{
-                    border: '2px dashed var(--border)', borderRadius: 'var(--radius)', padding: '20px 24px',
-                    textAlign: 'center', cursor: 'pointer', transition: 'var(--transition)'
-                }}
-                    onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,107,44,0.4)'}
-                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-                >
-                    <MdAttachFile style={{ fontSize: '1.8rem', color: 'var(--text-muted)', marginBottom: 8 }} />
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        Attach Documents or Photos (optional)
-                    </p>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                        PDF, JPG, PNG — up to 10MB. AI will extract text from documents automatically.
-                    </p>
+                <div>
+                    <div
+                        style={{
+                            border: '2px dashed var(--border)', borderRadius: 'var(--radius)', padding: '20px 24px',
+                            textAlign: 'center', cursor: 'pointer', transition: 'var(--transition)'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,107,44,0.4)'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            multiple
+                            accept="image/*,.pdf,.png,.jpg,.jpeg"
+                            style={{ display: 'none' }}
+                            onChange={e => {
+                                const newFiles = Array.from(e.target.files);
+                                setAttachedFiles(prev => [...prev, ...newFiles].slice(0, 5));
+                            }}
+                        />
+                        <MdAttachFile style={{ fontSize: '1.8rem', color: attachedFiles.length ? 'var(--teal)' : 'var(--text-muted)', marginBottom: 8 }} />
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                            {attachedFiles.length > 0 ? `${attachedFiles.length} file(s) selected — click to add more` : 'Click to Attach Documents or Photos (optional)'}
+                        </p>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                            PDF, JPG, PNG — up to 10MB each · Max 5 files
+                        </p>
+                    </div>
+                    {attachedFiles.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                            {attachedFiles.map((file, i) => (
+                                <div key={i} style={{
+                                    display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem',
+                                    background: 'rgba(0,200,150,0.08)', border: '1px solid rgba(0,200,150,0.2)',
+                                    borderRadius: 6, padding: '4px 10px', color: 'var(--teal)'
+                                }}>
+                                    <MdAttachFile style={{ fontSize: '0.9rem' }} />
+                                    <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                                    <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))} style={{
+                                        background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 0, fontSize: '1rem'
+                                    }}><MdClose /></button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '0.95rem', fontWeight: 700 }}>

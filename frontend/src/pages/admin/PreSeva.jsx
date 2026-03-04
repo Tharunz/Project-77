@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MdShield, MdWarning, MdCheckCircle, MdSend, MdArrowUpward, MdArrowDownward } from 'react-icons/md';
-import { apiGetPreSevaAlerts, apiGetPreSevaStats, apiMarkPrevented } from '../../services/api.service';
+import { MdShield, MdWarning, MdCheckCircle, MdSend, MdArrowUpward, MdArrowDownward, MdClose, MdPeople, MdMoneyOff } from 'react-icons/md';
+import { apiGetPreSevaAlerts, apiGetPreSevaStats, apiMarkPrevented, apiPresevAssignAlert } from '../../services/api.service';
 
 const URGENCY = {
     critical: { color: '#EF4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.25)', label: '🔴 CRITICAL', pulse: true },
@@ -19,11 +19,15 @@ export default function PreSeva() {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
+    const [allocateModal, setAllocateModal] = useState(null);
+    const [allocateForm, setAllocateForm] = useState({ officers: '2', budget: '50000', note: '' });
+    const [allocating, setAllocating] = useState(false);
+    const [allocated, setAllocated] = useState({});
 
     useEffect(() => {
         Promise.all([apiGetPreSevaAlerts(), apiGetPreSevaStats()]).then(([a, s]) => {
-            setAlerts(a.data);
-            setStats(s.data);
+            setAlerts(a.data || []);
+            setStats(s.data || null);
             setLoading(false);
         });
     }, []);
@@ -49,7 +53,7 @@ export default function PreSeva() {
             {/* Header */}
             <div className="section-header">
                 <div>
-                    <h1 className="section-title"><MdShield className="icon" style={{ color: '#8B5CF6' }} /> PreSeva — AI Prevention Engine</h1>
+                    <h1 className="section-title"><MdShield className="icon" style={{ color: '#8B5CF6' }} /> PRESEVA — Predictive Governance Intelligence</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: 4 }}>
                         The world's first proactive public service failure prediction system. We solve problems before citizens experience them.
                     </p>
@@ -166,14 +170,22 @@ export default function PreSeva() {
                                     </div>
 
                                     {!alert.prevented && (
-                                        <button onClick={e => { e.stopPropagation(); markPrevented(alert.id); }} style={{
-                                            background: 'rgba(0,200,150,0.12)', border: '1px solid rgba(0,200,150,0.3)',
-                                            color: '#00C896', borderRadius: 8, padding: '8px 16px', fontSize: '0.78rem',
-                                            fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-                                            flexShrink: 0, transition: 'all 0.2s'
-                                        }}>
-                                            <MdCheckCircle /> Mark Prevented
-                                        </button>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                                            <button onClick={e => { e.stopPropagation(); setAllocateModal(alert); setAllocateForm({ officers: '2', budget: '50000', note: '' }); }} style={{
+                                                background: 'rgba(255,107,44,0.12)', border: '1px solid rgba(255,107,44,0.3)',
+                                                color: 'var(--saffron)', borderRadius: 8, padding: '7px 12px', fontSize: '0.75rem',
+                                                fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.2s'
+                                            }}>
+                                                <MdPeople /> Allocate Resources
+                                            </button>
+                                            <button onClick={e => { e.stopPropagation(); markPrevented(alert.id); }} style={{
+                                                background: 'rgba(0,200,150,0.12)', border: '1px solid rgba(0,200,150,0.3)',
+                                                color: '#00C896', borderRadius: 8, padding: '7px 12px', fontSize: '0.75rem',
+                                                fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.2s'
+                                            }}>
+                                                <MdCheckCircle /> Mark Prevented
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
 
@@ -199,6 +211,50 @@ export default function PreSeva() {
                     })}
                 </div>
             </div>
+
+            {/* Resource Allocation Modal */}
+            {allocateModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+                    <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,107,44,0.3)', borderRadius: 16, padding: 28, maxWidth: 460, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--saffron)' }}>⚡ Allocate Resources</h3>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>{allocateModal.id} — {allocateModal.district}, {allocateModal.state}</p>
+                            </div>
+                            <button onClick={() => setAllocateModal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}><MdClose /></button>
+                        </div>
+                        <div style={{ background: 'rgba(255,107,44,0.06)', border: '1px solid rgba(255,107,44,0.2)', borderRadius: 8, padding: 12 }}>
+                            <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 4 }}>{allocateModal.title}</p>
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Predicted in {allocateModal.daysUntil} days · {allocateModal.probability}% confidence</p>
+                        </div>
+                        <div className="responsive-grid-2" style={{ gap: 12 }}>
+                            <div className="form-group">
+                                <label className="form-label">Officers to Deploy</label>
+                                <input className="form-input" type="number" min={1} max={20} value={allocateForm.officers} onChange={e => setAllocateForm(f => ({ ...f, officers: e.target.value }))} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Budget Allocated (₹)</label>
+                                <input className="form-input" type="number" min={0} value={allocateForm.budget} onChange={e => setAllocateForm(f => ({ ...f, budget: e.target.value }))} />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Escalation Note</label>
+                            <textarea className="form-input" rows={3} placeholder="Add notes for the department..." value={allocateForm.note} onChange={e => setAllocateForm(f => ({ ...f, note: e.target.value }))} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setAllocateModal(null)}>Cancel</button>
+                            <button className="btn-primary" style={{ flex: 1 }} disabled={allocating} onClick={async () => {
+                                setAllocating(true);
+                                await apiPresevAssignAlert(allocateModal.id, { ...allocateForm, assignedAt: new Date().toISOString() });
+                                setAllocated(a => ({ ...a, [allocateModal.id]: true }));
+                                setAlerts(as => as.map(a => a.id === allocateModal.id ? { ...a, status: 'Department Notified' } : a));
+                                setAllocating(false);
+                                setAllocateModal(null);
+                            }}>{allocating ? 'Allocating...' : '✓ Confirm Allocation'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* How PreSeva Works */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24 }}>

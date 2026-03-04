@@ -19,7 +19,7 @@ export default function NotificationsPanel() {
 
     useEffect(() => {
         apiGetNotifications().then(res => {
-            setNotifications(res.data);
+            setNotifications(res.data || []);
             setLoading(false);
         });
     }, []);

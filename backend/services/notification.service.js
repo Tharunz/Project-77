@@ -32,7 +32,7 @@ const sendEmail = async (to, subject, htmlBody) => {
     try {
         const transporter = createTransporter();
         const info = await transporter.sendMail({
-            from: process.env.EMAIL_FROM || '"Project-77 Gov Portal" <noreply@project77.gov.in>',
+            from: process.env.EMAIL_FROM || '"Project NCIE Gov Portal" <noreply@ncie.gov.in>',
             to,
             subject,
             html: htmlBody
@@ -76,7 +76,7 @@ const sendGrievanceFiledEmail = async (user, grievance) => {
     const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
       <div style="background: #050b1a; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-        <h2 style="margin: 0; color: #FF6B2C;">⚖️ Project-77</h2>
+        <h2 style="margin: 0; color: #FF6B2C;">⚖️ Project NCIE</h2>
         <p style="margin: 5px 0; color: #94a3b8;">AI-Powered Citizen Services</p>
       </div>
       <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px;">
@@ -89,8 +89,8 @@ const sendGrievanceFiledEmail = async (user, grievance) => {
           <tr><td style="padding: 8px; font-weight: bold;">Status</td><td style="padding: 8px;"><span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px;">Pending</span></td></tr>
           <tr><td style="padding: 8px; background: #f1f5f9; font-weight: bold;">Filed On</td><td style="padding: 8px; background: #f1f5f9;">${new Date(grievance.createdAt).toLocaleDateString('en-IN', { dateStyle: 'long' })}</td></tr>
         </table>
-        <p>You can track your grievance status anytime using your Tracking ID at <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="color: #FF6B2C;">Project-77 Portal</a></p>
-        <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">Jai Hind 🇮🇳 | Ministry of Electronics and IT | Project-77</p>
+        <p>You can track your grievance status anytime using your Tracking ID at <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="color: #FF6B2C;">Project NCIE Portal</a></p>
+        <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">Jai Hind 🇮🇳 | Ministry of Electronics and IT | Project NCIE</p>
       </div>
     </div>
   `;
@@ -105,15 +105,15 @@ const sendStatusUpdateEmail = async (user, grievance, newStatus) => {
     const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: #050b1a; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
-        <h2 style="margin: 0; color: #FF6B2C;">⚖️ Project-77</h2>
+        <h2 style="margin: 0; color: #FF6B2C;">⚖️ Project NCIE</h2>
       </div>
       <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px;">
         <p>Dear <strong>${user.name}</strong>,</p>
         <p>Your grievance <strong>${grievance.id}</strong> has been updated to: <strong>${newStatus}</strong></p>
         <p>Title: ${grievance.title}</p>
         ${grievance.adminNote ? `<p><strong>Officer Note:</strong> ${grievance.adminNote}</p>` : ''}
-        <p>Track at: <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="color: #FF6B2C;">Project-77 Portal</a></p>
-        <p style="color: #6b7280; font-size: 13px;">Jai Hind 🇮🇳 | Project-77</p>
+        <p>Track at: <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}" style="color: #FF6B2C;">Project NCIE Portal</a></p>
+        <p style="color: #6b7280; font-size: 13px;">Jai Hind 🇮🇳 | Project NCIE</p>
       </div>
     </div>
   `;

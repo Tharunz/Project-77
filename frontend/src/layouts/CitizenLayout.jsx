@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import {
     MdDashboard, MdSchool, MdEdit, MdTrackChanges,
     MdChat, MdPerson, MdLogout, MdMenu, MdClose, MdChevronRight,
-    MdMap, MdPeople, MdNewspaper
+    MdMap, MdPeople, MdNewspaper, MdBarChart
 } from 'react-icons/md';
+import { PROJECT_NAME } from '../config/constants';
 import './CitizenLayout.css';
 
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
     { to: '/citizen/track', icon: <MdTrackChanges />, label: 'Track Grievance' },
     { to: '/citizen/roadmap', icon: <MdMap />, label: 'Benefit Roadmap', badge: 'AI' },
     { to: '/citizen/chatbot', icon: <MdChat />, label: 'AI Assistant' },
+    { to: '/citizen/engagement', icon: <MdBarChart />, label: 'CI Score' },
     { to: '/citizen/community', icon: <MdPeople />, label: 'Community' },
     { to: '/citizen/news', icon: <MdNewspaper />, label: 'Seva News' },
     { to: '/citizen/profile', icon: <MdPerson />, label: 'My Profile' },
@@ -41,7 +43,7 @@ export default function CitizenLayout() {
                                 transform={`rotate(${i * 45} 20 20)`} strokeLinecap="round" />
                         ))}
                     </svg>
-                    <span className="citizen-logo-text">Project<span>-77</span></span>
+                    <span className="citizen-logo-text">{PROJECT_NAME}</span>
                 </div>
 
                 <nav className="citizen-nav-desktop">

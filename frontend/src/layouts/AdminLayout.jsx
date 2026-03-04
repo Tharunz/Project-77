@@ -20,8 +20,8 @@ const navItems = [
     { to: '/admin/analytics', icon: <MdAnalytics />, label: 'Analytics' },
     { to: '/admin/distress', icon: <MdWarning />, label: 'Distress Index' },
     { to: '/admin/sla', icon: <MdTimer />, label: 'SLA Tracker' },
-    { to: '/admin/preseva', icon: <MdShield />, label: 'PreSeva AI' },
-    { to: '/admin/escrow', icon: <MdAccountBalanceWallet />, label: 'Escrow Ledger' },
+    { to: '/admin/preseva', icon: <MdShield />, label: 'PRESEVA AI' },
+    { to: '/admin/escrow', icon: <MdAccountBalanceWallet />, label: 'NYAYKOSH Ledger' },
     { to: '/admin/audits', icon: <MdSecurity />, label: 'Ghost Audits' }
 ];
 
@@ -58,7 +58,7 @@ export default function AdminLayout() {
                                         />
                                     ))}
                                 </svg>
-                                <span className="logo-text">Project<span>-77</span></span>
+                                <span className="logo-text">{PROJECT_NAME}</span>
                             </div>
                         </div>
                     )}

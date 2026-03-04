@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MdPeople, MdThumbUp, MdComment, MdVerified, MdGavel, MdAdd } from 'react-icons/md';
+import { MdPeople, MdThumbUp, MdComment, MdVerified, MdGavel, MdAdd, MdShare } from 'react-icons/md';
 import {
     apiGetCommunityPosts, apiUpvotePost, apiCreateCommunityPost,
     apiGetPetitions, apiSignPetition, apiCreatePetition
@@ -28,8 +28,8 @@ export default function Community() {
                 apiGetCommunityPosts(),
                 apiGetPetitions()
             ]);
-            if (postsRes.success) setPosts(postsRes.data || []);
-            if (petitionsRes.success) setPetitions(petitionsRes.data || []);
+            if (postsRes.success) setPosts((postsRes.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+            if (petitionsRes.success) setPetitions((petitionsRes.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
         } catch (e) {
             setError('Failed to load community data. Please try again.');
         }
@@ -80,6 +80,18 @@ export default function Community() {
         }
         setNewPost({ title: '', content: '', category: 'General' });
         setShowForm(false);
+    };
+
+    const handleShare = (id, title) => {
+        const url = `${window.location.origin}/citizen/community?post=${id}`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(url);
+        }
+        const el = document.createElement('div');
+        el.textContent = '🔗 Link copied!';
+        el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1a2a3a;color:#00C896;padding:10px 18px;border-radius:8px;font-size:0.83rem;font-weight:700;z-index:9999;border:1px solid rgba(0,200,150,0.3);';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2500);
     };
 
     const filteredPosts = catFilter === 'All' ? posts : posts.filter(p => p.category === catFilter);
@@ -210,6 +222,9 @@ export default function Community() {
                                         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                                             <MdComment /> {post.responses?.length || 0} replies
                                         </span>
+                                        <button onClick={() => handleShare(post.id, post.title)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', padding: 0 }}>
+                                            <MdShare /> Share
+                                        </button>
                                     </div>
                                 </div>
                             </div>

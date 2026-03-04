@@ -10,7 +10,7 @@ import {
 } from 'react-icons/md';
 import {
     apiGetAdminAnalytics, apiGetDashboardStats, apiGetActivityFeed,
-    apiGetMonthlyTrend, apiGetCategoryBreakdown
+    apiGetMonthlyTrend, apiGetCategoryBreakdown, apiGetPreSevaAlerts
 } from '../../services/api.service';
 import './AdminDashboard.css';
 
@@ -75,11 +75,12 @@ export default function AdminDashboard() {
     const [categories, setCategories] = useState([]);
     const [topStates, setTopStates] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [presevaAlerts, setPresevaAlerts] = useState([]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const res = await apiGetAdminAnalytics();
+            const [res, pa] = await Promise.all([apiGetAdminAnalytics(), apiGetPreSevaAlerts()]);
             if (res.success && res.data) {
                 const { kpis, monthlyTrend, categoryBreakdown, activityFeed, topStates: ts } = res.data;
                 setStats(kpis);
@@ -87,6 +88,9 @@ export default function AdminDashboard() {
                 setCategories(categoryBreakdown || []);
                 setFeed(activityFeed || []);
                 setTopStates(ts || []);
+            }
+            if (pa.success && Array.isArray(pa.data)) {
+                setPresevaAlerts(pa.data.filter(a => !a.prevented).slice(0, 3));
             }
         } catch (err) {
             console.error("Dashboard Load Error:", err);
@@ -290,6 +294,37 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* PRESEVA Predictions Summary */}
+            {presevaAlerts.length > 0 && (
+                <div style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.22)', borderRadius: 'var(--radius-lg)', padding: '20px 24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#8B5CF6', boxShadow: '0 0 8px #8B5CF6', animation: 'pulse 2s ease-in-out infinite' }} />
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#A78BFA' }}>PRESEVA — Top Active Predictions</h3>
+                        </div>
+                        <a href="/admin/preseva" style={{ fontSize: '0.78rem', color: 'var(--saffron)', textDecoration: 'none', fontWeight: 700 }}>View All →</a>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                        {presevaAlerts.map(alert => {
+                            const urgencyColor = alert.urgency === 'critical' ? '#EF4444' : alert.urgency === 'high' ? '#F59E0B' : '#3B82F6';
+                            return (
+                                <div key={alert.id} style={{ background: `${urgencyColor}08`, border: `1px solid ${urgencyColor}25`, borderRadius: 10, padding: '14px 16px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: urgencyColor, textTransform: 'uppercase' }}>{alert.urgency} • {alert.daysUntil}d</span>
+                                        <span style={{ fontFamily: 'Space Grotesk', fontSize: '0.9rem', fontWeight: 800, color: urgencyColor }}>{alert.probability}%</span>
+                                    </div>
+                                    <p style={{ fontSize: '0.82rem', fontWeight: 700, marginBottom: 4, lineHeight: 1.3 }}>{alert.title}</p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>📍 {alert.district}, {alert.state}</p>
+                                    <div style={{ marginTop: 8, height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+                                        <div style={{ width: `${alert.probability}%`, height: '100%', background: urgencyColor, borderRadius: 2 }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Bottom Row: Live Feed + Resolution Ring */}
             <div className="dash-bottom-row">

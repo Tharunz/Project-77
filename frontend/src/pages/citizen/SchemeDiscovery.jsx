@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose } from 'react-icons/md';
+import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose, MdBookmark, MdBookmarkBorder, MdShare, MdSend } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
-import { apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine } from '../../services/api.service';
+import { apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine, apiBookmarkScheme, apiUnbookmarkScheme, apiGetBookmarkedSchemes, apiApplyScheme } from '../../services/api.service';
 import { INDIAN_STATES } from '../../mock/mockData';
 
 const CATEGORIES = ['Agriculture', 'Healthcare', 'Housing', 'Education', 'Labour & Employment', 'Pension & Social Security', 'Women & Child'];
@@ -21,6 +21,11 @@ export default function SchemeDiscovery() {
     const [filterState, setFilterState] = useState('');
     const [aiMode, setAiMode] = useState(true);
     const [selected, setSelected] = useState(null);
+    const [bookmarks, setBookmarks] = useState({}); // { schemeId: true/false }
+    const [applyModal, setApplyModal] = useState(null); // { scheme }
+    const [applyForm, setApplyForm] = useState({ additionalInfo: '', documents: [] });
+    const [applying, setApplying] = useState(false);
+    const [applyDone, setApplyDone] = useState({});
 
     // Group 2 Features
     const [timeMachineYear, setTimeMachineYear] = useState(2026);
@@ -67,6 +72,46 @@ export default function SchemeDiscovery() {
             eligibilityText: typeof s.eligibility === 'string' ? s.eligibility : 'Check details for eligibility',
             category: s.category || 'General'
         };
+    };
+
+    useEffect(() => {
+        apiGetBookmarkedSchemes().then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                const bm = {};
+                res.data.forEach(s => { bm[s.id] = true; });
+                setBookmarks(bm);
+            }
+        });
+    }, []);
+
+    const handleBookmark = async (e, id) => {
+        e.stopPropagation();
+        if (bookmarks[id]) {
+            await apiUnbookmarkScheme(id);
+            setBookmarks(bm => { const n = { ...bm }; delete n[id]; return n; });
+        } else {
+            await apiBookmarkScheme(id);
+            setBookmarks(bm => ({ ...bm, [id]: true }));
+        }
+    };
+
+    const handleShare = (e, s) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}/citizen/schemes?id=${s.id}`;
+        if (navigator.clipboard) navigator.clipboard.writeText(url);
+        const el = document.createElement('div');
+        el.textContent = '🔗 Scheme link copied!';
+        el.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1a2a3a;color:#00C896;padding:10px 18px;border-radius:8px;font-size:0.83rem;font-weight:700;z-index:9999;border:1px solid rgba(0,200,150,0.3);';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2500);
+    };
+
+    const handleApply = async () => {
+        if (!applyModal) return;
+        setApplying(true);
+        const res = await apiApplyScheme(applyModal.id, applyForm);
+        setApplying(false);
+        if (res.success) { setApplyDone(d => ({ ...d, [applyModal.id]: true })); setApplyModal(null); }
     };
 
     const displayed = (schemes || []).map(getSchemeData).filter(s => s);
@@ -151,25 +196,29 @@ export default function SchemeDiscovery() {
                 </select>
             </div>
 
+            {/* Header */}
+            <div style={{ background: 'rgba(255,107,44,0.06)', border: '1px solid rgba(255,107,44,0.2)', borderRadius: 10, padding: '10px 16px', fontSize: '0.8rem', color: 'var(--saffron)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🤖 <strong>NAGRIQ</strong> — Citizen Synchronization Engine &nbsp;<span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>| Intelligently matching government benefits to every citizen's profile</span>
+            </div>
+
             {/* Scheme Grid */}
-            {loading ? <p style={{ color: 'var(--text-muted)', padding: '40px 0', textAlign: 'center' }}>Synchronizing with database...</p> : (
+            {loading ? <p style={{ color: 'var(--text-muted)', padding: '40px 0', textAlign: 'center' }}>NAGRIQ synchronizing benefit database...</p> : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
                     {displayed.map((s, i) => (
                         <div key={s.id} className="glass-card" style={{ padding: 20, animation: `fadeInUp 0.3s ease ${i * 0.03}s both`, cursor: 'pointer' }}
                             onClick={() => setSelected(selected?.id === s.id ? null : s)}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                                <span style={{
-                                    background: `${catColors[s.category] || '#6B7280'}15`,
-                                    color: catColors[s.category] || '#6B7280',
-                                    border: `1px solid ${catColors[s.category] || '#6B7280'}30`,
-                                    padding: '3px 10px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700
-                                }}>{s.category}</span>
-                                <span className={`badge ${s.isActive ? 'badge-resolved' : 'badge-pending'}`}>{s.isActive ? 'Active' : 'Closed'}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center' }}>
+                                <span style={{ background: `${catColors[s.category] || '#6B7280'}15`, color: catColors[s.category] || '#6B7280', border: `1px solid ${catColors[s.category] || '#6B7280'}30`, padding: '3px 10px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700 }}>{s.category}</span>
+                                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    <span className={`badge ${s.isActive ? 'badge-resolved' : 'badge-pending'}`}>{s.isActive ? 'Active' : 'Closed'}</span>
+                                    <button onClick={e => handleBookmark(e, s.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: bookmarks[s.id] ? '#8B5CF6' : 'var(--text-muted)', fontSize: '1.1rem', padding: 2 }} title={bookmarks[s.id] ? 'Remove bookmark' : 'Bookmark'}>
+                                        {bookmarks[s.id] ? <MdBookmark /> : <MdBookmarkBorder />}
+                                    </button>
+                                    <button onClick={e => handleShare(e, s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: 2 }} title="Share"><MdShare /></button>
+                                </div>
                             </div>
                             <h3 style={{ fontSize: '0.92rem', fontWeight: 700, marginBottom: 8, lineHeight: 1.3 }}>{s.name}</h3>
-                            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>
-                                {s.eligibilityText}
-                            </p>
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 10 }}>{s.eligibilityText}</p>
                             <div style={{ padding: '10px 14px', background: 'rgba(0,200,150,0.08)', borderRadius: 8, marginBottom: 12 }}>
                                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 2 }}>Benefit:</p>
                                 <p style={{ fontSize: '0.85rem', color: 'var(--teal)', fontWeight: 700 }}>{s.benefit}</p>
@@ -184,9 +233,14 @@ export default function SchemeDiscovery() {
                             {selected?.id === s.id && (
                                 <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14, animation: 'fadeIn 0.3s ease' }}>
                                     <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>{s.description}</p>
-                                    <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', fontSize: '0.85rem' }}>
-                                        Apply for this Scheme <MdArrowForward />
-                                    </button>
+                                    {applyDone[s.id] ? (
+                                        <div style={{ padding: '10px 14px', background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 8, fontSize: '0.85rem', color: 'var(--teal)', textAlign: 'center' }}>✓ Application Submitted!</div>
+                                    ) : (
+                                        <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', fontSize: '0.85rem' }}
+                                            onClick={e => { e.stopPropagation(); setApplyModal(s); setApplyForm({ additionalInfo: '', documents: [] }); }}>
+                                            <MdSend /> Apply for this Scheme
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -196,6 +250,44 @@ export default function SchemeDiscovery() {
                             No record found in the state archives for this criteria.
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Apply for Scheme Modal */}
+            {applyModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,11,26,0.85)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 16, padding: 32, width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h2 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Apply for Scheme</h2>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>{applyModal.name}</p>
+                            </div>
+                            <MdClose style={{ cursor: 'pointer', fontSize: '1.5rem', color: 'var(--text-muted)' }} onClick={() => setApplyModal(null)} />
+                        </div>
+                        <div style={{ background: 'rgba(0,200,150,0.06)', border: '1px solid rgba(0,200,150,0.2)', borderRadius: 8, padding: 12 }}>
+                            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4 }}>Benefit:</p>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--teal)', fontWeight: 700 }}>{applyModal.benefit}</p>
+                        </div>
+                        <div>
+                            <p style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 8 }}>Required Documents (check what you have):</p>
+                            {['Aadhaar Card', 'Income Certificate', 'Residence Proof', 'Bank Account Details', 'Passport Photo'].map(doc => (
+                                <label key={doc} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer', fontSize: '0.83rem', color: 'var(--text-secondary)' }}>
+                                    <input type="checkbox" style={{ accentColor: 'var(--saffron)' }}
+                                        checked={applyForm.documents.includes(doc)}
+                                        onChange={e => setApplyForm(f => ({ ...f, documents: e.target.checked ? [...f.documents, doc] : f.documents.filter(d => d !== doc) }))} />
+                                    {doc}
+                                </label>
+                            ))}
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Additional Information</label>
+                            <textarea className="form-input" rows={3} placeholder="Any additional details for your application..." value={applyForm.additionalInfo} onChange={e => setApplyForm(f => ({ ...f, additionalInfo: e.target.value }))} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setApplyModal(null)}>Cancel</button>
+                            <button className="btn-primary" style={{ flex: 1 }} disabled={applying} onClick={handleApply}>{applying ? 'Submitting...' : <><MdSend /> Submit Application</>}</button>
+                        </div>
+                    </div>
                 </div>
             )}
 

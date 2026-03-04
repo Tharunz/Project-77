@@ -253,9 +253,69 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-04T05:45:06.921Z"
+    },
+    {
+      "id": "USR-DBFEF729",
+      "name": "2",
+      "email": "2@gmail.com",
+      "password": "$2a$10$EeUAdwc.P8PgRkJS5CC7HuIBWtTp6dm50d3Y/N0rkz/dgavg3came",
+      "state": "Odisha",
+      "district": null,
+      "age": 123,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-04T19:45:18.129Z"
     }
   ],
   "grievances": [
+    {
+      "id": "GRV-069EF141",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "sdfsfsfdsdf",
+      "description": "hello this is a test grievance and I guess its working properly Kannada language",
+      "category": "Education",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "status": "Resolved (Pending Verification)",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-04T20:30:20.042Z",
+      "updatedAt": "2026-03-04T20:32:02.087Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-6ECD1E6B",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "asfasddfa",
+      "description": "sfdasfasfsfsfsfsfsddddddddddddd",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-04T19:42:30.771Z",
+      "updatedAt": "2026-03-04T19:44:17.844Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-04T19:44:17.844Z"
+    },
     {
       "id": "GRV-47C7257B",
       "userId": "USR-CIT-001",
@@ -2077,6 +2137,42 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-04T05:47:15.282Z"
+    },
+    {
+      "id": "NOTIF-F6C7D1BB",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-6ECD1E6B",
+      "message": "Your grievance \"asfasddfa\" has been filed. Tracking ID: GRV-6ECD1E6B",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-04T19:42:30.773Z"
+    },
+    {
+      "id": "NOTIF-BF472AD4",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-6ECD1E6B",
+      "message": "Your grievance GRV-6ECD1E6B status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T19:44:01.664Z"
+    },
+    {
+      "id": "NOTIF-250A47F8",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance \"sdfsfsfdsdf\" has been filed. Tracking ID: GRV-069EF141",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-04T20:30:20.043Z"
+    },
+    {
+      "id": "NOTIF-9F56F4A9",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T20:32:02.089Z"
     }
   ],
   "communityPosts": [
@@ -2100,7 +2196,7 @@
       "content": "Sharing my experience so others can benefit. File your complaint with the block-level agricultural officer directly, not the call centre.",
       "category": "Finance",
       "state": "Kerala",
-      "votes": 893,
+      "votes": 894,
       "isPetition": false,
       "petitionCount": 0,
       "responses": [
@@ -2112,7 +2208,8 @@
       ],
       "createdAt": "2026-02-14T00:00:00.000Z",
       "voters": [
-        "USR-189352E8"
+        "USR-189352E8",
+        "USR-DBFEF729"
       ]
     },
     {
@@ -2123,11 +2220,31 @@
       "content": "testalslslfslfdl",
       "category": "Healthcare",
       "state": "Uttar Pradesh",
-      "votes": 0,
-      "voters": [],
+      "votes": 2,
+      "voters": [
+        "USR-DBFEF729",
+        "USR-CIT-001"
+      ],
       "isPetition": false,
       "responses": [],
       "createdAt": "2026-03-04T05:49:10.497Z"
+    },
+    {
+      "id": "POST-381AC54C",
+      "userId": "USR-CIT-001",
+      "authorName": "Ramesh Kumar",
+      "title": "55555555555",
+      "content": "5555555555555555555555",
+      "category": "Infrastructure",
+      "state": "Uttar Pradesh",
+      "votes": 2,
+      "voters": [
+        "USR-CIT-001",
+        "USR-DBFEF729"
+      ],
+      "isPetition": false,
+      "responses": [],
+      "createdAt": "2026-03-04T19:45:04.269Z"
     }
   ],
   "chatHistory": [],
@@ -2290,5 +2407,7 @@
       "severity": "critical",
       "verifiedByCitizen": false
     }
-  ]
+  ],
+  "schemeApplications": [],
+  "petitions": []
 }

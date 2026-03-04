@@ -35,7 +35,9 @@ const getDb = () => {
             chatHistory: [],
             sevaNews: [],
             escrowProjects: [],
-            ghostAuditAlerts: []
+            ghostAuditAlerts: [],
+            schemeApplications: [],
+            petitions: []
         }).write();
     }
     return db;

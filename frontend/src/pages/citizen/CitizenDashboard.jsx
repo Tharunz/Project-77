@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics } from 'react-icons/md';
-import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap } from '../../services/api.service';
+import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics, MdShield, MdMap, MdClose } from 'react-icons/md';
+import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail } from '../../services/api.service';
 
 const STATUS_ICONS = { Pending: <MdHourglassEmpty />, Resolved: <MdCheckCircle />, Critical: <MdWarning />, 'In Progress': <MdEdit /> };
 const STATUS_COLORS = { Pending: '#F59E0B', Resolved: '#00C896', Critical: '#EF4444', 'In Progress': '#3B82F6' };
@@ -14,6 +14,9 @@ export default function CitizenDashboard() {
     const [roadmap, setRoadmap] = useState(null);
     const [gap, setGap] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [presevaAlert, setPresevaAlert] = useState(null);
+    const [distressData, setDistressData] = useState(null);
+    const [dismissedAlert, setDismissedAlert] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -33,6 +36,24 @@ export default function CitizenDashboard() {
                 console.error("Dashboard load error:", err);
             } finally {
                 setLoading(false);
+            }
+
+            // Load PRESEVA predictions for user's state
+            try {
+                const alerts = await apiGetPreSevaAlerts();
+                const userState = user?.state;
+                if (alerts.success && Array.isArray(alerts.data)) {
+                    const stateAlert = alerts.data.find(a => !a.prevented && a.urgency === 'critical' && (!userState || a.state === userState || userState === a.state));
+                    if (stateAlert) setPresevaAlert(stateAlert);
+                }
+            } catch (_) {}
+
+            // Load heatmap/distress data for user's state
+            if (user?.state) {
+                try {
+                    const hd = await apiGetHeatmapStateDetail(user.state);
+                    if (hd.success && hd.data) setDistressData(hd.data);
+                } catch (_) {}
             }
         };
         load();
@@ -54,6 +75,20 @@ export default function CitizenDashboard() {
 
     return (
         <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+            {/* PRESEVA Alert Banner */}
+            {presevaAlert && !dismissedAlert && (
+                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
+                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444', boxShadow: '0 0 8px #EF4444', flexShrink: 0, animation: 'pulse 1.5s ease-in-out infinite' }} />
+                    <MdShield style={{ color: '#EF4444', fontSize: '1.2rem', flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#EF4444' }}>⚡ PRESEVA Alert — </span>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{presevaAlert.title} predicted in <strong>{presevaAlert.daysUntil} days</strong> in <strong>{presevaAlert.district}, {presevaAlert.state}</strong>. Government has been notified.</span>
+                    </div>
+                    <button onClick={() => setDismissedAlert(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0 }}><MdClose /></button>
+                </div>
+            )}
+
             {/* Welcome */}
             <div style={{
                 background: 'linear-gradient(135deg, rgba(255,107,44,0.1) 0%, rgba(0,200,150,0.06) 100%)',
@@ -104,6 +139,54 @@ export default function CitizenDashboard() {
                     </div>
                 ))}
             </div>
+
+            {/* Area Distress Card */}
+            {distressData && (
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.06) 100%)',
+                    border: '1px solid rgba(139,92,246,0.25)', borderRadius: 'var(--radius-lg)', padding: '20px 24px',
+                    position: 'relative', overflow: 'hidden'
+                }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #8B5CF6, #3B82F6)' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                <MdMap style={{ color: '#8B5CF6', fontSize: '1.2rem' }} />
+                                <span style={{ fontFamily: 'JetBrains Mono', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    Area Distress Intelligence — {user?.state || 'Your State'}
+                                </span>
+                            </div>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 6 }}>Local Service Distress Index</h3>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                                {distressData.topCategory ? `Most common issue in your area: ` : 'Analyzing local service patterns...'}
+                                {distressData.topCategory && <strong style={{ color: '#A78BFA' }}>{distressData.topCategory}</strong>}
+                            </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                            {[
+                                { label: 'Total Issues', value: distressData.count || distressData.totalGrievances || 0, color: '#8B5CF6' },
+                                { label: 'Resolved', value: distressData.resolved || 0, color: '#00C896' },
+                                { label: 'Distress Index', value: `${distressData.distressIndex || Math.round(((distressData.pending || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%`, color: '#F59E0B' },
+                            ].map(d => (
+                                <div key={d.label} style={{ textAlign: 'center', minWidth: 70 }}>
+                                    <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.4rem', fontWeight: 800, color: d.color }}>{d.value}</div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 2 }}>{d.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div style={{ marginTop: 14, height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                        <div style={{
+                            height: '100%', borderRadius: 3, transition: 'width 1s ease',
+                            width: `${distressData.resolutionRate || Math.round(((distressData.resolved || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%`,
+                            background: 'linear-gradient(90deg, #8B5CF6, #3B82F6)'
+                        }} />
+                    </div>
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>
+                        Resolution rate: <strong style={{ color: '#A78BFA' }}>{distressData.resolutionRate || Math.round(((distressData.resolved || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%</strong> in {user?.state}
+                    </p>
+                </div>
+            )}
 
             {/* Roadmap */}
             {roadmap && (

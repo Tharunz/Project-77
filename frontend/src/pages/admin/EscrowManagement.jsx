@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdAccountBalanceWallet, MdGavel, MdCheckCircle, MdHourglassEmpty, MdInfo, MdReceipt, MdSearch } from 'react-icons/md';
-import { apiGetEscrowProjects } from '../../services/api.service';
+import { apiGetAdminEscrow } from '../../services/api.service';
 
 export default function EscrowManagement() {
     const [projects, setProjects] = useState([]);
@@ -9,8 +9,8 @@ export default function EscrowManagement() {
 
     useEffect(() => {
         const load = async () => {
-            const res = await apiGetEscrowProjects();
-            setProjects(res.data);
+            const res = await apiGetAdminEscrow();
+            setProjects(res.data || []);
             setLoading(false);
         };
         load();
@@ -31,8 +31,8 @@ export default function EscrowManagement() {
         <div className="escrow-management page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <div className="section-header" style={{ marginBottom: 32, alignItems: 'flex-start' }}>
                 <div>
-                    <h1 className="dash-title"><MdAccountBalanceWallet className="icon" /> Digital Budget Escrow</h1>
-                    <p className="dash-subtitle">Algorithmic fund locking based on citizen verification</p>
+                    <h1 className="dash-title"><MdAccountBalanceWallet className="icon" /> NYAYKOSH — Sovereign Fund Accountability Ledger</h1>
+                    <p className="dash-subtitle">Algorithmic fund locking based on citizen verification — every rupee tracked on the sovereign ledger</p>
                 </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                     <div className="glass-card" style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', minWidth: 160 }}>

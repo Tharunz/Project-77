@@ -36,6 +36,7 @@ import ProfilePage from './pages/citizen/ProfilePage';
 import BenefitRoadmap from './pages/citizen/BenefitRoadmap';
 import Community from './pages/citizen/Community';
 import SevaNews from './pages/citizen/SevaNews';
+import EngagementDashboard from './pages/citizen/EngagementDashboard';
 
 // Loading Spinner
 const Loader = () => (
@@ -100,6 +101,7 @@ function AppRoutes() {
         <Route path="roadmap" element={<BenefitRoadmap />} />
         <Route path="community" element={<Community />} />
         <Route path="news" element={<SevaNews />} />
+        <Route path="engagement" element={<EngagementDashboard />} />
       </Route>
 
       {/* Fallback */}

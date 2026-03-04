@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MdTrackChanges, MdSearch, MdCheckCircle, MdHourglassEmpty, MdEdit, MdArrowForward, MdPhotoCamera, MdStar, MdStarBorder, MdCloudUpload, MdVerifiedUser, MdClose } from 'react-icons/md';
-import { apiTrackGrievance, apiVerifyResolution } from '../../services/api.service';
+import { apiTrackGrievance, apiVerifyResolution, apiGetEscrowProjects, apiVerifyEscrow } from '../../services/api.service';
 import { useAuth } from '../../context/AuthContext';
 import { apiGetMyGrievances } from '../../services/api.service';
 
@@ -13,11 +13,20 @@ function EscrowVerificationPanel({ grievanceId, onSuccess, showToast }) {
     const handleVerify = async () => {
         if (rating === 0) return showToast('error', 'Please provide a rating.');
         setLoading(true);
-        // Simulate API call
-        await new Promise(res => setTimeout(res, 1500));
-        setLoading(false);
-        // Pass the local photo to the parent
-        onSuccess(photo);
+        try {
+            // Find the escrow project linked to this grievance
+            const escrowRes = await apiGetEscrowProjects();
+            const projects = escrowRes.data || [];
+            const linked = projects.find(p => p.grievanceId === grievanceId);
+            if (linked) {
+                await apiVerifyEscrow(linked.id, rating, photo);
+            }
+        } catch (err) {
+            console.error('Escrow verification error:', err);
+        } finally {
+            setLoading(false);
+            onSuccess(photo);
+        }
     };
 
     const handlePhotoUpload = (e) => {

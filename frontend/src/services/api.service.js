@@ -1,5 +1,5 @@
 // =============================================
-// API SERVICE LAYER — Project-77
+// API SERVICE LAYER — Project NCIE
 // All API calls go here. Replace mock data with real endpoints.
 // =============================================
 
@@ -17,7 +17,7 @@ import {
 // Simulate async delay (only used for pending mock features now)
 const delay = (ms = 400) => new Promise(res => setTimeout(res, ms));
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 // Helper: Setup auth headers using the user's localStorage JWT token
 const getAuthHeaders = () => {
@@ -38,12 +38,19 @@ const apiFetch = async (endpoint, options = {}) => {
                 ...options.headers
             }
         });
-        const data = await res.json();
-        // Even if status is 4xx or 5xx, the backend always responds with JSON `{ success: false, error: ... }`
-        return data;
+        const text = await res.text();
+        if (!text || !text.trim()) {
+            return { success: false, error: 'Server returned an empty response. Is the backend running?' };
+        }
+        try {
+            return JSON.parse(text);
+        } catch {
+            console.error(`Non-JSON response at ${endpoint}:`, text.slice(0, 120));
+            return { success: false, error: `Server error (${res.status}). Backend may be unreachable.` };
+        }
     } catch (err) {
         console.error(`API Error at ${endpoint}:`, err);
-        return { success: false, error: err.message || 'Network request failed' };
+        return { success: false, error: 'Cannot connect to backend. Please ensure the server is running on port 5000.' };
     }
 };
 
@@ -253,7 +260,23 @@ export const apiUpdateScheme = async (id, data) => {
 // ==============================
 export const apiGetHeatmapData = async () => {
     const res = await apiFetch('/heatmap');
-    if (res.success && Array.isArray(res.data)) return res;
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        // Transform array [{state, totalGrievances, resolved, pending}] into
+        // object keyed by state name with `count` field as IndiaHeatmap.jsx expects
+        const byState = {};
+        res.data.forEach(d => {
+            byState[d.state] = {
+                count: d.totalGrievances || 0,
+                resolved: d.resolved || 0,
+                pending: d.pending || 0,
+                critical: d.critical || 0,
+                distressIndex: d.distressIndex || 0,
+                resolutionRate: d.resolutionRate || 0,
+                topCategory: d.topCategory || 'General'
+            };
+        });
+        return { success: true, data: byState };
+    }
     // Fallback to mock if backend empty
     await delay(400);
     return { success: true, data: mockHeatmapData };
@@ -457,6 +480,73 @@ export const apiMarkNotificationRead = async (id) => {
 };
 
 // ==============================
+//  PROFILE & DATA PRIVACY (M-06, M-07)
+// ==============================
+export const apiGetProfile = async () => {
+    return await apiFetch('/auth/profile');
+};
+
+export const apiUpdateProfile = async (updates) => {
+    return await apiFetch('/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+    });
+};
+
+export const apiExportData = async () => {
+    return await apiFetch('/auth/data-export');
+};
+
+export const apiDeleteAccount = async () => {
+    return await apiFetch('/auth/account', { method: 'DELETE' });
+};
+
+// ==============================
+//  GROUP 4 & 5: CITIZEN SPECIFIC APIS
+// ==============================
+export const apiGetCitizenScore = async () => {
+    return await apiFetch('/citizen/score');
+};
+
+export const apiGetCitizenFootprint = async () => {
+    return await apiFetch('/citizen/footprint');
+};
+
+export const apiGetCitizenPredictFuture = async () => {
+    return await apiFetch('/citizen/predict-future');
+};
+
+export const apiGetSevaNews = async () => {
+    return await apiFetch('/citizen/news');
+};
+
+export const apiGetEscrowProjects = async () => {
+    return await apiFetch('/citizen/escrow');
+};
+
+export const apiVerifyEscrow = async (id, rating, photo) => {
+    return await apiFetch(`/citizen/escrow/${id}/verify`, {
+        method: 'POST',
+        body: JSON.stringify({ rating, photo })
+    });
+};
+
+// ==============================
+//  GROUP 4: ADMIN SPECIFIC APIS
+// ==============================
+export const apiGetOfficersWall = async () => {
+    return await apiFetch('/admin/officers/wall');
+};
+
+export const apiGetAdminEscrow = async () => {
+    return await apiFetch('/admin/escrow');
+};
+
+export const apiGetGhostAuditAlerts = async () => {
+    return await apiFetch('/admin/ghost-audits');
+};
+
+// ==============================
 //  NEW FEATURE APIs (Stubs/Others)
 // ==============================
 
@@ -474,12 +564,69 @@ export const apiMarkPrevented = async (id) => {
 // Feature 15: Bharat Distress Index
 export const apiGetDistressIndex = async () => { await delay(400); return { success: true, data: mockDistressIndex }; };
 
-// Feature 19: Seva News
-export const apiGetSevaNews = async () => { await delay(400); return { success: true, data: mockSevaNews }; };
+// ==============================
+//  AUTH EXTRAS (Password, OTP, KYC)
+// ==============================
+export const apiChangePassword = async (currentPassword, newPassword) => {
+    return await apiFetch('/auth/change-password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword })
+    });
+};
 
-// Feature 27 & 20: Digital Budget Escrow
-export const apiGetEscrowProjects = async () => { await delay(500); return { success: true, data: mockEscrowProjects }; };
-export const apiVerifyEscrow = async (id, rating, photo) => { await delay(800); return { success: true }; };
+export const apiSendOTP = async (phone) => {
+    return await apiFetch('/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ phone })
+    });
+};
 
-// Feature 28: AI Ghost Audits
-export const apiGetGhostAuditAlerts = async () => { await delay(400); return { success: true, data: mockGhostAuditAlerts }; };
+export const apiVerifyOTP = async (otp) => {
+    return await apiFetch('/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ otp })
+    });
+};
+
+// ==============================
+//  SCHEME MANAGEMENT (Admin CRUD extras)
+// ==============================
+export const apiDeleteScheme = async (id) => {
+    return await apiFetch(`/schemes/${id}`, { method: 'DELETE' });
+};
+
+export const apiApplyScheme = async (schemeId, applicationData) => {
+    return await apiFetch(`/schemes/${schemeId}/apply`, {
+        method: 'POST',
+        body: JSON.stringify(applicationData)
+    });
+};
+
+// ==============================
+//  BOOKMARKS
+// ==============================
+export const apiGetBookmarkedSchemes = async () => {
+    return await apiFetch('/schemes/bookmarked');
+};
+
+export const apiBookmarkScheme = async (schemeId) => {
+    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'POST' });
+};
+
+export const apiUnbookmarkScheme = async (schemeId) => {
+    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'DELETE' });
+};
+
+// ==============================
+//  PRESEVA EXTRAS
+// ==============================
+export const apiPresevAssignAlert = async (id, assignData) => {
+    return await apiFetch(`/preseva/alerts/${id}/assign`, {
+        method: 'POST',
+        body: JSON.stringify(assignData)
+    });
+};
+
+export const apiGetPresevaPredictionsByState = async (state) => {
+    return await apiFetch(`/preseva/alerts?state=${encodeURIComponent(state)}`);
+};

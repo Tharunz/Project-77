@@ -1,5 +1,5 @@
 // ============================================
-// index.js — Project-77 Backend Entry Point
+// index.js — Project NCIE Backend Entry Point
 // Express server with all routes mounted
 // ============================================
 
@@ -19,14 +19,14 @@ const ocrRoutes = require('./routes/ocr.routes');
 const presevaRoutes = require('./routes/preseva.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const notificationRoutes = require('./routes/notification.routes');
-<<<<<<< HEAD
+
 // Group 3 Routes
 const translateRoutes = require('./routes/translate.routes');
 const heatmapRoutes = require('./routes/heatmap.routes');
 const communityRoutes = require('./routes/community.routes');
-=======
+
+// Group 4 & 5 Routes
 const citizenRoutes = require('./routes/citizen.routes');
->>>>>>> eb3d0bbbeac2cee9e992a4014fc9788618855247
 
 // ─── Import Middleware ────────────────────────────────────────────────────────
 const { errorHandler, notFound } = require('./middleware/errorHandler.middleware');
@@ -81,7 +81,7 @@ app.get('/api/health', (req, res) => {
             environment: process.env.NODE_ENV || 'development',
             uptime: process.uptime()
         },
-        message: 'Project-77 Backend is running. Jai Hind! 🇮🇳',
+        message: 'Project NCIE Backend is running. Jai Hind! 🇮🇳',
         timestamp: new Date().toISOString()
     });
 });
@@ -96,14 +96,14 @@ app.use('/api/ocr', ocrRoutes);
 app.use('/api/preseva', presevaRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notification', notificationRoutes);
-<<<<<<< HEAD
-// Group 3
+
+// Group 3 Routes
 app.use('/api/translate', translateRoutes);
 app.use('/api/heatmap', heatmapRoutes);
 app.use('/api/community', communityRoutes);
-=======
+
+// Group 4 & 5 Routes
 app.use('/api/citizen', citizenRoutes);
->>>>>>> eb3d0bbbeac2cee9e992a4014fc9788618855247
 
 // ─── 404 + Error Handlers ─────────────────────────────────────────────────────
 app.use(notFound);
@@ -117,7 +117,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
         console.log('');
         console.log('╔══════════════════════════════════════════════════════╗');
-        console.log('║        🇮🇳  PROJECT-77 BACKEND  🇮🇳                   ║');
+        console.log('║        🇮🇳  PROJECT NCIE BACKEND  🇮🇳                 ║');
         console.log('║   AI-Powered Citizen Services Super-Platform          ║');
         console.log('║   AI ASCEND 2026 — AWS & Kyndryl Hackathon            ║');
         console.log('╠══════════════════════════════════════════════════════╣');
@@ -131,8 +131,7 @@ const startServer = async () => {
         console.log(`║   GET  /api/schemes/recommend|eligibility-check       ║`);
         console.log(`║   GET  /api/admin/officers/leaderboard|sla-tracker    ║`);
         console.log('╠══════════════════════════════════════════════════════╣');
-<<<<<<< HEAD
-        console.log('║   GROUP 3 Routes (NEW):                              ║');
+        console.log('║   GROUP 3 Routes:                                     ║');
         console.log(`║   POST /api/chatbot/message              [#21]       ║`);
         console.log(`║   POST /api/translate                    [#22]       ║`);
         console.log(`║   GET  /api/translate/languages          [#22]       ║`);
@@ -146,36 +145,17 @@ const startServer = async () => {
         console.log(`║   POST /api/community/posts/:id/vote     [#29]       ║`);
         console.log(`║   GET  /api/community/petitions          [#30]       ║`);
         console.log(`║   POST /api/community/petitions/:id/sign [#30]       ║`);
-=======
-        console.log('║   GROUP 2 Routes:                                     ║');
-        console.log(`║   GET   /api/schemes/recommend          [#11]         ║`);
-        console.log(`║   GET   /api/schemes/eligibility-check  [#12]         ║`);
-        console.log(`║   POST  /api/schemes/benefit-gap        [#13]         ║`);
-        console.log(`║   GET   /api/schemes/time-machine       [#14]         ║`);
-        console.log(`║   GET   /api/schemes/benefit-roadmap    [NEW]         ║`);
-        console.log(`║   GET   /api/admin/grievances           [#15]         ║`);
-        console.log(`║   GET   /api/admin/analytics            [#16]         ║`);
-        console.log(`║   GET   /api/admin/officers/leaderboard [#17]         ║`);
-        console.log(`║   GET   /api/admin/sla-tracker          [#18]         ║`);
-        console.log(`║   GET   /api/admin/fraud-alerts         [#19]         ║`);
-        console.log(`║   GET   /api/grievance/search           [#20]         ║`);
         console.log('╠══════════════════════════════════════════════════════╣');
-        console.log('║   GROUP 4 Routes:                                     ║');
+        console.log('║   GROUP 4 & 5 Routes:                                 ║');
         console.log(`║   GET   /api/citizen/score              [#31]         ║`);
         console.log(`║   GET   /api/citizen/footprint          [#32]         ║`);
         console.log(`║   GET   /api/citizen/predict-future     [#33]         ║`);
         console.log(`║   GET   /api/admin/officers/wall        [#34]         ║`);
-<<<<<<< HEAD
->>>>>>> eb3d0bbbeac2cee9e992a4014fc9788618855247
-=======
-        console.log('╠══════════════════════════════════════════════════════╣');
-        console.log('║   GROUP 5 Routes:                                     ║');
-        console.log(`║   GET   /api/citizen/news               [#19]         ║`);
-        console.log(`║   GET   /api/citizen/escrow             [#27]         ║`);
-        console.log(`║   POST  /api/citizen/escrow/:id/verify  [#20]         ║`);
-        console.log(`║   GET   /api/admin/escrow               [#27]         ║`);
-        console.log(`║   GET   /api/admin/ghost-audits         [#28]         ║`);
->>>>>>> 2f136609f561a46f26478268eb04755cb6cde13d
+        console.log(`║   GET   /api/citizen/news               [#35]         ║`);
+        console.log(`║   GET   /api/citizen/escrow             [#36]         ║`);
+        console.log(`║   POST  /api/citizen/escrow/:id/verify  [#37]         ║`);
+        console.log(`║   GET   /api/admin/escrow               [#38]         ║`);
+        console.log(`║   GET   /api/admin/ghost-audits         [#39]         ║`);
         console.log('╚══════════════════════════════════════════════════════╝');
         console.log('');
     });
