@@ -5,6 +5,7 @@
 ---
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ## 🏛️ THE VISION: SHIFTING THE PARADIGM
 Project-X is not a grievance resolution platform; it is a **Sovereign Intelligence Engine**. It shifts governance from **Reactive** (responding to complaints) to **Proactive** (extinguishing issues before they ignite). 
 
@@ -14,6 +15,11 @@ Project-X is not a grievance resolution platform; it is a **Sovereign Intelligen
 ## Active Branch: feature/surya-backend-group-3
 ## Current Phase: Backend Group 3 COMPLETE — All 30 APIs live (10 groups × 3 groups)
 >>>>>>> a86b39643c98b229e4f221e21def5e5cb917e51f
+=======
+## Last Updated: 2026-03-04
+## Active Branch: feature/surya-backend-group-4
+## Current Phase: Backend Group 4 COMPLETE — New Citizen & Admin APIs live
+>>>>>>> eb3d0bbbeac2cee9e992a4014fc9788618855247
 
 ---
 
@@ -80,7 +86,11 @@ graph TD
 
 ## BACKEND STATUS (Surya)
 
+<<<<<<< HEAD
 ### Branch: `feature/surya-backend-group-1`
+=======
+### Branch: `feature/surya-backend-group-4`
+>>>>>>> eb3d0bbbeac2cee9e992a4014fc9788618855247
 ### Server: `http://localhost:5000`
 ### Start: `cd backend && npm run dev`
 
@@ -99,7 +109,36 @@ graph TD
 | 9 | My Grievances List API | ✅ Complete | GET /api/grievance/my-grievances — pagination + filter |
 | 10 | Scheme Listing + Filtering | ✅ Complete | GET /api/schemes — filter, recommend, eligibility-check, benefit-gap |
 
+<<<<<<< HEAD
 #### Additional APIs (bonus, also built in Group 1):
+=======
+#### Group 2 — COMPLETE ✅
+
+| # | Feature | Status | Endpoint |
+|---|---------|--------|----------|
+| 11 | Scheme recommendation engine | ✅ Complete | GET /api/schemes/recommend |
+| 12 | Scheme eligibility checker | ✅ Complete | GET /api/schemes/eligibility-check |
+| 13 | Benefit gap calculator | ✅ Complete | POST /api/schemes/benefit-gap |
+| 14 | Scheme time machine | ✅ Complete | GET /api/schemes/time-machine |
+| 15 | Admin grievance management | ✅ Complete | GET /api/admin/grievances + PATCH /api/grievance/update/:id |
+| 16 | Admin dashboard analytics | ✅ Complete | GET /api/admin/analytics |
+| 17 | Officer leaderboard | ✅ Complete | GET /api/admin/officers/leaderboard — composite score, badge (Gold/Silver/Bronze/Warning) |
+| 18 | SLA tracker | ✅ Fixed + Complete | GET /api/admin/sla-tracker — fixed wrong DB collection |
+| 19 | Fraud detection | ✅ Enhanced + Complete | GET /api/admin/fraud-alerts — AI reasoning, similarity grouping, riskLevel |
+| 20 | Grievance search | ✅ Complete | GET /api/grievance/search |
+| — | Benefit roadmap | ✅ Bonus | GET /api/schemes/benefit-roadmap — 3-phase personalized roadmap |
+
+#### Group 4 — COMPLETE ✅
+
+| # | Feature | Status | Endpoint |
+|---|---------|--------|----------|
+| 31 | Jan Shakti Score calculation | ✅ Complete | GET /api/citizen/score |
+| 32 | Seva Mirror citizen footprint API | ✅ Complete | GET /api/citizen/footprint |
+| 33 | Predict My Future AI planning API | ✅ Complete | GET /api/citizen/predict-future |
+| 34 | Officer accountability wall API | ✅ Complete | GET /api/admin/officers/wall |
+
+#### Additional APIs (also built, bonus):
+>>>>>>> eb3d0bbbeac2cee9e992a4014fc9788618855247
 - Admin dashboard — `/api/admin/dashboard` (KPIs, charts, activity feed)
 - Admin analytics — `/api/admin/analytics` (monthly trend, category, sentiment, state)
 - Admin officers — `/api/admin/officers` + PATCH
