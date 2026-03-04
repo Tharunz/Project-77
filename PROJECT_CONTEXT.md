@@ -4,9 +4,9 @@
 
 ---
 
-## Last Updated: 2026-02-28
-## Active Branch: feature/surya-backend-group-1
-## Current Phase: Backend Group 1 COMPLETE — Frontend complete + Backend Group 1 APIs live
+## Last Updated: 2026-03-04
+## Active Branch: feature/surya-backend-group-4
+## Current Phase: Backend Group 4 COMPLETE — New Citizen & Admin APIs live
 
 ---
 
@@ -62,7 +62,7 @@
 
 ## BACKEND STATUS (Surya)
 
-### Branch: `feature/surya-backend-group-2`
+### Branch: `feature/surya-backend-group-4`
 ### Server: `http://localhost:5000`
 ### Start: `cd backend && npm run dev`
 
@@ -96,6 +96,15 @@
 | 19 | Fraud detection | ✅ Enhanced + Complete | GET /api/admin/fraud-alerts — AI reasoning, similarity grouping, riskLevel |
 | 20 | Grievance search | ✅ Complete | GET /api/grievance/search |
 | — | Benefit roadmap | ✅ Bonus | GET /api/schemes/benefit-roadmap — 3-phase personalized roadmap |
+
+#### Group 4 — COMPLETE ✅
+
+| # | Feature | Status | Endpoint |
+|---|---------|--------|----------|
+| 31 | Jan Shakti Score calculation | ✅ Complete | GET /api/citizen/score |
+| 32 | Seva Mirror citizen footprint API | ✅ Complete | GET /api/citizen/footprint |
+| 33 | Predict My Future AI planning API | ✅ Complete | GET /api/citizen/predict-future |
+| 34 | Officer accountability wall API | ✅ Complete | GET /api/admin/officers/wall |
 
 #### Additional APIs (also built, bonus):
 - Admin dashboard — `/api/admin/dashboard` (KPIs, charts, activity feed)

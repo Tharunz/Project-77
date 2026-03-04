@@ -19,6 +19,7 @@ const ocrRoutes = require('./routes/ocr.routes');
 const presevaRoutes = require('./routes/preseva.routes');
 const analyticsRoutes = require('./routes/analytics.routes');
 const notificationRoutes = require('./routes/notification.routes');
+const citizenRoutes = require('./routes/citizen.routes');
 
 // ─── Import Middleware ────────────────────────────────────────────────────────
 const { errorHandler, notFound } = require('./middleware/errorHandler.middleware');
@@ -88,6 +89,7 @@ app.use('/api/ocr', ocrRoutes);
 app.use('/api/preseva', presevaRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notification', notificationRoutes);
+app.use('/api/citizen', citizenRoutes);
 
 // ─── 404 + Error Handlers ─────────────────────────────────────────────────────
 app.use(notFound);
@@ -131,6 +133,12 @@ const startServer = async () => {
         console.log(`║   GET   /api/admin/sla-tracker          [#18]         ║`);
         console.log(`║   GET   /api/admin/fraud-alerts         [#19]         ║`);
         console.log(`║   GET   /api/grievance/search           [#20]         ║`);
+        console.log('╠══════════════════════════════════════════════════════╣');
+        console.log('║   GROUP 4 Routes:                                     ║');
+        console.log(`║   GET   /api/citizen/score              [#31]         ║`);
+        console.log(`║   GET   /api/citizen/footprint          [#32]         ║`);
+        console.log(`║   GET   /api/citizen/predict-future     [#33]         ║`);
+        console.log(`║   GET   /api/admin/officers/wall        [#34]         ║`);
         console.log('╚══════════════════════════════════════════════════════╝');
         console.log('');
     });
