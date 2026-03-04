@@ -23,9 +23,9 @@ function TerminalViz({ vizType, color }) {
 
         if (vizType === 'rupee') {
             intRupee = setInterval(() => {
-                rupeeRef.current = rupeeRef.current + Math.floor(Math.random() * 100);
+                rupeeRef.current = rupeeRef.current + Math.floor(Math.random() * 400);
                 if (rupeeDomRef.current) rupeeDomRef.current.textContent = '₹' + rupeeRef.current.toLocaleString('en-IN');
-            }, 50);
+            }, 200);
         }
 
         if (vizType === 'petition') {

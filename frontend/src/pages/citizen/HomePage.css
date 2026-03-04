@@ -775,6 +775,8 @@
 
 /* PreSeva section */
 .it-pv {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 600px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     max-width: 1300px;
@@ -1128,6 +1130,8 @@
 
 /* CTA */
 .it-cta {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
     padding: 80px 48px 100px;
 }
 
@@ -1183,6 +1187,8 @@
 
 /* Footer */
 .it-footer {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 200px;
     padding: 36px 48px;
     text-align: center;
     border-top: 1px solid rgba(92, 142, 255, .06);
@@ -1420,6 +1426,7 @@
     height: 740px;
     display: flex;
     flex-direction: column;
+    will-change: transform;
 }
 
 /* ── INDIA DISTRESS COMMAND UI ── */
@@ -1684,17 +1691,72 @@
     height: 100%;
     position: absolute;
     inset: 0;
+    will-change: contents;
+    contain: layout;
 }
 
 /* ── India Map Ultra-Performant Spotlights (Pure CSS) ── */
 
 .state-layer-group {
     transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
-    will-change: opacity, filter;
+}
+
+/* ── Per-Tier Neon Glow + Breathing (opacity-only — compositor, zero repaint) ── */
+/* Static drop-shadow gives the neon look; opacity breath has zero GPU cost.    */
+
+/* SAFE — teal */
+.state-breathe-0 {
+    filter: drop-shadow(0 0 3px rgba(0,229,160,0.55));
+    animation: breatheOpacity 3.8s ease-in-out infinite;
+    will-change: opacity;
+}
+
+/* LOW — blue */
+.state-breathe-1 {
+    filter: drop-shadow(0 0 3px rgba(92,142,255,0.55));
+    animation: breatheOpacity 4.2s ease-in-out infinite;
+    will-change: opacity;
+}
+
+/* MEDIUM — amber */
+.state-breathe-2 {
+    filter: drop-shadow(0 0 3px rgba(255,184,0,0.55));
+    animation: breatheOpacity 3.9s ease-in-out infinite;
+    will-change: opacity;
+}
+
+/* HIGH — orange */
+.state-breathe-3 {
+    filter: drop-shadow(0 0 4px rgba(255,85,0,0.65));
+    animation: breatheOpacity 3.5s ease-in-out infinite;
+    will-change: opacity;
+}
+
+/* CRITICAL — red */
+.state-breathe-4 {
+    filter: drop-shadow(0 0 5px rgba(255,59,59,0.7));
+    animation: breatheOpacity 3s ease-in-out infinite;
+    will-change: opacity;
+}
+
+/* Single shared keyframe — only opacity changes (compositor layer, 0 repaint) */
+@keyframes breatheOpacity {
+    0%,100% { opacity: 0.82; }
+    50%      { opacity: 1; }
+}
+
+/* Pause on clicked states */
+.state-layer-group.is-clicked .state-breathe-0,
+.state-layer-group.is-clicked .state-breathe-1,
+.state-layer-group.is-clicked .state-breathe-2,
+.state-layer-group.is-clicked .state-breathe-3,
+.state-layer-group.is-clicked .state-breathe-4 {
+    animation-play-state: paused;
+    opacity: 1;
 }
 
 .map-geographies {
-    will-change: opacity, filter;
+    contain: layout style;
 }
 
 /* 1. Hover Spotlight: Dim all states EXCEPT the one currently being hovered */
@@ -1885,6 +1947,32 @@
     to {
         stroke-dashoffset: 0;
     }
+}
+
+.city-pulse-ring {
+    animation: cityPulse 2s ease-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+    will-change: transform, opacity;
+}
+
+@keyframes cityPulse {
+    0% {
+        transform: scale(0.4);
+        opacity: 0.25;
+    }
+    80% {
+        opacity: 0.05;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+.travel-dot {
+    animation: travelDot 4s linear infinite;
+    will-change: stroke-dashoffset;
 }
 
 .arc-lbl {

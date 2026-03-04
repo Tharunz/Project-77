@@ -11,6 +11,7 @@ let width, height;
 let mouse = { x: -1000, y: -1000 };
 let currentMouse = { x: 0, y: 0 };
 let targetMouse = { x: 0, y: 0 };
+let frameCount = 0;
 
 // Simplified Particle for Worker
 class WorkerParticle {
@@ -53,10 +54,12 @@ function initParticles(n, w, h, c1, c2) {
 
 function render() {
     if (!ctx) return;
+    frameCount++;
     ctx.clearRect(0, 0, width, height);
 
     if (type === 'particles') {
         const connectionDistance = 110;
+        const connDistSq = connectionDistance * connectionDistance;
         particles.forEach(p => {
             p.update(width, height);
             ctx.beginPath();
@@ -65,23 +68,26 @@ function render() {
             ctx.fill();
         });
 
-        for (let i = 0; i < particles.length; i++) {
-            for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const distSq = dx * dx + dy * dy;
-                if (distSq < connectionDistance * connectionDistance) {
-                    const dist = Math.sqrt(distSq);
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.strokeStyle = `rgba(0, 229, 160, ${(1 - dist / connectionDistance) * 0.3})`;
-                    ctx.stroke();
+        // Draw connections every other frame to halve stroke call count
+        if (frameCount % 2 === 0) {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < connDistSq) {
+                        const dist = Math.sqrt(distSq);
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(0, 229, 160, ${(1 - dist / connectionDistance) * 0.3})`;
+                        ctx.stroke();
+                    }
                 }
             }
         }
     } else if (type === 'quantum') {
-        const connectionDistance = 120;
+        // Quantum mode: dots only, no O(n²) connection loop
         particles.forEach(p => {
             p.x += p.vx;
             p.y += p.vy;
@@ -91,43 +97,27 @@ function render() {
 
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(0, 229, 160, 0.4)';
+            ctx.fillStyle = 'rgba(0, 229, 160, 0.45)';
             ctx.fill();
 
-            // Mouse tether
+            // Mouse tether only (single line per particle, not O(n²))
             const dxm = p.x - mouse.x;
             const dym = p.y - mouse.y;
             const distmSq = dxm * dxm + dym * dym;
-            if (distmSq < 200 * 200) {
+            if (distmSq < 160 * 160) {
                 const distm = Math.sqrt(distmSq);
                 ctx.beginPath();
                 ctx.moveTo(p.x, p.y);
                 ctx.lineTo(mouse.x, mouse.y);
-                ctx.strokeStyle = `rgba(0, 229, 160, ${(200 - distm) / 200 * 0.5})`;
+                ctx.strokeStyle = `rgba(0, 229, 160, ${(160 - distm) / 160 * 0.4})`;
                 ctx.stroke();
-                p.vx -= (dxm / distm) * 0.015;
-                p.vy -= (dym / distm) * 0.015;
+                p.vx -= (dxm / distm) * 0.012;
+                p.vy -= (dym / distm) * 0.012;
             }
 
             const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-            if (speed > 1.2) { p.vx *= 0.95; p.vy *= 0.95; }
+            if (speed > 1.0) { p.vx *= 0.95; p.vy *= 0.95; }
         });
-
-        for (let i = 0; i < particles.length; i++) {
-            for (let j = i + 1; j < particles.length; j++) {
-                const dx = particles[i].x - particles[j].x;
-                const dy = particles[i].y - particles[j].y;
-                const ds = dx * dx + dy * dy;
-                if (ds < connectionDistance * connectionDistance) {
-                    const d = Math.sqrt(ds);
-                    ctx.beginPath();
-                    ctx.moveTo(particles[i].x, particles[i].y);
-                    ctx.lineTo(particles[j].x, particles[j].y);
-                    ctx.strokeStyle = `rgba(0, 229, 160, ${0.15 - d / connectionDistance * 0.15})`;
-                    ctx.stroke();
-                }
-            }
-        }
     }
 
     requestAnimationFrame(render);

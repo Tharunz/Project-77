@@ -1,6 +1,5 @@
-import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
-import { ComposableMap, Geographies, Geography, Marker, Line } from 'react-simple-maps';
-import { geoCentroid, geoMercator } from 'd3-geo';
+import React, { useState, useEffect, memo, useCallback } from 'react';
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 
 const GEO_URL = "/india_states.geojson";
 let globalGeoCache = null;
@@ -73,123 +72,11 @@ const STATE_MOCK_DATA = {
 };
 
 const DC = ['#00E5A0', '#5C8EFF', '#FFB800', '#FF5500', '#FF3B3B'];
-const DC_FAINT = ['rgba(0,229,160,0.08)', 'rgba(92,142,255,0.08)', 'rgba(255,184,0,0.08)', 'rgba(255,85,0,0.08)', 'rgba(255,59,59,0.08)'];
 const LEVEL_LABELS = ['SAFE', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
-const CITIES = [
-    { name: 'Lucknow', coords: [80.946, 26.846], level: 4, st: 'Uttar Pradesh', cat: 'Water' },
-    { name: 'Patna', coords: [85.137, 25.594], level: 4, st: 'Bihar', cat: 'Education' },
-    { name: 'Ranchi', coords: [85.309, 23.344], level: 4, st: 'Jharkhand', cat: 'Pension' },
-    { name: 'New Delhi', coords: [77.209, 28.613], level: 3, st: 'Delhi', cat: 'Transport' },
-    { name: 'Jaipur', coords: [75.787, 26.912], level: 3, st: 'Rajasthan', cat: 'Power' },
-    { name: 'Bhopal', coords: [77.412, 23.259], level: 3, st: 'Madhya Pradesh', cat: 'Roads' },
-    { name: 'Raipur', coords: [81.629, 21.251], level: 3, st: 'Chhattisgarh', cat: 'Civic' },
-    { name: 'Mumbai', coords: [72.877, 19.076], level: 2, st: 'Maharashtra', cat: 'Police' },
-    { name: 'Kolkata', coords: [88.363, 22.572], level: 2, st: 'West Bengal', cat: 'Water' },
-    { name: 'Bengaluru', coords: [77.594, 12.971], level: 2, st: 'Karnataka', cat: 'Traffic' },
-    { name: 'Chennai', coords: [80.270, 13.082], level: 1, st: 'Tamil Nadu', cat: 'Health' },
-    { name: 'Hyderabad', coords: [78.486, 17.385], level: 2, st: 'Telangana', cat: 'IT' },
-    { name: 'Ahmedabad', coords: [72.571, 23.022], level: 2, st: 'Gujarat', cat: 'Business' },
-    { name: 'Guwahati', coords: [91.736, 26.144], level: 2, st: 'Assam', cat: 'Bridge' },
-    { name: 'Srinagar', coords: [74.797, 34.083], level: 3, st: 'Jammu and Kashmir', cat: 'Cable' },
-    { name: 'Leh', coords: [77.577, 34.152], level: 1, st: 'Ladakh', cat: 'Pass' },
-    { name: 'Thiruvananthapuram', coords: [76.936, 8.485], level: 1, st: 'Kerala', cat: 'Port' },
-    { name: 'Chandigarh', coords: [76.785, 30.738], level: 1, st: 'Chandigarh', cat: 'Planning' },
-    { name: 'Panaji', coords: [73.812, 15.490], level: 0, st: 'Goa', cat: 'Tourism' },
-    { name: 'Bhubaneswar', coords: [85.824, 20.296], level: 3, st: 'Odisha', cat: 'Cyclone' },
-    { name: 'Port Blair', coords: [92.726, 11.623], level: 0, st: 'Andaman and Nicobar Islands', cat: 'Naval' },
-    { name: 'Itanagar', coords: [93.605, 27.084], level: 1, st: 'Arunachal Pradesh', cat: 'Hydro' },
-    { name: 'Imphal', coords: [93.936, 24.817], level: 3, st: 'Manipur', cat: 'Safety' },
-    { name: 'Puducherry', coords: [79.808, 11.941], level: 0, st: 'Puducherry', cat: 'Coastal' },
-    { name: 'Silvassa', coords: [72.966, 20.266], level: 1, st: 'Dadra and Nagar Haveli and Daman and Diu', cat: 'Industry' },
-];
-
-const PRE_SEVA_LINKS = [
-    { s: [80.946, 26.846], d: [85.137, 25.594], msg: 'Water Supply Prop' },
-    { s: [85.137, 25.594], d: [85.309, 23.344], msg: 'Grid Overload' },
-    { s: [77.209, 28.613], d: [75.787, 26.912], msg: 'Logistics Delay' }
-];
-
-const MapOverlays = memo(({ hasClick, activeArcs, clickedState, activeFilterLevel, onClickState }) => {
-    return (
-        <>
-            {/* Threat Corridors (PreSeva Arcs) */}
-            {!hasClick && activeArcs.map((arc, i) => (
-                <React.Fragment key={'arc-group-' + i}>
-                    <Line
-                        from={arc.s}
-                        to={arc.d}
-                        stroke="#8B5CF6"
-                        strokeWidth={2}
-                        strokeOpacity={0.55}
-                        strokeLinecap="round"
-                        className="fade-in-arc"
-                        style={{ filter: 'drop-shadow(0 0 8px #8B5CF6)', pointerEvents: 'none' }}
-                    />
-                    <Line
-                        from={arc.s}
-                        to={arc.d}
-                        stroke="#FFFFFF"
-                        strokeWidth={6}
-                        strokeOpacity={1}
-                        strokeLinecap="round"
-                        strokeDasharray="0.1 200"
-                        className="fade-in-arc"
-                        style={{ animation: 'travelDot 4s linear infinite', filter: 'drop-shadow(0 0 8px #8B5CF6)', pointerEvents: 'none' }}
-                    />
-                </React.Fragment>
-            ))}
-
-            {/* Distress dots with Pulsing Effect */}
-            {CITIES.map((city, i) => {
-                let baseR = (city.level >= 4 ? 4 : city.level >= 3 ? 3 : 2.2) * 1.5;
-                if (hasClick && clickedState?.name === city.st) baseR *= 1.8;
-
-                let dotOpacity = hasClick && clickedState?.name !== city.st ? 0.1 : 0.95;
-                if (!hasClick && activeFilterLevel !== undefined && activeFilterLevel !== null) {
-                    if (city.level !== activeFilterLevel) dotOpacity = 0.1;
-                }
-
-                const activeColor = DC[city.level];
-
-                return (
-                    <Marker
-                        key={'city-' + i}
-                        coordinates={city.coords}
-                        style={{ cursor: 'pointer' }}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onClickState && onClickState({
-                                name: city.st,
-                                level: city.level,
-                                coords: city.coords
-                            });
-                        }}
-                    >
-                        <title>{city.name} ({city.st})</title>
-                        <circle r={baseR * 2.5} fill={activeColor} opacity={dotOpacity * 0.2}>
-                            <animate attributeName="r" from={baseR} to={baseR * 3} dur="2s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" from={dotOpacity * 0.3} to="0" dur="2s" repeatCount="indefinite" />
-                        </circle>
-                        <circle r={baseR} fill={activeColor} filter="drop-shadow(0 0 11px currentColor)"
-                            opacity={dotOpacity} style={{ transition: 'opacity 0.4s ease' }} />
-                        <circle r={baseR * 0.3} fill="#FFFFFF" opacity={dotOpacity} />
-                    </Marker>
-                );
-            })}
-        </>
-    );
-});
-
-
-// Identical projection to map settings to map lonlat -> pixels for custom SVG pathing
-const projection = geoMercator().center([82.5, 22.5]).scale(1450).translate([250, 275]);
-
-// Replaced by Threat Auras
-const PRE_SEVA_SOURCES = ['Andhra Pradesh', 'Uttar Pradesh', 'Maharashtra'];
-const PRE_SEVA_DESTS = ['Karnataka', 'Bihar', 'Goa'];
-
-// Replaced by pulse rings
+const MapOverlays = memo(() => (
+    <></>
+));
 
 const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, onHoverState, onClickState, bootPhase }) => {
     const hasClick = clickedStateName !== null;
@@ -207,30 +94,30 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
                         const isLegendPulsed = hoveredLegendLevel === level;
                         const isBoot = bootPhase === 'building';
 
-                        const isThreatSource = PRE_SEVA_SOURCES.includes(name);
-                        const isThreatDest = PRE_SEVA_DESTS.includes(name);
+                        const isThreatSource = false;
+                        const isThreatDest = false;
 
                         let filter = 'none';
                         if (isClicked) {
                             filter = `drop-shadow(0 0 16px ${DC[level]})`;
-                        } else if (!hasClick) {
-                            filter = 'drop-shadow(0 0 10px rgba(0,255,238,0.4))';
                         }
 
                         let fillVal = 'rgba(0,229,255,0.15)';
                         if (!hasClick) {
                             if (level === 4) fillVal = 'url(#bloom-crit)';
                             else if (level === 3) fillVal = 'url(#bloom-high)';
-                            if (isThreatSource) fillVal = 'rgba(245, 158, 11, 0.1)';
-                            if (isThreatDest) fillVal = 'rgba(139, 92, 246, 0.1)';
+                            else if (level === 2) fillVal = 'rgba(255,184,0,0.12)';
+                            else if (level === 1) fillVal = 'rgba(92,142,255,0.12)';
+                            else fillVal = 'rgba(0,229,160,0.12)';
+
                             if (isBoot) fillVal = 'transparent';
                         } else if (isClicked) {
                             fillVal = `${DC[level]}59`;
                         }
 
-                        let strokeColor = isLegendPulsed ? '#FFFFFF' : '#00FFEE';
-                        let strokeWidth = 1.8;
-                        let strokeOpacity = isLegendPulsed ? 1 : 0.9;
+                        let strokeColor = isLegendPulsed ? '#FFFFFF' : DC[level];
+                        let strokeWidth = isClicked ? 2.5 : 2;
+                        let strokeOpacity = 1;
 
                         if (isClicked) {
                             strokeColor = DC[level];
@@ -238,11 +125,7 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
                             strokeOpacity = 1;
                         }
 
-                        let extraClass = '';
-                        if (!hasClick) {
-                            if (isThreatSource) extraClass = 'aura-source';
-                            if (isThreatDest) extraClass = 'aura-dest';
-                        }
+                        let extraClass = `state-breathe-${level}`;
 
                         const delaySecs = (geoData.delayMap && geoData.delayMap[name]) || 0;
                         const pathStyle = isBoot ? { strokeDasharray: 1000, strokeDashoffset: 1000, animation: `drawState 0.6s ease-out forwards`, animationDelay: `${delaySecs}s` } : {};
@@ -262,7 +145,7 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
                                     }}
                                     style={{
                                         default: { fill: fillVal, stroke: strokeColor, strokeWidth, strokeOpacity, outline: 'none', cursor: 'pointer', ...pathStyle },
-                                        hover: { fill: 'rgba(0,229,255,0.25)', stroke: '#FFFFFF', strokeWidth: 1.8, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
+                                        hover: { fill: isClicked ? fillVal : `${DC[level]}44`, stroke: '#FFFFFF', strokeWidth: 2, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
                                         pressed: { outline: 'none', ...pathStyle },
                                     }}
                                     className={`state-geo-path ${extraClass}`}
@@ -289,8 +172,6 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
 
     const [clickedState, setClickedState] = useState(null);
     const [isClosingClick, setIsClosingClick] = useState(false);
-
-    const [activeArcs, setActiveArcs] = useState([PRE_SEVA_LINKS[0], PRE_SEVA_LINKS[1], PRE_SEVA_LINKS[2]]);
 
     // Document click to close details
     useEffect(() => {
@@ -373,7 +254,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                 if (!dataReady && p >= 85) {
                     p = 85;
                 } else {
-                    p += Math.random() * (dataReady ? 15 : 4);
+                    p += Math.random() * (dataReady ? 15 : 8);
                 }
 
                 if (p > 100) p = 100;
@@ -395,7 +276,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                         }, 800);
                     }, 1200);
                 }
-            }, 60);
+            }, 120);
 
             return () => {
                 clearInterval(pInterval);
@@ -408,20 +289,6 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
             if (onReady) onReady();
         }
     }, [onReady]);
-
-    // Corridors Rotate
-    useEffect(() => {
-        if (bootPhase !== 'ready') return;
-        const interval = setInterval(() => {
-            setActiveArcs(prev => {
-                const next = [...prev]; next.shift();
-                const available = PRE_SEVA_LINKS.filter(a => !next.includes(a));
-                next.push(available[Math.floor(Math.random() * available.length)]);
-                return next;
-            });
-        }, 10000);
-        return () => clearInterval(interval);
-    }, [bootPhase]);
 
     // Hover is handled internally by Geography style to ensure 60fps fluidity
     const handleHoverState = useCallback(() => { }, []);
@@ -479,19 +346,13 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                             </radialGradient>
 
                             <clipPath id="india-clip">
-                                <Geographies geography={geoData}>
-                                    {({ geographies }) => geographies.map((geo, i) => <Geography key={'clip-' + i} geography={geo} />)}
-                                </Geographies>
+                                <rect x="-100" y="-100" width="1400" height="1150" />
                             </clipPath>
 
                             <linearGradient id="radar-gradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="transparent" /><stop offset="30%" stopColor="rgba(0,255,238,0.1)" /><stop offset="50%" stopColor="rgba(0,255,238,0.2)" /><stop offset="70%" stopColor="rgba(0,255,238,0.1)" /><stop offset="100%" stopColor="transparent" />
                             </linearGradient>
                         </defs>
-
-                        <g clipPath="url(#india-clip)" className={`radar-sweep-group ${(bootPhase === 'building' || bootPhase === 'fading') ? 'boot-hidden' : ''}`} style={{ pointerEvents: 'none', animationDelay: '1.8s' }}>
-                            <rect x="-100" y="-100" width="1000" height="180" className="radar-beam" fill="url(#radar-gradient)" />
-                        </g>
 
                         <StateBaseLayer
                             geoData={geoData}
@@ -502,15 +363,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                             bootPhase={bootPhase}
                         />
 
-                        {/* PreSeva Pulse Rings Removed in Favor of Threat Auras in StateBaseLayer */}
-
-                        <MapOverlays
-                            hasClick={hasClick}
-                            activeArcs={activeArcs}
-                            clickedState={clickedState}
-                            activeFilterLevel={activeFilterLevel}
-                            onClickState={handleClickState}
-                        />
+                        <MapOverlays />
                     </ComposableMap>
 
                     {/* DOM Element HUD — LEFT PANEL (Isolated State) */}

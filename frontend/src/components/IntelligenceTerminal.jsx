@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react';
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from 'react-icons/md';
 import { PROJECT_NAME } from '../config/constants';
 import './IntelligenceTerminal.css';
@@ -273,6 +273,13 @@ function IntelligenceTerminal() {
     const [visible, setVisible] = useState(false);
     const sectionRef = useRef(null);
 
+    const mobileParticles = useMemo(() => Array.from({ length: 25 }).map((_, i) => ({
+        left: `${Math.random() * 100}%`,
+        delay: `${Math.random() * 5}s`,
+        duration: `${Math.random() * 4 + 3}s`,
+        color: Math.random() > 0.5 ? '#00E5A0' : '#FF6B2C',
+    })), []);
+
     useEffect(() => {
         if (!sectionRef.current) return;
         const observer = new IntersectionObserver(([entry]) => {
@@ -442,14 +449,9 @@ function IntelligenceTerminal() {
                     </div>
 
                     <div className="it-zone-b">
-                        {MODULES_DATA.map((mod) => (
-                            <div
-                                key={mod.id}
-                                className={`it-viz-layer ${mod.id === activeMod.id ? 'active' : ''}`}
-                            >
-                                <TerminalViz vizType={mod.vizType} color={mod.color} />
-                            </div>
-                        ))}
+                        <div key={activeMod.id} className="it-viz-layer active">
+                            <TerminalViz vizType={activeMod.vizType} color={activeMod.color} />
+                        </div>
                     </div>
 
                     <div className="it-zone-c">
@@ -481,17 +483,17 @@ function IntelligenceTerminal() {
             {/* Mobile Exclusive Capabilities UI */}
             <div className={`mobile-capabilities-ui mobile-only ${visible ? 'visible' : ''}`}>
                 <div className="mc-particles">
-                    {Array.from({ length: 25 }).map((_, i) => (
+                    {mobileParticles.map((p, i) => (
                         <div
                             key={i}
                             className="mc-particle"
                             style={{
-                                left: `${Math.random() * 100}%`,
-                                animationDelay: `${Math.random() * 5}s`,
-                                animationDuration: `${Math.random() * 4 + 3}s`,
-                                background: Math.random() > 0.5 ? '#00E5A0' : '#FF6B2C',
-                                boxShadow: `0 0 12px ${Math.random() > 0.5 ? '#00E5A0' : '#FF6B2C'}`,
-                                opacity: Math.random() * 0.5 + 0.3
+                                left: p.left,
+                                animationDelay: p.delay,
+                                animationDuration: p.duration,
+                                background: p.color,
+                                boxShadow: `0 0 12px ${p.color}`,
+                                opacity: 0.5
                             }}
                         />
                     ))}

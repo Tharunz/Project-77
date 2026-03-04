@@ -24,7 +24,8 @@
       "income": 150000,
       "role": "citizen",
       "janShaktiScore": 72,
-      "createdAt": "2026-01-15T08:30:00.000Z"
+      "createdAt": "2026-01-15T08:30:00.000Z",
+      "bookmarkedSchemes": []
     },
     {
       "id": "USR-CIT-002",
@@ -267,6 +268,26 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-04T19:45:18.129Z"
+    },
+    {
+      "id": "USR-21D4DD4F",
+      "name": "a",
+      "email": "3@gmail.com",
+      "password": "$2a$10$AE9FPfjcrBrrzBwzy74sh.i.cCbiCICohm/4bscY9oSfC8LvVcBH.",
+      "state": "Odisha",
+      "district": null,
+      "age": 123,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-04T21:39:25.524Z",
+      "pendingPhone": "1231231231",
+      "pendingOtp": null,
+      "otpExpiry": null,
+      "phone": "1231231231",
+      "mobileVerified": true,
+      "updatedAt": "2026-03-04T21:42:12.497Z"
     }
   ],
   "grievances": [
@@ -289,8 +310,10 @@
       "fraudScore": 0.05,
       "adminNote": null,
       "createdAt": "2026-03-04T20:30:20.042Z",
-      "updatedAt": "2026-03-04T20:32:02.087Z",
-      "resolvedAt": null
+      "updatedAt": "2026-03-04T22:03:11.868Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-04T21:52:20.132Z"
     },
     {
       "id": "GRV-6ECD1E6B",
@@ -507,17 +530,17 @@
       "category": "Finance",
       "state": "Punjab",
       "district": "Lucknow",
-      "status": "Pending",
+      "status": "In Progress",
       "sentiment": "Highly Negative",
       "sentimentScore": 0.05,
-      "priority": "Medium",
+      "priority": "High",
       "assignedOfficer": "OFC-006",
       "documents": [],
       "isDuplicate": true,
       "fraudScore": 0.72,
       "adminNote": null,
       "createdAt": "2026-02-24T00:00:00.000Z",
-      "updatedAt": "2026-02-26T00:00:00.000Z",
+      "updatedAt": "2026-03-04T22:00:52.099Z",
       "resolvedAt": null
     },
     {
@@ -1553,7 +1576,8 @@
       "deadline": null,
       "state": "All India",
       "isActive": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "beneficiaries": 2
     },
     {
       "id": "SCH-003",
@@ -1934,6 +1958,22 @@
       "state": "All India",
       "isActive": true,
       "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "SCH-1772661330087",
+      "name": "test",
+      "category": "",
+      "state": "All India",
+      "benefit": "123123",
+      "eligibility": "123123",
+      "description": "123",
+      "minAge": 18,
+      "maxAge": 65,
+      "maxIncome": "123123",
+      "isActive": true,
+      "beneficiaries": 1,
+      "createdAt": "2026-03-04T21:55:30.087Z",
+      "updatedAt": "2026-03-04T21:55:30.087Z"
     }
   ],
   "officers": [],
@@ -2173,6 +2213,60 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-04T20:32:02.089Z"
+    },
+    {
+      "id": "NOTIF-E9403C9B",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-046",
+      "message": "Your grievance GRV-046 status updated to: Escalated",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T21:59:28.402Z"
+    },
+    {
+      "id": "NOTIF-C715D1D5",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-046",
+      "message": "Your grievance GRV-046 status updated to: In Progress",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:00:52.100Z"
+    },
+    {
+      "id": "NOTIF-3772AE34",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Escalated",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:01:30.390Z"
+    },
+    {
+      "id": "NOTIF-4DE19FA0",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Escalated",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:01:59.676Z"
+    },
+    {
+      "id": "NOTIF-93405CF2",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:02:06.291Z"
+    },
+    {
+      "id": "NOTIF-C5B4BB5E",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:03:11.869Z"
     }
   ],
   "communityPosts": [
@@ -2408,6 +2502,50 @@
       "verifiedByCitizen": false
     }
   ],
-  "schemeApplications": [],
+  "schemeApplications": [
+    {
+      "id": "APP-1772660857596",
+      "schemeId": "SCH-002",
+      "schemeName": "Ayushman Bharat PM-JAY",
+      "userId": "USR-21D4DD4F",
+      "userName": "a",
+      "additionalInfo": "test",
+      "documents": [
+        "Residence Proof",
+        "Income Certificate",
+        "Aadhaar Card",
+        "Bank Account Details",
+        "Passport Photo"
+      ],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T21:47:37.596Z"
+    },
+    {
+      "id": "APP-1772660901603",
+      "schemeId": "SCH-002",
+      "schemeName": "Ayushman Bharat PM-JAY",
+      "userId": "USR-21D4DD4F",
+      "userName": "a",
+      "additionalInfo": "",
+      "documents": [
+        "Passport Photo"
+      ],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T21:48:21.603Z"
+    },
+    {
+      "id": "APP-1772661390433",
+      "schemeId": "SCH-1772661330087",
+      "schemeName": "test",
+      "userId": "USR-CIT-001",
+      "userName": "Ramesh Kumar",
+      "additionalInfo": "",
+      "documents": [
+        "Passport Photo"
+      ],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T21:56:30.433Z"
+    }
+  ],
   "petitions": []
 }

@@ -22,7 +22,7 @@ function MobileParticles() {
                 data: {
                     canvas: offscreen,
                     type: 'particles',
-                    num: 45,
+                    num: 28,
                     c1: '#FF6B2C',
                     c2: '#00E5A0'
                 }

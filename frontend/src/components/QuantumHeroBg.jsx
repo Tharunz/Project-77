@@ -24,7 +24,7 @@ function QuantumHeroBg() {
                 data: {
                     canvas: offscreen,
                     type: 'quantum',
-                    num: 80
+                    num: 50
                 }
             }, [offscreen]);
 

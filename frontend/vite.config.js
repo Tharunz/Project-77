@@ -12,5 +12,18 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'maps-vendor': ['react-simple-maps', 'd3-geo'],
+          'icons-vendor': ['react-icons'],
+          'charts-vendor': ['recharts'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 800,
   }
 })
