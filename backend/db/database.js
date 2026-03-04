@@ -32,7 +32,10 @@ const getDb = () => {
             preSevaAlerts: [],
             notifications: [],
             communityPosts: [],
-            chatHistory: []
+            chatHistory: [],
+            sevaNews: [],
+            escrowProjects: [],
+            ghostAuditAlerts: []
         }).write();
     }
     return db;

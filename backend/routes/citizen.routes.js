@@ -164,4 +164,75 @@ router.get('/predict-future', (req, res, next) => {
     }
 });
 
+// ─── Feature 19: Seva News API ────────────────────────────────────────────────
+router.get('/news', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const news = db_instance.get('sevaNews').value() || [];
+
+        return res.status(200).json({
+            success: true,
+            data: news,
+            message: "Seva News fetched successfully.",
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── Feature 27 & 20: Digital Budget Escrow APIs ──────────────────────────────
+router.get('/escrow', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const escrowProjects = db_instance.get('escrowProjects').value() || [];
+
+        return res.status(200).json({
+            success: true,
+            data: escrowProjects,
+            message: "Escrow projects fetched successfully.",
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/escrow/:id/verify', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const projectId = req.params.id;
+        const { rating, photo } = req.body;
+
+        const project = db_instance.get('escrowProjects').find({ id: projectId }).value();
+
+        if (!project) {
+            return res.status(404).json({
+                success: false,
+                data: null,
+                message: "Escrow project not found.",
+                timestamp: new Date().toISOString()
+            });
+        }
+
+        db_instance.get('escrowProjects').find({ id: projectId }).assign({
+            status: 'Disbursed (Verified by Citizens)',
+            citizenVerified: true,
+            rating: rating || 5,
+            verificationPhoto: photo || project.verificationPhoto,
+            disbursedAmount: project.lockedAmount,
+            lockedAmount: 0
+        }).write();
+
+        return res.status(200).json({
+            success: true,
+            data: db_instance.get('escrowProjects').find({ id: projectId }).value(),
+            message: "Escrow project verified successfully.",
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;
