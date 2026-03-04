@@ -82,80 +82,76 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
     const hasClick = clickedStateName !== null;
     const hasLegendHover = hoveredLegendLevel !== null;
 
-    // Use a memoized callback for the render prop to prevent excessive re-renders
     return (
-        <g className={`map-geographies ${hasClick ? 'has-click' : ''} ${hasLegendHover ? 'has-legend-hover' : ''}`} style={{ willChange: 'filter, opacity' }}>
+        <g className={`map-geographies ${hasClick ? 'has-click' : ''} ${hasLegendHover ? 'has-legend-hover' : ''}`}>
             <Geographies geography={geoData}>
-                {({ geographies }) =>
-                    geographies.map(geo => {
+                {({ geographies }) => {
+                    // Group by distress level: 5 <g> compositor layers instead of 36 individual ones
+                    const groups = [[], [], [], [], []];
+                    geographies.forEach(geo => {
                         const name = geo.properties._normalizedName || normalizeStateName(geo.properties.NAME_1 || geo.properties.ST_NM || geo.properties.name || geo.properties.state_name || '');
                         const level = STATE_DISTRESS[name] ?? 1;
-                        const isClicked = clickedStateName === name;
-                        const isLegendPulsed = hoveredLegendLevel === level;
-                        const isBoot = bootPhase === 'building';
+                        groups[level].push({ geo, name, level });
+                    });
 
-                        const isThreatSource = false;
-                        const isThreatDest = false;
+                    return groups.map((geos, level) => (
+                        <g key={level} className={`state-breathe-${level}`}>
+                            {geos.map(({ geo, name }) => {
+                                const isClicked = clickedStateName === name;
+                                const isLegendPulsed = hoveredLegendLevel === level;
+                                const isBoot = bootPhase === 'building';
 
-                        let filter = 'none';
-                        if (isClicked) {
-                            filter = `drop-shadow(0 0 16px ${DC[level]})`;
-                        }
+                                let fillVal = 'rgba(0,229,255,0.15)';
+                                if (!hasClick) {
+                                    if (level === 4) fillVal = 'url(#bloom-crit)';
+                                    else if (level === 3) fillVal = 'url(#bloom-high)';
+                                    else if (level === 2) fillVal = 'rgba(255,184,0,0.12)';
+                                    else if (level === 1) fillVal = 'rgba(92,142,255,0.12)';
+                                    else fillVal = 'rgba(0,229,160,0.12)';
+                                    if (isBoot) fillVal = 'transparent';
+                                } else if (isClicked) {
+                                    fillVal = `${DC[level]}59`;
+                                }
 
-                        let fillVal = 'rgba(0,229,255,0.15)';
-                        if (!hasClick) {
-                            if (level === 4) fillVal = 'url(#bloom-crit)';
-                            else if (level === 3) fillVal = 'url(#bloom-high)';
-                            else if (level === 2) fillVal = 'rgba(255,184,0,0.12)';
-                            else if (level === 1) fillVal = 'rgba(92,142,255,0.12)';
-                            else fillVal = 'rgba(0,229,160,0.12)';
+                                const strokeColor = isLegendPulsed ? '#FFFFFF' : DC[level];
+                                const strokeWidth = isClicked ? 2.5 : 2;
 
-                            if (isBoot) fillVal = 'transparent';
-                        } else if (isClicked) {
-                            fillVal = `${DC[level]}59`;
-                        }
+                                const delaySecs = (geoData.delayMap && geoData.delayMap[name]) || 0;
+                                const pathStyle = isBoot ? { strokeDasharray: 1000, strokeDashoffset: 1000, animation: `drawState 0.6s ease-out forwards`, animationDelay: `${delaySecs}s` } : {};
+                                const fillStyle = isBoot ? { opacity: 0, animation: `bootFadeIn 0.6s ease forwards`, animationDelay: `${delaySecs + 0.8}s` } : {};
 
-                        let strokeColor = isLegendPulsed ? '#FFFFFF' : DC[level];
-                        let strokeWidth = isClicked ? 2.5 : 2;
-                        let strokeOpacity = 1;
-
-                        if (isClicked) {
-                            strokeColor = DC[level];
-                            strokeWidth = 2.5;
-                            strokeOpacity = 1;
-                        }
-
-                        let extraClass = `state-breathe-${level}`;
-
-                        const delaySecs = (geoData.delayMap && geoData.delayMap[name]) || 0;
-                        const pathStyle = isBoot ? { strokeDasharray: 1000, strokeDashoffset: 1000, animation: `drawState 0.6s ease-out forwards`, animationDelay: `${delaySecs}s` } : {};
-                        const fillStyle = isBoot ? { opacity: 0, animation: `bootFadeIn 0.6s ease forwards`, animationDelay: `${delaySecs + 0.8}s` } : {};
-
-                        return (
-                            <g key={geo.rsmKey || name}
-                                className={`state-layer-group ${isClicked ? 'is-clicked' : ''} ${isLegendPulsed ? 'is-legend-pulsed' : ''}`}
-                                style={{ transformOrigin: '50% 50%', filter, opacity: (hasClick && !isClicked) ? 0.4 : 1, transition: 'opacity 0.4s ease', ...fillStyle }}>
-                                <Geography
-                                    geography={geo}
-                                    onMouseEnter={() => !hasClick && onHoverState(name)}
-                                    onMouseLeave={() => !hasClick && onHoverState(null)}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onClickState({ name, level, coords: geo.properties._centroid, geoPath: geo });
-                                    }}
-                                    style={{
-                                        default: { fill: fillVal, stroke: strokeColor, strokeWidth, strokeOpacity, outline: 'none', cursor: 'pointer', ...pathStyle },
-                                        hover: { fill: isClicked ? fillVal : `${DC[level]}44`, stroke: '#FFFFFF', strokeWidth: 2, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
-                                        pressed: { outline: 'none', ...pathStyle },
-                                    }}
-                                    className={`state-geo-path ${extraClass}`}
-                                >
-                                    <title>{name}</title>
-                                </Geography>
-                            </g>
-                        );
-                    })
-                }
+                                return (
+                                    <g key={geo.rsmKey || name}
+                                        className={`state-layer-group ${isClicked ? 'is-clicked' : ''} ${isLegendPulsed ? 'is-legend-pulsed' : ''}`}
+                                        style={{
+                                            ...(isClicked ? { '--ac': DC[level] } : {}),
+                                            opacity: (hasClick && !isClicked) ? 0.4 : 1,
+                                            transition: 'opacity 0.4s ease',
+                                            ...fillStyle
+                                        }}>
+                                        <Geography
+                                            geography={geo}
+                                            onMouseEnter={() => !hasClick && onHoverState(name)}
+                                            onMouseLeave={() => !hasClick && onHoverState(null)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onClickState({ name, level, coords: geo.properties._centroid, geoPath: geo });
+                                            }}
+                                            style={{
+                                                default: { fill: fillVal, stroke: strokeColor, strokeWidth, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
+                                                hover: { fill: isClicked ? fillVal : `${DC[level]}44`, stroke: '#FFFFFF', strokeWidth: 2, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
+                                                pressed: { outline: 'none', ...pathStyle },
+                                            }}
+                                            className="state-geo-path"
+                                        >
+                                            <title>{name}</title>
+                                        </Geography>
+                                    </g>
+                                );
+                            })}
+                        </g>
+                    ));
+                }}
             </Geographies>
         </g>
     );
@@ -340,7 +336,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                         <defs>
                             <radialGradient id="bloom-high"><stop offset="0%" stopColor="#FF5500" stopOpacity="0.04" /><stop offset="100%" stopColor="#FF5500" stopOpacity="0" /></radialGradient>
                             <radialGradient id="bloom-crit">
-                                <stop offset="0%" stopColor="#FF3B3B"><animate attributeName="stop-opacity" values="0.03;0.07;0.03" dur="3s" repeatCount="indefinite" /></stop>
+                                <stop offset="0%" stopColor="#FF3B3B" stopOpacity="0.05" />
                                 <stop offset="70%" stopColor="#FF3B3B" stopOpacity="0.01" />
                                 <stop offset="100%" stopColor="#FF3B3B" stopOpacity="0" />
                             </radialGradient>
