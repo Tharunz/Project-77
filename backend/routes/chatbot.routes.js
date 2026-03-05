@@ -11,7 +11,7 @@ const { protect } = require('../middleware/auth.middleware');
 const { getResponse, getHistory, clearHistory } = require('../services/chatbot.service');
 
 // ─── POST /api/chatbot/message ────────────────────────────────────────────────
-router.post('/message', protect, (req, res, next) => {
+router.post('/message', protect, async (req, res, next) => {
     try {
         const { message, lang = 'en' } = req.body;
 
@@ -23,7 +23,7 @@ router.post('/message', protect, (req, res, next) => {
             });
         }
 
-        const result = getResponse(message.trim(), lang, req.user.id);
+        const result = await getResponse(message.trim(), lang, req.user.id);
 
         return res.status(200).json({
             success: true,

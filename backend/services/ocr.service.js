@@ -1,35 +1,155 @@
 // ============================================
 // ocr.service.js — Optical Character Recognition
-// → AWS swap: Replace with Amazon Textract SDK
+// ENABLE_TEXTRACT=false → returns mock data
+// ENABLE_TEXTRACT=true  → Amazon Textract (AnalyzeDocument)
 // ============================================
 
-const Tesseract = require('tesseract.js');
-const path = require('path');
+const fs = require('fs');
 
-/**
- * Extract text from an image or document file using Tesseract.js.
- * → AWS Textract: textract.detectDocumentText({ Document: { Bytes: buffer } })
- *
- * @param {string} filePath - Absolute or relative path to the image file
- * @returns {Promise<{ text: string, confidence: number, words: Array }>}
- */
-const extractText = async (filePath) => {
-    try {
-        const { data } = await Tesseract.recognize(filePath, 'eng+hin', {
-            logger: () => { } // suppress progress logs
-        });
+const isTextract = () => process.env.ENABLE_TEXTRACT === 'true';
 
-        return {
-            text: data.text.trim(),
-            confidence: parseFloat((data.confidence).toFixed(2)),
-            words: (data.words || []).map(w => ({
-                text: w.text,
-                confidence: parseFloat(w.confidence.toFixed(2))
-            })).slice(0, 100) // limit output size
-        };
-    } catch (err) {
-        throw new Error('OCR extraction failed: ' + err.message);
+// ─── Lazy Textract client ──────────────────────────────────────────────────────
+let _textractClient = null;
+const getTextractClient = () => {
+    if (!_textractClient) {
+        const { TextractClient } = require('@aws-sdk/client-textract');
+        const { awsConfig } = require('../config/aws.config');
+        _textractClient = new TextractClient(awsConfig);
     }
+    return _textractClient;
 };
 
-module.exports = { extractText };
+// ─── Mock response ─────────────────────────────────────────────────────────────
+const MOCK_RESPONSE = {
+    text: "Mock extracted text from document",
+    formFields: { name: "Ramesh Kumar", id: "XXXX-XXXX-1234" }
+};
+
+// =============================================================================
+// TEXTRACT IMPLEMENTATION
+// =============================================================================
+
+/**
+ * findBlockById(blocks, id) — Helper to lookup blocks
+ */
+const findBlockById = (blocks, id) => blocks.find(b => b.Id === id);
+
+/**
+ * getBlockText(block, blocks) — Recursively extract text from WORD/SELECTION_ELEMENT blocks
+ */
+const getBlockText = (block, blocks) => {
+    let text = '';
+    if (block.Relationships) {
+        block.Relationships.forEach(relationship => {
+            if (relationship.Type === 'CHILD') {
+                relationship.Ids.forEach(childId => {
+                    const child = findBlockById(blocks, childId);
+                    if (child) {
+                        if (child.BlockType === 'WORD') text += child.Text + ' ';
+                        if (child.BlockType === 'SELECTION_ELEMENT') {
+                            text += child.SelectionStatus === 'SELECTED' ? 'X ' : ' ';
+                        }
+                    }
+                });
+            }
+        });
+    }
+    return text.trim();
+};
+
+/**
+ * parseKeyValues(blocks) — Extract KEY_VALUE_SET relationships into an object
+ */
+const parseKeyValues = (blocks) => {
+    const keyMap = {};
+    const valueMap = {};
+    const keyValues = {};
+
+    const kvBlocks = blocks.filter(b => b.BlockType === 'KEY_VALUE_SET');
+
+    // Separate KEY and VALUE blocks
+    kvBlocks.forEach(b => {
+        if (b.EntityTypes.includes('KEY')) keyMap[b.Id] = b;
+        else valueMap[b.Id] = b;
+    });
+
+    // Link keys to values
+    Object.values(keyMap).forEach(keyBlock => {
+        let valueBlock = null;
+        if (keyBlock.Relationships) {
+            keyBlock.Relationships.forEach(rel => {
+                if (rel.Type === 'VALUE') {
+                    rel.Ids.forEach(valId => {
+                        valueBlock = valueMap[valId];
+                    });
+                }
+            });
+        }
+
+        const keyText = getBlockText(keyBlock, blocks).toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/(^_|_$)/g, '');
+        const valText = valueBlock ? getBlockText(valueBlock, blocks) : '';
+
+        if (keyText) keyValues[keyText] = valText;
+    });
+
+    return keyValues;
+};
+
+const extractWithTextract = async (fileBuffer) => {
+    const { AnalyzeDocumentCommand } = require('@aws-sdk/client-textract');
+    const client = getTextractClient();
+
+    const response = await client.send(new AnalyzeDocumentCommand({
+        Document: { Bytes: fileBuffer },
+        FeatureTypes: ['FORMS', 'TABLES']
+    }));
+
+    const blocks = response.Blocks || [];
+
+    // Extract all LINE blocks as plain text
+    const textLines = blocks
+        .filter(b => b.BlockType === 'LINE')
+        .map(b => b.Text)
+        .join('\n');
+
+    // Extract KEY_VALUE_SET blocks
+    const formFields = parseKeyValues(blocks);
+
+    return {
+        text: textLines,
+        formFields: formFields
+    };
+};
+
+// =============================================================================
+// PUBLIC INTERFACE
+// =============================================================================
+
+/**
+ * extractFromDocument(fileInput) — Main OCR endpoint.
+ * Accepts buffer or filePath. If textract disabled, returns mock.
+ * @param {Buffer|string} fileInput - file Buffer or absolute path
+ */
+const extractFromDocument = async (fileInput) => {
+    if (!isTextract()) return MOCK_RESPONSE;
+
+    let buffer = null;
+    if (Buffer.isBuffer(fileInput)) {
+        buffer = fileInput;
+    } else if (typeof fileInput === 'string') {
+        buffer = fs.readFileSync(fileInput);
+    } else {
+        throw new Error('extractFromDocument requires a Buffer or file path');
+    }
+
+    return extractWithTextract(buffer);
+};
+
+// For backward compatibility with existing usage in other places (if any)
+const extractText = extractFromDocument;
+
+module.exports = {
+    extractFromDocument,
+    extractText,
+    isTextract
+};

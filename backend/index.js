@@ -27,6 +27,8 @@ const communityRoutes = require('./routes/community.routes');
 
 // Group 4 & 5 Routes
 const citizenRoutes = require('./routes/citizen.routes');
+const pollyRoutes = require('./routes/polly.routes');
+const escrowRoutes = require('./routes/escrow.routes');
 
 // ─── Import Middleware ────────────────────────────────────────────────────────
 const { errorHandler, notFound } = require('./middleware/errorHandler.middleware');
@@ -104,6 +106,8 @@ app.use('/api/community', communityRoutes);
 
 // Group 4 & 5 Routes
 app.use('/api/citizen', citizenRoutes);
+app.use('/api/polly', pollyRoutes);
+app.use('/api/escrow', escrowRoutes);
 
 // ─── 404 + Error Handlers ─────────────────────────────────────────────────────
 app.use(notFound);

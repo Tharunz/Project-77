@@ -13,8 +13,9 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { protect, adminOnly } = require('../middleware/auth.middleware');
-const { analyze: analyzeSentiment } = require('../services/sentiment.service');
+const { analyzeSentiment } = require('../services/sentiment.service');
 const { upload, getFileUrl, processUploadedFiles } = require('../services/storage.service');
+const { extractFromDocument } = require('../services/ocr.service');
 const { createNotification, sendGrievanceFiledEmail, sendStatusUpdateEmail } = require('../services/notification.service');
 const db = require('../db/database');
 
@@ -31,11 +32,30 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             });
         }
 
-        // Run sentiment analysis on description
-        const sentimentResult = analyzeSentiment(description);
+        // Run sentiment analysis on description (async when Comprehend enabled)
+        const sentimentResult = await Promise.resolve(analyzeSentiment(description));
+        // Normalize sentimentScore — local returns a number, Comprehend returns { Positive, Negative, ... }
+        const sentimentScoreVal = typeof sentimentResult.sentimentScore === 'number'
+            ? sentimentResult.sentimentScore
+            : (typeof sentimentResult.score === 'number' ? sentimentResult.score : 0.5);
 
         // Handle uploaded documents — supports both local disk and S3
         const documents = await processUploadedFiles(req.files || [], 'grievance-documents');
+
+        // Extract Text from the first document using OCR
+        let extractedText = null;
+        let formFields = null;
+        if (req.files && req.files.length > 0) {
+            try {
+                const firstFile = req.files[0];
+                const fileSource = firstFile.buffer || firstFile.path;
+                const ocrResult = await extractFromDocument(fileSource);
+                extractedText = ocrResult.text;
+                formFields = Object.keys(ocrResult.formFields).length > 0 ? ocrResult.formFields : null;
+            } catch (err) {
+                console.error("⚠️  OCR extraction failed:", err.message);
+            }
+        }
 
         const db_instance = db.getDb();
 
@@ -63,10 +83,14 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             district: district || 'Unknown',
             status: 'Pending',
             sentiment: sentimentResult.label,
-            sentimentScore: sentimentResult.score,
-            priority: priority || sentimentResult.priority,
+            sentimentScore: sentimentScoreVal,
+            sentimentData: sentimentResult.score || null,   // Full score object (from Comprehend)
+            keyPhrases: sentimentResult.keyPhrases || sentimentResult.keywords || [],
+            priority: priority || sentimentResult.priority || sentimentResult.priorityRaw || 'MEDIUM',
             assignedOfficer: null,
             documents,
+            extractedText,
+            formFields,
             isDuplicate,
             fraudScore: isDuplicate ? 0.65 : 0.05,
             adminNote: null,
