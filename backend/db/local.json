@@ -382,7 +382,7 @@
       "category": "Electricity",
       "state": "Mizoram",
       "district": "Unknown",
-      "status": "Resolved (Pending Verification)",
+      "status": "Resolved",
       "sentiment": "Neutral",
       "sentimentScore": 0.5,
       "priority": "Medium",
@@ -400,10 +400,10 @@
       "fraudScore": 0.05,
       "adminNote": null,
       "createdAt": "2026-03-05T07:13:56.396Z",
-      "updatedAt": "2026-03-05T09:01:31.945Z",
+      "updatedAt": "2026-03-05T16:46:34.023Z",
       "resolvedAt": null,
       "citizenFeedback": "Citizen confirmed resolution via portal.",
-      "verifiedAt": "2026-03-05T07:15:23.226Z"
+      "verifiedAt": "2026-03-05T16:46:34.023Z"
     },
     {
       "id": "GRV-C330F324",
