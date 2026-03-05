@@ -330,15 +330,15 @@ export default function OnboardingPage() {
     const [slide, setSlide] = useState(0);
     const [exiting, setExiting] = useState(false);
 
-    // Skip onboarding if already completed
+    // Skip onboarding if already completed for this user
     useEffect(() => {
-        if (localStorage.getItem('ncie_onboarding_done') === 'true') {
+        if (user && localStorage.getItem(`ncie_onboarding_done_${user.id}`) === 'true') {
             navigate('/citizen', { replace: true });
         }
-    }, []);
+    }, [user]);
 
     const handleDone = () => {
-        localStorage.setItem('ncie_onboarding_done', 'true');
+        localStorage.setItem(`ncie_onboarding_done_${user?.id}`, 'true');
         navigate('/citizen');
     };
 

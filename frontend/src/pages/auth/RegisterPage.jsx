@@ -80,8 +80,8 @@ export default function RegisterPage() {
         if (step === 4 && registeredUser) {
             const t = setTimeout(() => {
                 login(registeredUser);
-                // Check if already done onboarding (e.g. re-registration edge case)
-                const done = localStorage.getItem('ncie_onboarding_done');
+                // Check if already done onboarding for this specific user
+                const done = localStorage.getItem(`ncie_onboarding_done_${registeredUser.id}`);
                 navigate(done ? '/citizen' : '/onboarding');
             }, 2800);
             return () => clearTimeout(t);

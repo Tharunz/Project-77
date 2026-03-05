@@ -328,6 +328,34 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-05T07:28:49.479Z"
+    },
+    {
+      "id": "USR-B168BE89",
+      "name": "9",
+      "email": "9@gmail.com",
+      "password": "$2a$10$SV.Pnwf.tUvMYG5QyUsVBui27E939KmUoOiP2jPyTDZUCeaQSEJtq",
+      "state": "West Bengal",
+      "district": null,
+      "age": 1231,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T08:49:06.006Z"
+    },
+    {
+      "id": "USR-3383F677",
+      "name": "b",
+      "email": "j@gmail.com",
+      "password": "$2a$10$nLs6v2d.Ozy4BO/O/Pnp9OtcB1Cvs81neclfhFIvOmwoElgTZ3ATu",
+      "state": "Manipur",
+      "district": null,
+      "age": 123,
+      "income": 123123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T08:53:11.756Z"
     }
   ],
   "grievances": [
