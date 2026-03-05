@@ -9,7 +9,7 @@ const { verifyToken } = require('../services/auth.service');
  * protect — Verifies JWT token from Authorization header.
  * Attaches decoded user payload to req.user.
  */
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -23,7 +23,8 @@ const protect = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = verifyToken(token);
+    // verifyToken may return a Promise (Cognito) or a value (JWT)
+    const decoded = await Promise.resolve(verifyToken(token));
 
     if (!decoded) {
       return res.status(401).json({

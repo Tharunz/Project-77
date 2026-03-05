@@ -9,7 +9,15 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { hashPassword, comparePassword, generateToken } = require('../services/auth.service');
+const {
+    hashPassword,
+    comparePassword,
+    generateToken,
+    loginUserCognito,
+    registerUserCognito,
+    logoutUserCognito,
+    isCognito
+} = require('../services/auth.service');
 const { protect } = require('../middleware/auth.middleware');
 const db = require('../db/database');
 
@@ -18,7 +26,6 @@ router.post('/register', async (req, res, next) => {
     try {
         const { name, email, password, state, district, age, income, gender } = req.body;
 
-        // Validation
         if (!name || !email || !password) {
             return res.status(400).json({
                 success: false,
@@ -36,9 +43,27 @@ router.post('/register', async (req, res, next) => {
             });
         }
 
-        const db_instance = db.getDb();
+        // ── Cognito path ──────────────────────────────────────────────────────
+        if (isCognito()) {
+            try {
+                const result = await registerUserCognito(email, password, name, state);
+                const token = generateToken({ id: result.userId, email, role: 'citizen', name });
+                return res.status(201).json({
+                    success: true,
+                    data: { token, user: { id: result.userId, email, name, state, role: 'citizen' } },
+                    message: 'Account created successfully. Welcome to Project NCIE!',
+                    timestamp: new Date().toISOString()
+                });
+            } catch (cogErr) {
+                if (cogErr.name === 'UsernameExistsException') {
+                    return res.status(409).json({ success: false, data: null, message: 'An account with this email already exists.', timestamp: new Date().toISOString() });
+                }
+                throw cogErr;
+            }
+        }
 
-        // Check for existing user
+        // ── Local JWT path ────────────────────────────────────────────────────
+        const db_instance = db.getDb();
         const existing = db_instance.get('users').find({ email: email.toLowerCase() }).value();
         if (existing) {
             return res.status(409).json({
@@ -102,6 +127,33 @@ router.post('/login', async (req, res, next) => {
             });
         }
 
+        // ── Cognito path ──────────────────────────────────────────────────────
+        if (isCognito()) {
+            try {
+                const tokens = await loginUserCognito(email, password);
+                // Return a local JWT too, so existing frontend token handling works
+                const localToken = generateToken({ id: email, email, role: 'citizen', name: email.split('@')[0] });
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        token: localToken,          // backward-compatible
+                        accessToken: tokens.accessToken,
+                        idToken: tokens.idToken,
+                        refreshToken: tokens.refreshToken,
+                        user: { email, role: 'citizen' }
+                    },
+                    message: `Welcome back!`,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (cogErr) {
+                if (cogErr.name === 'NotAuthorizedException' || cogErr.name === 'UserNotFoundException') {
+                    return res.status(401).json({ success: false, data: null, message: 'Invalid email or password.', timestamp: new Date().toISOString() });
+                }
+                throw cogErr;
+            }
+        }
+
+        // ── Local JWT path ────────────────────────────────────────────────────
         const db_instance = db.getDb();
         const user = db_instance.get('users').find({ email: email.toLowerCase() }).value();
 

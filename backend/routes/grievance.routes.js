@@ -14,7 +14,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { protect, adminOnly } = require('../middleware/auth.middleware');
 const { analyze: analyzeSentiment } = require('../services/sentiment.service');
-const { upload, getFileUrl } = require('../services/storage.service');
+const { upload, getFileUrl, processUploadedFiles } = require('../services/storage.service');
 const { createNotification, sendGrievanceFiledEmail, sendStatusUpdateEmail } = require('../services/notification.service');
 const db = require('../db/database');
 
@@ -34,14 +34,8 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
         // Run sentiment analysis on description
         const sentimentResult = analyzeSentiment(description);
 
-        // Handle uploaded documents
-        const documents = (req.files || []).map(file => ({
-            filename: file.filename,
-            originalName: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-            url: getFileUrl(file.filename)
-        }));
+        // Handle uploaded documents — supports both local disk and S3
+        const documents = await processUploadedFiles(req.files || [], 'grievance-documents');
 
         const db_instance = db.getDb();
 
@@ -448,25 +442,25 @@ router.post('/:id/summarize', protect, adminOnly, (req, res, next) => {
             });
         }
 
-        const desc   = (grievance.description || '').toLowerCase();
-        const cat    = (grievance.category    || 'General').toLowerCase();
-        const prio   = (grievance.priority    || 'Medium');
-        const state  = grievance.state || 'Unknown';
-        const cName  = grievance.citizenName || 'Citizen';
+        const desc = (grievance.description || '').toLowerCase();
+        const cat = (grievance.category || 'General').toLowerCase();
+        const prio = (grievance.priority || 'Medium');
+        const state = grievance.state || 'Unknown';
+        const cName = grievance.citizenName || 'Citizen';
 
         // ── Issue detection heuristics ────────────────────────────────────────
         const isAudio = desc.includes('[audio grievance');
 
         // Category-level templates
         const CAT_MAP = {
-            water:         { dept: 'Department of Water Resources', impact: '1,200–4,000', action1: 'Dispatch field inspection team within 24 hours', action2: 'Coordinate with State Water Board for emergency supply', key1: 'Water supply disruption affecting daily household needs', key2: 'Potential public health risk if not addressed promptly' },
-            road:          { dept: 'Public Works Department (PWD)', impact: '500–2,000',  action1: 'Schedule road inspection and pothole repair crew', action2: 'Place safety barriers and hazard markers immediately', key1: 'Road infrastructure damage causing commuter risk', key2: 'Risk of vehicle damage and pedestrian injuries' },
-            electricity:   { dept: 'State Electricity Distribution Board', impact: '800–3,500', action1: 'Dispatch DISCOM engineer for fault assessment', action2: 'Coordinate with substation for load re-routing', key1: 'Power supply failure affecting residential and commercial areas', key2: 'Risk to medical equipment and cold-chain storage' },
-            health:        { dept: 'Ministry of Health & Family Welfare', impact: '300–1,500', action1: 'Alert District Chief Medical Officer', action2: 'Deploy mobile health unit for area assessment', key1: 'Public health concern requiring immediate medical intervention', key2: 'Potential for disease spread if not contained' },
-            sanitation:    { dept: 'Urban Local Body / Swachh Bharat Mission', impact: '600–2,500', action1: 'Schedule emergency sanitation crew deployment', action2: 'Issue advisory to affected residents', key1: 'Sanitation failure posing hygiene and health risks', key2: 'Environmental contamination if drainage is blocked' },
-            education:     { dept: 'Ministry of Education / State School Board', impact: '200–800',  action1: 'Contact District Education Officer for intervention', action2: 'Schedule school facility audit', key1: 'Educational infrastructure or access issue affecting students', key2: 'Potential impact on academic continuity for enrolled students' },
-            corruption:    { dept: 'State Vigilance & Anti-Corruption Bureau', impact: '100–600',  action1: 'Initiate formal investigation with Vigilance Bureau', action2: 'Preserve digital evidence and witness statements', key1: 'Alleged misconduct or corruption by a government official', key2: 'Risk of evidence destruction if not acted upon quickly' },
-            pension:       { dept: 'Department of Social Justice & Empowerment', impact: '50–300',   action1: 'Expedite pension file review at District Treasury', action2: 'Contact beneficiary for document verification', key1: 'Delayed pension disbursement causing financial hardship', key2: 'Elderly citizen at risk without income support' },
+            water: { dept: 'Department of Water Resources', impact: '1,200–4,000', action1: 'Dispatch field inspection team within 24 hours', action2: 'Coordinate with State Water Board for emergency supply', key1: 'Water supply disruption affecting daily household needs', key2: 'Potential public health risk if not addressed promptly' },
+            road: { dept: 'Public Works Department (PWD)', impact: '500–2,000', action1: 'Schedule road inspection and pothole repair crew', action2: 'Place safety barriers and hazard markers immediately', key1: 'Road infrastructure damage causing commuter risk', key2: 'Risk of vehicle damage and pedestrian injuries' },
+            electricity: { dept: 'State Electricity Distribution Board', impact: '800–3,500', action1: 'Dispatch DISCOM engineer for fault assessment', action2: 'Coordinate with substation for load re-routing', key1: 'Power supply failure affecting residential and commercial areas', key2: 'Risk to medical equipment and cold-chain storage' },
+            health: { dept: 'Ministry of Health & Family Welfare', impact: '300–1,500', action1: 'Alert District Chief Medical Officer', action2: 'Deploy mobile health unit for area assessment', key1: 'Public health concern requiring immediate medical intervention', key2: 'Potential for disease spread if not contained' },
+            sanitation: { dept: 'Urban Local Body / Swachh Bharat Mission', impact: '600–2,500', action1: 'Schedule emergency sanitation crew deployment', action2: 'Issue advisory to affected residents', key1: 'Sanitation failure posing hygiene and health risks', key2: 'Environmental contamination if drainage is blocked' },
+            education: { dept: 'Ministry of Education / State School Board', impact: '200–800', action1: 'Contact District Education Officer for intervention', action2: 'Schedule school facility audit', key1: 'Educational infrastructure or access issue affecting students', key2: 'Potential impact on academic continuity for enrolled students' },
+            corruption: { dept: 'State Vigilance & Anti-Corruption Bureau', impact: '100–600', action1: 'Initiate formal investigation with Vigilance Bureau', action2: 'Preserve digital evidence and witness statements', key1: 'Alleged misconduct or corruption by a government official', key2: 'Risk of evidence destruction if not acted upon quickly' },
+            pension: { dept: 'Department of Social Justice & Empowerment', impact: '50–300', action1: 'Expedite pension file review at District Treasury', action2: 'Contact beneficiary for document verification', key1: 'Delayed pension disbursement causing financial hardship', key2: 'Elderly citizen at risk without income support' },
         };
 
         // Match category
@@ -486,8 +480,8 @@ router.post('/:id/summarize', protect, adminOnly, (req, res, next) => {
         // Urgency scoring
         const URGENCY_KEYWORDS = ['urgent', 'emergency', 'critical', 'dying', 'fire', 'flood', 'disease', 'contaminated', 'no water', 'power cut', 'illegal', 'bribe'];
         const urgencyHits = URGENCY_KEYWORDS.filter(k => desc.includes(k) || cat.includes(k)).length;
-        const prioBoost   = prio === 'High' ? 2 : prio === 'Critical' ? 3 : 0;
-        const rawScore    = Math.min(1, (urgencyHits * 0.15) + (prioBoost * 0.12) + (sentimentBoost(grievance.sentimentScore)));
+        const prioBoost = prio === 'High' ? 2 : prio === 'Critical' ? 3 : 0;
+        const rawScore = Math.min(1, (urgencyHits * 0.15) + (prioBoost * 0.12) + (sentimentBoost(grievance.sentimentScore)));
         const urgencyScore = parseFloat((0.45 + rawScore * 0.55).toFixed(2)); // always between 0.45–1.0
         const urgencyLevel = urgencyScore > 0.78 ? 'Critical' : urgencyScore > 0.60 ? 'High' : urgencyScore > 0.45 ? 'Medium' : 'Low';
 
@@ -502,15 +496,15 @@ router.post('/:id/summarize', protect, adminOnly, (req, res, next) => {
             success: true,
             data: {
                 summary,
-                keyIssues:          [tpl.key1, tpl.key2],
+                keyIssues: [tpl.key1, tpl.key2],
                 urgencyLevel,
                 urgencyScore,
                 recommendedActions: [tpl.action1, tpl.action2],
-                estimatedImpact:    `~${tpl.impact} citizens`,
-                department:         tpl.dept,
+                estimatedImpact: `~${tpl.impact} citizens`,
+                department: tpl.dept,
                 confidence,
-                isAudioGrievance:   isAudio,
-                generatedAt:        new Date().toISOString()
+                isAudioGrievance: isAudio,
+                generatedAt: new Date().toISOString()
             },
             message: 'AI analysis complete.',
             timestamp: new Date().toISOString()

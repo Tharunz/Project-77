@@ -356,6 +356,20 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-05T08:53:11.756Z"
+    },
+    {
+      "id": "USR-D2B34597",
+      "name": "h",
+      "email": "hj@gmail.com",
+      "password": "$2a$10$6TKOIZ7tdo53S9XG3Z5aH.8LcB8D4BkwEhf4J73km66oih/s5zWmq",
+      "state": "Mizoram",
+      "district": null,
+      "age": 15,
+      "income": 123123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T09:00:18.061Z"
     }
   ],
   "grievances": [
@@ -368,7 +382,7 @@
       "category": "Electricity",
       "state": "Mizoram",
       "district": "Unknown",
-      "status": "Resolved",
+      "status": "Resolved (Pending Verification)",
       "sentiment": "Neutral",
       "sentimentScore": 0.5,
       "priority": "Medium",
@@ -386,7 +400,7 @@
       "fraudScore": 0.05,
       "adminNote": null,
       "createdAt": "2026-03-05T07:13:56.396Z",
-      "updatedAt": "2026-03-05T07:15:23.226Z",
+      "updatedAt": "2026-03-05T09:01:31.945Z",
       "resolvedAt": null,
       "citizenFeedback": "Citizen confirmed resolution via portal.",
       "verifiedAt": "2026-03-05T07:15:23.226Z"
@@ -2460,6 +2474,15 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-05T07:15:12.405Z"
+    },
+    {
+      "id": "NOTIF-303D79C1",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-871473A6",
+      "message": "Your grievance GRV-871473A6 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-05T09:01:31.946Z"
     }
   ],
   "communityPosts": [
