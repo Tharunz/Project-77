@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import './QuantumHeroBg.css';
 
-export default function QuantumHeroBg() {
+function QuantumHeroBg() {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const workerRef = useRef(null);
@@ -14,6 +14,10 @@ export default function QuantumHeroBg() {
         if (!canvas || !container) return;
 
         try {
+            // Set pixel dimensions BEFORE transfer — canvas default is 300×150
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
+
             // Transfer control to Offscreen Worker for GPGPU acceleration
             const offscreen = canvas.transferControlToOffscreen();
             const worker = new Worker(new URL('../workers/animationWorker.js', import.meta.url), { type: 'module' });
@@ -24,7 +28,7 @@ export default function QuantumHeroBg() {
                 data: {
                     canvas: offscreen,
                     type: 'quantum',
-                    num: 80
+                    num: 50
                 }
             }, [offscreen]);
 
@@ -115,3 +119,5 @@ export default function QuantumHeroBg() {
         </div>
     );
 }
+
+export default memo(QuantumHeroBg);

@@ -34,7 +34,7 @@ router.get('/stats', protect, (req, res, next) => {
         const predictions = getPredictions();
         const alerts = getAlerts();
 
-        const preventedCount = db_instance.get('preSevaAlerts').filter({ status: 'prevented' }).value().length;
+        const preventedCount = db_instance.get('preSevaAlerts').filter({ prevented: true }).value().length;
 
         return res.status(200).json({
             success: true,
@@ -66,6 +66,30 @@ router.get('/alerts', protect, (req, res, next) => {
             message: `${alerts.length} PreSeva alert(s) fetched.`,
             timestamp: new Date().toISOString()
         });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── POST /api/preseva/alerts/:id/assign (admin) — Resource Allocation ───────
+router.post('/alerts/:id/assign', protect, adminOnly, (req, res, next) => {
+    try {
+        const { officers, budget, note, assignedAt } = req.body;
+        const db_instance = db.getDb();
+        const alert = db_instance.get('preSevaAlerts').find({ id: req.params.id }).value();
+        if (!alert) {
+            return res.status(404).json({ success: false, data: null, message: 'Alert not found.', timestamp: new Date().toISOString() });
+        }
+        db_instance.get('preSevaAlerts').find({ id: req.params.id }).assign({
+            status: 'Department Notified',
+            allocated: true,
+            allocatedOfficers: parseInt(officers) || 2,
+            allocatedBudget: parseInt(budget) || 0,
+            allocationNote: note || '',
+            allocatedAt: assignedAt || new Date().toISOString()
+        }).write();
+        const updated = db_instance.get('preSevaAlerts').find({ id: req.params.id }).value();
+        return res.status(200).json({ success: true, data: updated, message: 'Resources allocated successfully.', timestamp: new Date().toISOString() });
     } catch (err) {
         next(err);
     }
@@ -156,7 +180,7 @@ router.patch('/alerts/:id/mark-prevented', protect, adminOnly, (req, res, next) 
         }
 
         db_instance.get('preSevaAlerts').find({ id: req.params.id })
-            .assign({ status: 'prevented', resolvedAt: new Date().toISOString() })
+            .assign({ status: 'prevented', prevented: true, resolvedAt: new Date().toISOString() })
             .write();
 
         return res.status(200).json({

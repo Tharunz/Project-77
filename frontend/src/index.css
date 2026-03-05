@@ -3,7 +3,7 @@
    Global Styles, CSS Variables, Utilities
    =================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 
 /* --- CSS Variables --- */
 :root {
@@ -340,11 +340,13 @@ select {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 107, 44, 0.4);
+    transform: scale(1);
+    opacity: 1;
   }
 
   50% {
-    box-shadow: 0 0 0 10px rgba(255, 107, 44, 0);
+    transform: scale(1.08);
+    opacity: 0.85;
   }
 }
 

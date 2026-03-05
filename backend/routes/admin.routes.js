@@ -127,6 +127,50 @@ router.get('/heatmap', (req, res, next) => {
     }
 });
 
+// ─── GET /api/admin/officers/wall ───────────────────────────────────────────────
+// Feature #34 — Officer Accountability Wall API
+router.get('/officers/wall', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const officers = db_instance.get('users').filter({ role: 'officer' }).value() || [];
+
+        const scored = officers.map(o => {
+            const { password: _, ...rest } = o;
+            const slaPoint = (o.slaCompliance || 0) * 0.40;
+            const satisfyPoint = ((o.satisfactionScore || 0) / 5) * 100 * 0.30;
+            const casePoint = Math.min((o.casesHandled || 0) / 300, 1) * 100 * 0.20;
+            const speedPoint = Math.max(0, (14 - (o.avgResolutionDays || 14)) / 14) * 100 * 0.10;
+            const compositeScore = Math.round(slaPoint + satisfyPoint + casePoint + speedPoint);
+            return { ...rest, compositeScore, breaches: o.breaches || 0 };
+        }).sort((a, b) => b.compositeScore - a.compositeScore);
+
+        // Top 3 performers (Hall of Fame)
+        const hallOfFame = scored.slice(0, 3);
+
+        // Bottom performers with high breaches / low SLA (Wall of Accountability)
+        const accountabilityWatchlist = scored
+            .filter(o => o.isBreachingSLA || o.slaCompliance < 70 || o.breaches > 3)
+            .sort((a, b) => b.breaches - a.breaches || a.slaCompliance - b.slaCompliance);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                hallOfFame,
+                accountabilityWatchlist,
+                metrics: {
+                    totalOfficers: scored.length,
+                    watchlisted: accountabilityWatchlist.length,
+                    topPerformers: hallOfFame.length
+                }
+            },
+            message: "Officer accountability wall data fetched.",
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
 // ─── GET /api/admin/officers/leaderboard ────────────────────────────────────
 // Feature #17 — Officer Leaderboard API
 // Must be BEFORE /officers and /officers/:id to avoid route conflict
@@ -389,6 +433,40 @@ router.patch('/fraud-alerts/:id/review', (req, res, next) => {
             success: true,
             data: db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).value(),
             message: `Fraud alert ${action === 'confirm' ? 'confirmed - grievance closed' : 'dismissed - grievance reinstated'}.`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── Feature 28: AI Ghost Audits API ──────────────────────────────────────────
+router.get('/ghost-audits', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const alerts = db_instance.get('ghostAuditAlerts').value() || [];
+
+        return res.status(200).json({
+            success: true,
+            data: alerts,
+            message: "Ghost audit alerts fetched successfully.",
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── Feature 27 & 20: Digital Budget Escrow APIs (Admin) ─────────────────────
+router.get('/escrow', (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const escrowProjects = db_instance.get('escrowProjects').value() || [];
+
+        return res.status(200).json({
+            success: true,
+            data: escrowProjects,
+            message: "Admin escrow projects fetched successfully.",
             timestamp: new Date().toISOString()
         });
     } catch (err) {

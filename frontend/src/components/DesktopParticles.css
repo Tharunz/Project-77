@@ -1,0 +1,135 @@
+/* DesktopParticles — GPU-promoted, zero layout impact */
+
+.dp-container {
+    /* Desktop only — mobile covered by MobileParticles */
+    display: none;
+}
+
+@media (min-width: 769px) {
+    .dp-container {
+        display: block;
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 2;
+        pointer-events: none;
+        /* GPU layer promotion */
+        will-change: transform;
+        contain: layout style;
+        /* Soft 4-sided fade — eliminates hard rectangular clip at hero bounds */
+        -webkit-mask-image:
+            linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, black 5%,  black 95%, transparent 100%);
+        -webkit-mask-composite: destination-in;
+        mask-image:
+            linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, black 5%,  black 95%, transparent 100%);
+        mask-composite: intersect;
+    }
+}
+
+/* Canvas — full-coverage, promoted to compositor layer */
+.dp-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.78;
+    pointer-events: none;
+    /* Force GPU rasterisation */
+    transform: translateZ(0);
+    will-change: transform;
+    contain: strict;
+}
+
+/* Aurora parallax overlays — shift with mouse via CSS vars --dpx / --dpy */
+.dp-aurora {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.12;
+    mix-blend-mode: screen;
+    pointer-events: none;
+    will-change: transform;
+    /* Parallax: different multipliers per aurora */
+    transition: transform 0.1s linear;
+}
+
+.dp-aurora-saffron {
+    width: 55vw;
+    height: 55vw;
+    top: -15%;
+    left: -5%;
+    background: radial-gradient(circle, rgba(255, 107, 44, 0.9), transparent 60%);
+    transform: translate(
+        calc(var(--dpx, 0) * -28px),
+        calc(var(--dpy, 0) * -28px)
+    ) translateZ(0);
+    animation: dpAuroraFloat 22s ease-in-out infinite alternate;
+}
+
+.dp-aurora-teal {
+    width: 45vw;
+    height: 45vw;
+    top: 10%;
+    right: -5%;
+    background: radial-gradient(circle, rgba(0, 229, 160, 0.9), transparent 60%);
+    transform: translate(
+        calc(var(--dpx, 0) * -18px),
+        calc(var(--dpy, 0) * -18px)
+    ) translateZ(0);
+    animation: dpAuroraFloat 28s ease-in-out 3s infinite alternate-reverse;
+}
+
+.dp-aurora-blue {
+    width: 40vw;
+    height: 40vw;
+    bottom: -10%;
+    left: 25%;
+    background: radial-gradient(circle, rgba(92, 142, 255, 0.8), transparent 60%);
+    transform: translate(
+        calc(var(--dpx, 0) * -12px),
+        calc(var(--dpy, 0) * -12px)
+    ) translateZ(0);
+    animation: dpAuroraFloat 18s ease-in-out 6s infinite alternate;
+}
+
+@keyframes dpAuroraFloat {
+    0%   { transform: translate(0, 0) scale(1)     translateZ(0); }
+    33%  { transform: translate(40px, -30px) scale(1.08) translateZ(0); }
+    66%  { transform: translate(-25px, 45px) scale(0.94) translateZ(0); }
+    100% { transform: translate(20px, 25px) scale(1.04) translateZ(0); }
+}
+
+/* CSS-only fallback glow orbs */
+.dp-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(50px);
+    opacity: 0.14;
+}
+.dp-glow-1 {
+    width: 40vw; height: 40vw;
+    top: -10%; left: -5%;
+    background: radial-gradient(circle, #FF6B2C, transparent 65%);
+    animation: dpGlowFloat 16s ease-in-out infinite alternate;
+}
+.dp-glow-2 {
+    width: 35vw; height: 35vw;
+    top: 30%; right: -5%;
+    background: radial-gradient(circle, #00E5A0, transparent 65%);
+    animation: dpGlowFloat 20s ease-in-out 4s infinite alternate-reverse;
+}
+.dp-glow-3 {
+    width: 30vw; height: 30vw;
+    bottom: -5%; left: 35%;
+    background: radial-gradient(circle, #5C8EFF, transparent 65%);
+    animation: dpGlowFloat 14s ease-in-out 8s infinite alternate;
+}
+
+@keyframes dpGlowFloat {
+    0%   { transform: translate(0, 0) scale(1); }
+    50%  { transform: translate(30px, 40px) scale(1.1); }
+    100% { transform: translate(-20px, -30px) scale(0.9); }
+}

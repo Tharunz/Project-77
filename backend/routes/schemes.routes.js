@@ -348,6 +348,135 @@ router.get('/benefit-roadmap', protect, (req, res, next) => {
     }
 });
 
+// ─── GET /api/schemes/my-applications ────────────────────────────────────────
+// Must be BEFORE /:id to avoid route conflict
+router.get('/my-applications', protect, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        let apps = [];
+        try {
+            apps = db_instance.get('schemeApplications').filter({ userId: req.user.id }).value() || [];
+        } catch (_) { apps = []; }
+        // Sort newest first
+        apps = [...apps].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        return res.status(200).json({
+            success: true,
+            data: apps,
+            message: `${apps.length} scheme application(s) found.`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) { next(err); }
+});
+
+// ─── GET /api/schemes/bookmarked ─────────────────────────────────────────────
+// Must be BEFORE /:id to avoid route conflict
+router.get('/bookmarked', protect, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        const bookmarkedIds = user?.bookmarkedSchemes || [];
+        const schemes = db_instance.get('schemes').value().filter(s => bookmarkedIds.includes(s.id));
+        return res.status(200).json({ success: true, data: schemes, message: `${schemes.length} bookmarked scheme(s).`, timestamp: new Date().toISOString() });
+    } catch (err) { next(err); }
+});
+
+// ─── POST /api/schemes (admin only) ──────────────────────────────────────────
+const { protect: _protect, adminOnly } = require('../middleware/auth.middleware');
+router.post('/', protect, adminOnly, (req, res, next) => {
+    try {
+        const { v4: uuidv4 } = require('uuid');
+        const db_instance = db.getDb();
+        const newScheme = {
+            id: `SCH-${Date.now()}`,
+            ...req.body,
+            isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+            beneficiaries: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        db_instance.get('schemes').push(newScheme).write();
+        return res.status(201).json({ success: true, data: newScheme, message: 'Scheme created successfully.', timestamp: new Date().toISOString() });
+    } catch (err) { next(err); }
+});
+
+// ─── POST /api/schemes/:id/apply ─────────────────────────────────────────────
+router.post('/:id/apply', protect, (req, res, next) => {
+    try {
+        const { v4: uuidv4 } = require('uuid');
+        const db_instance = db.getDb();
+        const scheme = db_instance.get('schemes').find({ id: req.params.id.toUpperCase() }).value();
+        if (!scheme) return res.status(404).json({ success: false, data: null, message: 'Scheme not found.', timestamp: new Date().toISOString() });
+        const application = {
+            id: `APP-${Date.now()}`,
+            schemeId: scheme.id,
+            schemeName: scheme.name,
+            userId: req.user.id,
+            userName: req.user.name,
+            additionalInfo: req.body.additionalInfo || '',
+            documents: req.body.documents || [],
+            status: 'Submitted',
+            submittedAt: new Date().toISOString()
+        };
+        if (!db_instance.get('schemeApplications').value()) db_instance.set('schemeApplications', []).write();
+        db_instance.get('schemeApplications').push(application).write();
+        // Update beneficiaries count
+        db_instance.get('schemes').find({ id: scheme.id }).assign({ beneficiaries: (scheme.beneficiaries || 0) + 1 }).write();
+        return res.status(201).json({ success: true, data: application, message: `Application submitted for ${scheme.name}.`, timestamp: new Date().toISOString() });
+    } catch (err) { next(err); }
+});
+
+// ─── POST /api/schemes/:id/bookmark ──────────────────────────────────────────
+router.post('/:id/bookmark', protect, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        if (!user) return res.status(404).json({ success: false, data: null, message: 'User not found.', timestamp: new Date().toISOString() });
+        const bookmarks = user.bookmarkedSchemes || [];
+        const schemeId = req.params.id.toUpperCase();
+        if (!bookmarks.includes(schemeId)) bookmarks.push(schemeId);
+        db_instance.get('users').find({ id: req.user.id }).assign({ bookmarkedSchemes: bookmarks }).write();
+        return res.status(200).json({ success: true, data: { bookmarkedSchemes: bookmarks }, message: 'Scheme bookmarked.', timestamp: new Date().toISOString() });
+    } catch (err) { next(err); }
+});
+
+// ─── DELETE /api/schemes/:id/bookmark ────────────────────────────────────────
+router.delete('/:id/bookmark', protect, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        if (!user) return res.status(404).json({ success: false, data: null, message: 'User not found.', timestamp: new Date().toISOString() });
+        const schemeId = req.params.id.toUpperCase();
+        const bookmarks = (user.bookmarkedSchemes || []).filter(id => id !== schemeId);
+        db_instance.get('users').find({ id: req.user.id }).assign({ bookmarkedSchemes: bookmarks }).write();
+        return res.status(200).json({ success: true, data: { bookmarkedSchemes: bookmarks }, message: 'Bookmark removed.', timestamp: new Date().toISOString() });
+    } catch (err) { next(err); }
+});
+
+// ─── PUT /api/schemes/:id (admin only) ───────────────────────────────────────
+router.put('/:id', protect, adminOnly, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const schemeId = req.params.id.toUpperCase();
+        const scheme = db_instance.get('schemes').find({ id: schemeId }).value();
+        if (!scheme) return res.status(404).json({ success: false, data: null, message: 'Scheme not found.', timestamp: new Date().toISOString() });
+        const updates = { ...req.body, updatedAt: new Date().toISOString() };
+        delete updates.id;
+        db_instance.get('schemes').find({ id: schemeId }).assign(updates).write();
+        const updated = db_instance.get('schemes').find({ id: schemeId }).value();
+        return res.status(200).json({ success: true, data: updated, message: 'Scheme updated.', timestamp: new Date().toISOString() });
+    } catch (err) { next(err); }
+});
+
+// ─── DELETE /api/schemes/:id (admin only — soft delete) ──────────────────────
+router.delete('/:id', protect, adminOnly, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        const schemeId = req.params.id.toUpperCase();
+        db_instance.get('schemes').find({ id: schemeId }).assign({ isActive: false, updatedAt: new Date().toISOString() }).write();
+        return res.status(200).json({ success: true, data: null, message: 'Scheme deactivated.', timestamp: new Date().toISOString() });
+    } catch (err) { next(err); }
+});
+
 // ─── GET /api/schemes/:id ─────────────────────────────────────────────────────
 router.get('/:id', (req, res, next) => {
     try {

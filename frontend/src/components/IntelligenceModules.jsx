@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, useRef } from 'react';
+import React, { useState, useEffect, Suspense, useRef, memo } from 'react';
 import {
     MdShowChart, MdAnalytics, MdChat, MdAssignment, MdTimeline, MdAccessTime,
     MdPeople, MdShield, MdDeviceHub, MdAttachMoney, MdFormatListNumbered,
@@ -217,7 +217,7 @@ const MODULES = [
     }
 ];
 
-const Viz = ({ type, color, hover }) => {
+const Viz = memo(({ type, color, hover }) => {
     const [tick, setTick] = useState(0);
     useEffect(() => {
         const interval = setInterval(() => setTick(t => t + 1), hover ? 1000 : 1500);
@@ -386,9 +386,9 @@ const Viz = ({ type, color, hover }) => {
             );
         default: return null;
     }
-};
+});
 
-const Module = ({ mod, index, parentVisible }) => {
+const Module = memo(({ mod, index, parentVisible }) => {
     const [hover, setHover] = useState(false);
     const [visible, setVisible] = useState(false);
 
@@ -455,9 +455,9 @@ const Module = ({ mod, index, parentVisible }) => {
             </div>
         </div>
     );
-};
+});
 
-export default function IntelligenceModules() {
+function IntelligenceModules() {
     const [sectionVisible, setSectionVisible] = useState(false);
     const sectionRef = useRef(null);
 
@@ -497,3 +497,5 @@ export default function IntelligenceModules() {
         </section>
     );
 }
+
+export default memo(IntelligenceModules);

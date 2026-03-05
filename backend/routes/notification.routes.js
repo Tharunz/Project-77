@@ -33,7 +33,7 @@ router.post('/send', protect, adminOnly, async (req, res, next) => {
             const db_instance = db.getDb();
             const user = db_instance.get('users').find({ id: userId }).value();
             if (user?.email) {
-                emailResult = await sendEmail(user.email, emailSubject || 'Notification from Project-77', emailBody || `<p>${message}</p>`);
+                emailResult = await sendEmail(user.email, emailSubject || 'Notification from Project NCIE', emailBody || `<p>${message}</p>`);
             }
         }
 

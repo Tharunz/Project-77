@@ -61,7 +61,7 @@ const getPredictions = () => {
 const getAlerts = () => {
     const db_instance = db.getDb();
     return db_instance.get('preSevaAlerts')
-        .filter({ status: 'active' })
+        .filter({ prevented: false })
         .value();
 };
 

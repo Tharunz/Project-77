@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MdListAlt, MdSearch, MdFilterList, MdEdit, MdCheck, MdClose, MdArrowUpward, MdRefresh, MdDownload } from 'react-icons/md';
-import { apiGetGrievances, apiUpdateGrievance, apiSearchGrievances } from '../../services/api.service';
+import { MdListAlt, MdSearch, MdFilterList, MdEdit, MdCheck, MdClose, MdArrowUpward, MdRefresh, MdDownload, MdSmartToy, MdAutoAwesome, MdWarning, MdCheckCircle, MdBolt, MdExpandMore } from 'react-icons/md';
+import { apiGetGrievances, apiUpdateGrievance, apiSearchGrievances, apiSummarizeGrievance } from '../../services/api.service';
 import { INDIAN_STATES, GRIEVANCE_CATEGORIES } from '../../mock/mockData';
 
 const STATUS_COLORS = {
@@ -40,6 +40,9 @@ export default function GrievanceManagement() {
     const [editStatus, setEditStatus] = useState('');
     const [editNote, setEditNote] = useState('');
     const [editAssign, setEditAssign] = useState('');
+    const [aiSummary, setAiSummary] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiExpanded, setAiExpanded] = useState(false);
     const PER_PAGE = 15;
 
     const loadGrievances = useCallback(async () => {
@@ -85,7 +88,21 @@ export default function GrievanceManagement() {
         setEditStatus(g.status);
         setEditNote(g.resolutionNote || '');
         setEditAssign(g.assignedTo || '');
+        setAiSummary(null);
+        setAiLoading(false);
+        setAiExpanded(false);
         setEditModal(true);
+    };
+
+    const handleGenerateSummary = async () => {
+        if (!selected) return;
+        setAiLoading(true);
+        setAiExpanded(true);
+        try {
+            const res = await apiSummarizeGrievance(selected.id);
+            if (res.success && res.data) setAiSummary(res.data);
+        } catch (_) {}
+        setAiLoading(false);
     };
 
     const handleSave = async () => {
@@ -183,8 +200,9 @@ export default function GrievanceManagement() {
                                         <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{g.state}</td>
                                         <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{g.category}</td>
                                         <td style={{ maxWidth: 160, fontSize: '0.82rem' }}>
-                                            <div title={g.description} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word' }}>
-                                                {g.title}
+                                            <div title={g.description} style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                                                {g.description?.startsWith('[Audio grievance') && <span title="Audio Grievance" style={{ fontSize: '0.9rem', flexShrink: 0 }}>🎤</span>}
+                                                <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', wordBreak: 'break-word' }}>{g.title}</span>
                                             </div>
                                         </td>
                                         <td style={{ minWidth: 100 }}>
@@ -242,22 +260,153 @@ export default function GrievanceManagement() {
                 <div style={{
                     position: 'fixed', inset: 0, background: 'rgba(5,11,26,0.85)',
                     backdropFilter: 'blur(8px)', zIndex: 1000,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '16px'
                 }}>
                     <div style={{
                         background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-lg)', padding: 32, width: '100%', maxWidth: 560
+                        borderRadius: 'var(--radius-lg)', padding: 28, width: '100%', maxWidth: 600,
+                        maxHeight: '92vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                            <h2 style={{ fontSize: '1.1rem' }}>Update Grievance <span style={{ color: 'var(--saffron)' }}>{selected.id}</span></h2>
+                        {/* Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1.1rem' }}>
+                                Update Grievance <span style={{ color: 'var(--saffron)' }}>{selected.id}</span>
+                            </h2>
                             <button onClick={() => setEditModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer' }}><MdClose /></button>
                         </div>
-                        <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '12px 16px', marginBottom: 20 }}>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
-                                <strong style={{ color: 'var(--text-primary)' }}>{selected.citizenName}</strong> — {selected.state}
+
+                        {/* ── Grievance Info Box (restored) ── */}
+                        <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '12px 16px' }}>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 6 }}>
+                                <strong style={{ color: 'var(--text-primary)' }}>{selected.citizenName}</strong>
+                                {' '}—{' '}{selected.state}
+                                {selected.description?.startsWith('[Audio grievance') && (
+                                    <span style={{ marginLeft: 8, fontSize: '0.72rem', fontWeight: 700, background: 'rgba(239,68,68,0.15)', color: '#F87171', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, padding: '1px 7px' }}>🎤 Audio Grievance</span>
+                                )}
                             </p>
-                            <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5, maxHeight: 200, overflowY: 'auto', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{selected.description}</div>
+                            {/* Audio player — shown when grievance has an audio document */}
+                            {selected.documents?.some(d => d.mimetype?.startsWith('audio/') || d.url?.includes('.webm') || d.url?.includes('.ogg') || d.url?.includes('.mp3')) && (
+                                <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 10 }}>
+                                    <p style={{ fontSize: '0.72rem', color: '#F87171', fontWeight: 700, marginBottom: 6 }}>🎤 Audio Recording</p>
+                                    <audio controls src={selected.documents.find(d => d.mimetype?.startsWith('audio/') || d.url?.includes('.webm'))?.url} style={{ width: '100%', height: 36 }} />
+                                </div>
+                            )}
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                                {selected.description}
+                            </div>
                         </div>
+
+                        {/* ── NCIE AI Analysis Section ── */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(59,130,246,0.05) 100%)',
+                            border: '1px solid rgba(139,92,246,0.25)', borderRadius: 12, overflow: 'hidden'
+                        }}>
+                            {/* AI Card Header */}
+                            <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <MdSmartToy style={{ color: '#A78BFA', fontSize: '1rem' }} />
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#A78BFA', letterSpacing: '0.06em' }}>NCIE AI Analysis</div>
+                                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>LLM-powered grievance intelligence</div>
+                                    </div>
+                                </div>
+                                {!aiExpanded ? (
+                                    <button
+                                        onClick={handleGenerateSummary}
+                                        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 8, color: '#A78BFA', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+                                    >
+                                        <MdAutoAwesome style={{ fontSize: '1rem' }} /> Generate AI Summary
+                                    </button>
+                                ) : (
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
+                                        {aiSummary ? `${aiSummary.confidence}% confidence` : 'Analyzing…'}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* AI Result / Loading */}
+                            {aiExpanded && (
+                                <div style={{ borderTop: '1px solid rgba(139,92,246,0.15)', padding: '16px 16px' }}>
+                                    {aiLoading ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0' }}>
+                                            <div style={{ width: 20, height: 20, border: '2px solid rgba(139,92,246,0.3)', borderTop: '2px solid #A78BFA', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                                            <div>
+                                                <div style={{ fontSize: '0.82rem', color: '#A78BFA', fontWeight: 700 }}>Analyzing with NCIE AI…</div>
+                                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>Processing description · Detecting urgency · Mapping department</div>
+                                            </div>
+                                        </div>
+                                    ) : aiSummary ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                            {/* Summary text */}
+                                            <div style={{ fontSize: '0.83rem', color: 'var(--text-primary)', lineHeight: 1.6, fontStyle: 'italic', borderLeft: '3px solid #A78BFA', paddingLeft: 12 }}>
+                                                "{aiSummary.summary}"
+                                            </div>
+
+                                            {/* Urgency bar */}
+                                            <div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                                                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Urgency Level</span>
+                                                    <span style={{
+                                                        fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.06em',
+                                                        color: aiSummary.urgencyLevel === 'Critical' ? '#EF4444' : aiSummary.urgencyLevel === 'High' ? '#F59E0B' : aiSummary.urgencyLevel === 'Medium' ? '#3B82F6' : '#00C896'
+                                                    }}>{aiSummary.urgencyLevel?.toUpperCase()}</span>
+                                                </div>
+                                                <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                                                    <div style={{
+                                                        height: '100%', borderRadius: 3, transition: 'width 0.8s ease',
+                                                        width: `${Math.round(aiSummary.urgencyScore * 100)}%`,
+                                                        background: aiSummary.urgencyLevel === 'Critical' ? '#EF4444' : aiSummary.urgencyLevel === 'High' ? '#F59E0B' : aiSummary.urgencyLevel === 'Medium' ? '#3B82F6' : '#00C896'
+                                                    }} />
+                                                </div>
+                                            </div>
+
+                                            {/* Key Issues + Actions grid */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px' }}>
+                                                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Key Issues</div>
+                                                    {aiSummary.keyIssues?.map((issue, i) => (
+                                                        <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
+                                                            <MdWarning style={{ color: '#F59E0B', fontSize: '0.85rem', flexShrink: 0, marginTop: 1 }} />
+                                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{issue}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '10px 12px' }}>
+                                                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Recommended Actions</div>
+                                                    {aiSummary.recommendedActions?.map((act, i) => (
+                                                        <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
+                                                            <MdCheckCircle style={{ color: '#00C896', fontSize: '0.85rem', flexShrink: 0, marginTop: 1 }} />
+                                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{act}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Footer meta */}
+                                            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                                                {[
+                                                    { label: '🏛 Department', value: aiSummary.department },
+                                                    { label: '👥 Est. Impact', value: aiSummary.estimatedImpact },
+                                                    { label: '🎯 Confidence', value: `${aiSummary.confidence}%` }
+                                                ].map(m => (
+                                                    <div key={m.label} style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 6, padding: '5px 10px' }}>
+                                                        <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginBottom: 2 }}>{m.label}</div>
+                                                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-white)' }}>{m.value}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ fontSize: '0.8rem', color: '#EF4444', padding: '6px 0' }}>Failed to generate summary. Please try again.</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Action Form ── */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                             <div className="form-group">
                                 <label className="form-label">Update Status</label>
@@ -278,7 +427,8 @@ export default function GrievanceManagement() {
                                     placeholder="Add a resolution note or update..." style={{ resize: 'none' }} />
                             </div>
                         </div>
-                        <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'flex-end' }}>
+
+                        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
                             <button className="btn-secondary" onClick={() => setEditModal(false)}>Cancel</button>
                             <button className="btn-primary" onClick={handleSave}><MdCheck /> Save Changes</button>
                         </div>
