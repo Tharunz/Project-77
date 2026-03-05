@@ -31,7 +31,10 @@ const seed = async (force = false) => {
             preSevaAlerts: [],
             notifications: [],
             communityPosts: [],
-            chatHistory: []
+            chatHistory: [],
+            sevaNews: [],
+            escrowProjects: [],
+            ghostAuditAlerts: []
         }).write();
     }
 
@@ -640,28 +643,219 @@ const seed = async (force = false) => {
         {
             id: 'POST-001',
             userId: 'USR-CIT-001',
+            authorName: 'Ramesh Kumar',
             title: 'Online petition: Fix water supply in Lucknow East before summer',
-            content: 'Summer is coming and water supply is already unreliable. Sign this petition to demand daily 6-hour supply.',
+            content: 'Summer is coming and water supply is already unreliable. Sign this petition to demand daily 6-hour supply for all wards in Lucknow East.',
             category: 'Water Supply',
             state: 'Uttar Pradesh',
             votes: 1247,
+            voters: ['USR-CIT-001'],
             isPetition: true,
             petitionCount: 4821,
+            signers: ['USR-CIT-001'],
+            targetSignatures: 5000,
+            status: 'active',
             responses: [],
             createdAt: '2026-02-15T00:00:00.000Z'
         },
         {
             id: 'POST-002',
             userId: 'USR-CIT-002',
+            authorName: 'Priya Nair',
             title: 'How I got my PM Kisan payment issue resolved in 3 days',
             content: 'Sharing my experience so others can benefit. File your complaint with the block-level agricultural officer directly, not the call centre.',
             category: 'Finance',
             state: 'Kerala',
             votes: 892,
+            voters: ['USR-CIT-002'],
             isPetition: false,
             petitionCount: 0,
-            responses: [{ userId: 'USR-CIT-003', content: 'Thank you for sharing!', createdAt: '2026-02-16T00:00:00.000Z' }],
+            signers: [],
+            responses: [{ id: 'RESP-001', userId: 'USR-CIT-003', authorName: 'Suresh Patel', content: 'Thank you for sharing! This worked for me too.', createdAt: '2026-02-16T00:00:00.000Z' }],
             createdAt: '2026-02-14T00:00:00.000Z'
+        },
+        {
+            id: 'PET-001',
+            userId: 'USR-CIT-003',
+            authorName: 'Suresh Patel',
+            title: 'Demand: Open a PHC in Ahmedabad East — 50,000 residents have no primary healthcare',
+            content: 'Ward 14 of Ahmedabad East has a population of 50,000 but no Primary Health Centre within 10km. People are paying private hospital prices for basic healthcare. We demand the government open a PHC here immediately.',
+            category: 'Healthcare',
+            state: 'Gujarat',
+            votes: 512,
+            voters: ['USR-CIT-003'],
+            isPetition: true,
+            petitionCount: 3412,
+            signers: ['USR-CIT-003'],
+            targetSignatures: 5000,
+            status: 'active',
+            responses: [],
+            createdAt: '2026-02-20T00:00:00.000Z'
+        },
+        {
+            id: 'PET-002',
+            userId: 'USR-CIT-002',
+            authorName: 'Priya Nair',
+            title: 'Petition: Restore KSRTC bus routes to Wayanad tribal hamlets',
+            content: 'KSRTC discontinued routes to 12 tribal hamlets in Wayanad in January 2026, citing low occupancy. These communities have no other transport. Children cannot reach school, patients cannot reach hospitals. We demand immediate restoration.',
+            category: 'Transport',
+            state: 'Kerala',
+            votes: 2109,
+            voters: ['USR-CIT-002'],
+            isPetition: true,
+            petitionCount: 8200,
+            signers: ['USR-CIT-002'],
+            targetSignatures: 10000,
+            status: 'active',
+            responses: [],
+            createdAt: '2026-02-10T00:00:00.000Z'
+        },
+        {
+            id: 'POST-003',
+            userId: 'USR-CIT-001',
+            authorName: 'Ramesh Kumar',
+            title: 'Tip: How to track your MGNREGS wage payment status online',
+            content: 'Step 1: Go to nrega.nic.in. Step 2: Select your state. Step 3: Enter your Job Card number. Step 4: Click "Payment Transaction Details". Works without any login. Hope this helps fellow workers.',
+            category: 'Employment',
+            state: 'Uttar Pradesh',
+            votes: 345,
+            voters: ['USR-CIT-001'],
+            isPetition: false,
+            petitionCount: 0,
+            signers: [],
+            responses: [],
+            createdAt: '2026-02-25T00:00:00.000Z'
+        }
+    ];
+
+    // ============================================
+    // SEVA NEWS
+    // ============================================
+    const sevaNews = [
+        {
+            id: 'NEWS-001', title: 'PM Kisan Enhanced: ₹8,000/year from April 2026',
+            titleHi: 'पीएम किसान: अप्रैल 2026 से ₹8,000/वर्ष',
+            body: 'The government has announced an increase in PM Kisan Samman Nidhi from ₹6,000 to ₹8,000 per year, effective April 2026. All registered farmers will automatically receive the enhanced amount.',
+            category: 'Agriculture', date: '2026-02-25',
+            tags: ['PM Kisan', 'farmers'], impact: 'high',
+            affectedStates: ['All India'], beneficiaries: '12 Crore Farmers',
+        },
+        {
+            id: 'NEWS-002', title: '500 New Mobile Health Clinics for Remote Villages',
+            titleHi: 'दूरदराज के गांवों के लिए 500 नई मोबाइल स्वास्थ्य क्लीनिक',
+            body: 'Ministry of Health has launched 500 mobile health clinics targeting the most remote 10,000 villages. Each clinic carries essential medicines and diagnostic equipment.',
+            category: 'Healthcare', date: '2026-02-24',
+            tags: ['health', 'rural', 'mobile clinic'], impact: 'high',
+            affectedStates: ['Bihar', 'Jharkhand', 'Odisha', 'Rajasthan', 'UP'], beneficiaries: '4 Crore Rural Citizens',
+        },
+        {
+            id: 'NEWS-003', title: 'MGNREGS Wages Increased to ₹267/day in Uttar Pradesh',
+            titleHi: 'यूपी में मनरेगा मजदूरी ₹267/दिन हुई',
+            body: 'The daily wage under MGNREGS has been revised upward in Uttar Pradesh from ₹220 to ₹267 per day.',
+            category: 'Labour & Employment', date: '2026-02-23',
+            tags: ['MGNREGS', 'wages'], impact: 'medium',
+            affectedStates: ['Uttar Pradesh'], beneficiaries: '2.3 Crore Rural Households',
+        },
+        {
+            id: 'NEWS-004', title: 'National Scholarship Portal Deadline Extended to March 15',
+            titleHi: 'राष्ट्रीय छात्रवृत्ति पोर्टल की समय सीमा 15 मार्च तक बढ़ी',
+            body: 'The National Scholarship Portal deadline for all central scholarships has been extended to March 15, 2026.',
+            category: 'Education', date: '2026-02-22',
+            tags: ['scholarship', 'NSP'], impact: 'medium',
+            affectedStates: ['All India'], beneficiaries: '40 Lakh Students',
+        },
+    ];
+
+    // ============================================
+    // ESCROW PROJECTS
+    // ============================================
+    const escrowProjects = [
+        {
+            id: 'ESC-26001',
+            title: 'Village Road Paving — Varanasi Ward 4',
+            contractor: 'NH Infra Ltd',
+            budget: 1250000,
+            lockedAmount: 1250000,
+            disbursedAmount: 0,
+            status: 'Locked (Awaiting Citizen Verification)',
+            grievanceId: 'GRV-2601001',
+            progress: 100,
+            verificationPhoto: 'https://images.unsplash.com/photo-1596464716127-f2a82984de30?q=80&w=400&auto=format&fit=crop',
+            completionDate: '2026-02-26',
+            citizenVerified: false,
+            rating: 0,
+        },
+        {
+            id: 'ESC-26002',
+            title: 'Water Pipeline Repair — Patna North',
+            contractor: 'AquaSolutions Corp',
+            budget: 450000,
+            lockedAmount: 0,
+            disbursedAmount: 450000,
+            status: 'Disbursed (Verified by Citizens)',
+            grievanceId: 'GRV-2601045',
+            progress: 100,
+            verificationPhoto: 'https://images.unsplash.com/photo-1541810270632-63321033485b?q=80&w=400&auto=format&fit=crop',
+            completionDate: '2026-02-20',
+            citizenVerified: true,
+            rating: 5,
+        },
+        {
+            id: 'ESC-26003',
+            title: 'Primary School Building Extension — Ranchi',
+            contractor: 'BuildWell Cooperatives',
+            budget: 2800000,
+            lockedAmount: 2800000,
+            disbursedAmount: 0,
+            status: 'Work In Progress',
+            grievanceId: 'GRV-2601098',
+            progress: 65,
+            verificationPhoto: null,
+            completionDate: null,
+            citizenVerified: false,
+            rating: 0,
+        }
+    ];
+
+    // ============================================
+    // GHOST AUDIT ALERTS
+    // ============================================
+    const ghostAuditAlerts = [
+        {
+            id: 'AUD-001',
+            grievanceId: 'GRV-2605432',
+            officer: 'Officer Bose',
+            action: 'Ticket Closed (Suspicious)',
+            aiReasoning: 'Officer closed the ticket within 2 hours of assignment without attaching a resolution photo or field notes. Historical average for this category is 48 hours.',
+            consequence: 'Ticket Reopened (Bypassed Officer)',
+            impact: 'Stopped fraudulent closure of road repair request.',
+            timestamp: '2026-02-27 14:20',
+            severity: 'high',
+            verifiedByCitizen: false,
+        },
+        {
+            id: 'AUD-002',
+            grievanceId: 'GRV-2605488',
+            officer: 'Officer Rao',
+            action: 'Marked Resolved',
+            aiReasoning: 'Sentiment analysis of citizen metadata indicates negative sentiment at closure site. GPS coordinates of officer dont match grievance location.',
+            consequence: 'Pending Citizen Verification',
+            impact: 'Ensuring worker presence for water supply maintenance.',
+            timestamp: '2026-02-27 15:45',
+            severity: 'medium',
+            verifiedByCitizen: null,
+        },
+        {
+            id: 'AUD-003',
+            grievanceId: 'GRV-2605512',
+            officer: 'Officer Mehta',
+            action: 'Duplicate Closure Pattern',
+            aiReasoning: 'Pattern matching reveals 5 identical closures with the same copy-pasted resolution text in 1 hour.',
+            consequence: 'Manual Audit Triggered (Escrow Locked)',
+            impact: 'Protected ₹5.4 Lakh in sanitation contract funds.',
+            timestamp: '2026-02-27 11:30',
+            severity: 'critical',
+            verifiedByCitizen: false,
         }
     ];
 
@@ -676,6 +870,9 @@ const seed = async (force = false) => {
     grievances.forEach(g => db_final.get('grievances').push(g).write());
     preSevaAlerts.forEach(a => db_final.get('preSevaAlerts').push(a).write());
     communityPosts.forEach(p => db_final.get('communityPosts').push(p).write());
+    sevaNews.forEach(n => db_final.get('sevaNews').push(n).write());
+    escrowProjects.forEach(ep => db_final.get('escrowProjects').push(ep).write());
+    ghostAuditAlerts.forEach(ga => db_final.get('ghostAuditAlerts').push(ga).write());
 
     console.log('[SEED] ✅ Database seeded successfully!');
     console.log(`[SEED] → ${users.length + officers.length} users (${users.filter(u => u.role === 'admin').length} admin, ${users.filter(u => u.role === 'citizen').length} citizens, ${officers.length} officers)`);

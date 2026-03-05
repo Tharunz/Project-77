@@ -32,13 +32,16 @@ const fileFilter = (req, file, cb) => {
         'image/jpeg', 'image/png', 'image/gif', 'image/webp',
         'application/pdf',
         'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        // Audio types for Audio Grievance feature
+        'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/wav',
+        'audio/mp4', 'audio/x-m4a', 'audio/aac', 'video/webm'
     ];
 
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error(`File type ${file.mimetype} is not allowed. Please upload images or PDF documents.`), false);
+        cb(new Error(`File type ${file.mimetype} is not allowed.`), false);
     }
 };
 

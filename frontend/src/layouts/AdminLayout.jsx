@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LanguagePill, useLanguage } from '../context/LanguageContext';
 import {
     MdDashboard, MdListAlt, MdPsychology, MdMap, MdSchool,
     MdNotifications, MdSecurity, MdAnalytics, MdLogout, MdMenu,
@@ -9,26 +10,27 @@ import {
 import { PROJECT_NAME } from '../config/constants';
 import './AdminLayout.css';
 
-const navItems = [
-    { to: '/admin', icon: <MdDashboard />, label: 'Dashboard', end: true },
-    { to: '/admin/grievances', icon: <MdListAlt />, label: 'Grievances' },
-    { to: '/admin/sentiment', icon: <MdPsychology />, label: 'Sentiment AI' },
-    { to: '/admin/heatmap', icon: <MdMap />, label: 'India Heatmap' },
-    { to: '/admin/schemes', icon: <MdSchool />, label: 'Schemes' },
-    { to: '/admin/notifications', icon: <MdNotifications />, label: 'Notifications' },
-    { to: '/admin/fraud', icon: <MdSecurity />, label: 'Fraud Detection' },
-    { to: '/admin/analytics', icon: <MdAnalytics />, label: 'Analytics' },
-    { to: '/admin/distress', icon: <MdWarning />, label: 'Distress Index' },
-    { to: '/admin/sla', icon: <MdTimer />, label: 'SLA Tracker' },
-    { to: '/admin/preseva', icon: <MdShield />, label: 'PreSeva AI' },
-    { to: '/admin/escrow', icon: <MdAccountBalanceWallet />, label: 'Escrow Ledger' },
-    { to: '/admin/audits', icon: <MdSecurity />, label: 'Ghost Audits' }
-];
-
 export default function AdminLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [sidebarOpen, setSidebarOpen] = useState(true);
+
+    const navItems = [
+        { to: '/admin', icon: <MdDashboard />, label: t('dashboard'), end: true },
+        { to: '/admin/preseva', icon: <MdShield />, label: 'PRESEVA AI', highlight: true },
+        { to: '/admin/grievances', icon: <MdListAlt />, label: t('grievances') },
+        { to: '/admin/sentiment', icon: <MdPsychology />, label: 'Sentiment AI' },
+        { to: '/admin/heatmap', icon: <MdMap />, label: 'India Heatmap' },
+        { to: '/admin/schemes', icon: <MdSchool />, label: t('schemes') },
+        { to: '/admin/notifications', icon: <MdNotifications />, label: 'Notifications' },
+        { to: '/admin/fraud', icon: <MdSecurity />, label: 'Fraud Detection' },
+        { to: '/admin/analytics', icon: <MdAnalytics />, label: 'Analytics' },
+        { to: '/admin/distress', icon: <MdWarning />, label: 'Distress Index' },
+        { to: '/admin/sla', icon: <MdTimer />, label: 'SLA Tracker' },
+        { to: '/admin/escrow', icon: <MdAccountBalanceWallet />, label: 'NYAYKOSH Ledger' },
+        { to: '/admin/audits', icon: <MdSecurity />, label: 'Ghost Audits' }
+    ];
 
     const handleLogout = () => {
         logout();
@@ -41,13 +43,12 @@ export default function AdminLayout() {
             <aside className="admin-sidebar">
                 <div className="sidebar-header" style={{ justifyContent: sidebarOpen ? 'space-between' : 'center', padding: sidebarOpen ? '20px 16px 16px' : '20px 0 16px' }}>
                     {sidebarOpen && (
-                        <div className="sidebar-logo">
+                        <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none' }}>
                             <div className="logo-icon">
                                 <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
                                     <circle cx="20" cy="20" r="20" fill="rgba(255,107,44,0.15)" />
                                     <circle cx="20" cy="20" r="12" stroke="#FF6B2C" strokeWidth="2" fill="none" />
                                     <circle cx="20" cy="20" r="3" fill="#FF6B2C" />
-                                    {/* Chakra spokes */}
                                     {Array.from({ length: 8 }).map((_, i) => (
                                         <line
                                             key={i}
@@ -58,9 +59,9 @@ export default function AdminLayout() {
                                         />
                                     ))}
                                 </svg>
-                                <span className="logo-text">Project<span>-77</span></span>
+                                <span className="logo-text">{PROJECT_NAME}</span>
                             </div>
-                        </div>
+                        </Link>
                     )}
                     <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} style={!sidebarOpen ? { background: 'transparent', border: 'none', color: 'var(--text-white)' } : {}}>
                         <MdMenu style={!sidebarOpen ? { fontSize: '1.6rem' } : {}} />
@@ -106,6 +107,7 @@ export default function AdminLayout() {
                 <header className="admin-topbar">
                     <div className="topbar-title">{PROJECT_NAME} — Integrated Citizen Intelligence Platform</div>
                     <div className="topbar-right">
+                        <LanguagePill />
                         <div className="topbar-status">
                             <span className="status-dot" />
                             <span>Live</span>

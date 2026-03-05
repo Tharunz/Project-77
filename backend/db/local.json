@@ -24,7 +24,14 @@
       "income": 150000,
       "role": "citizen",
       "janShaktiScore": 72,
-      "createdAt": "2026-01-15T08:30:00.000Z"
+      "createdAt": "2026-01-15T08:30:00.000Z",
+      "bookmarkedSchemes": [],
+      "pendingPhone": "1234123412",
+      "pendingOtp": "1234",
+      "otpExpiry": 1772693178299,
+      "phone": "1231231231",
+      "mobileVerified": true,
+      "updatedAt": "2026-03-05T06:40:59.349Z"
     },
     {
       "id": "USR-CIT-002",
@@ -225,9 +232,327 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-01T18:55:26.739Z"
+    },
+    {
+      "id": "USR-BA0D1BB7",
+      "name": "t",
+      "email": "t@gmail.com",
+      "password": "$2a$10$istXGubvqYmtahO4DCbZROMphEp/KxQ322hvPSFat9OPngltdufjG",
+      "state": "Tamil Nadu",
+      "district": null,
+      "age": 35,
+      "income": 150000,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-02T04:02:43.225Z"
+    },
+    {
+      "id": "USR-189352E8",
+      "name": "4",
+      "email": "4@gmail.com",
+      "password": "$2a$10$/TYJzA8sq4JnpJb2/Xnvku1qR2Ik0yeIqc6x40UbOm/IABpNfCwqG",
+      "state": "Jharkhand",
+      "district": null,
+      "age": 45,
+      "income": 150000,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-04T05:45:06.921Z"
+    },
+    {
+      "id": "USR-DBFEF729",
+      "name": "2",
+      "email": "2@gmail.com",
+      "password": "$2a$10$EeUAdwc.P8PgRkJS5CC7HuIBWtTp6dm50d3Y/N0rkz/dgavg3came",
+      "state": "Odisha",
+      "district": null,
+      "age": 123,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-04T19:45:18.129Z"
+    },
+    {
+      "id": "USR-21D4DD4F",
+      "name": "a",
+      "email": "3@gmail.com",
+      "password": "$2a$10$AE9FPfjcrBrrzBwzy74sh.i.cCbiCICohm/4bscY9oSfC8LvVcBH.",
+      "state": "Odisha",
+      "district": null,
+      "age": 123,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-04T21:39:25.524Z",
+      "pendingPhone": "1231231231",
+      "pendingOtp": null,
+      "otpExpiry": null,
+      "phone": "1231231231",
+      "mobileVerified": true,
+      "updatedAt": "2026-03-04T21:42:12.497Z"
+    },
+    {
+      "id": "USR-D2256B3B",
+      "name": "hello",
+      "email": "tn@gmail.com",
+      "password": "$2a$10$pWSDVq9Pmlw58rha/43taerRLyZrKR3M.b/ZHAOZfmhOeB/3AohFK",
+      "state": "Tamil Nadu",
+      "district": null,
+      "age": 14,
+      "income": 124123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T05:04:25.123Z",
+      "pendingPhone": "1234123412",
+      "pendingOtp": null,
+      "otpExpiry": null,
+      "phone": "1234123412",
+      "mobileVerified": true,
+      "updatedAt": "2026-03-05T05:07:05.823Z"
+    },
+    {
+      "id": "USR-D797C965",
+      "name": "test",
+      "email": "test@gmail.com",
+      "password": "$2a$10$os1WR7BkQ1uPjR9b/8JdUuMvWJLFiTxphSyVsYmAI0fnKVxAoLj66",
+      "state": "Nagaland",
+      "district": null,
+      "age": 14,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T07:28:49.479Z"
+    },
+    {
+      "id": "USR-B168BE89",
+      "name": "9",
+      "email": "9@gmail.com",
+      "password": "$2a$10$SV.Pnwf.tUvMYG5QyUsVBui27E939KmUoOiP2jPyTDZUCeaQSEJtq",
+      "state": "West Bengal",
+      "district": null,
+      "age": 1231,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T08:49:06.006Z"
+    },
+    {
+      "id": "USR-3383F677",
+      "name": "b",
+      "email": "j@gmail.com",
+      "password": "$2a$10$nLs6v2d.Ozy4BO/O/Pnp9OtcB1Cvs81neclfhFIvOmwoElgTZ3ATu",
+      "state": "Manipur",
+      "district": null,
+      "age": 123,
+      "income": 123123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T08:53:11.756Z"
     }
   ],
   "grievances": [
+    {
+      "id": "GRV-871473A6",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "test",
+      "description": "[Audio grievance recorded in English] Duration: 2s",
+      "category": "Electricity",
+      "state": "Mizoram",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "doc-1772694836393-813063913.webm",
+          "originalName": "grievance-audio.webm",
+          "mimetype": "audio/webm",
+          "size": 42800,
+          "url": "http://localhost:5000/uploads/doc-1772694836393-813063913.webm"
+        }
+      ],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T07:13:56.396Z",
+      "updatedAt": "2026-03-05T07:15:23.226Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-05T07:15:23.226Z"
+    },
+    {
+      "id": "GRV-C330F324",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "Sudesh is a very long text grievance 101 hello by yes ok bye",
+      "description": "Sudesh is a very long text grievance 101 hello by yes ok bye",
+      "category": "Police & Law",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.508,
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T06:44:31.709Z",
+      "updatedAt": "2026-03-05T06:46:17.934Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-05T06:46:17.934Z"
+    },
+    {
+      "id": "GRV-E459B8D7",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "testetstseteststeet",
+      "description": "sfsdfsdfsdfsdfsdfsfsdfsdfsdfsdfsdf",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-04T23:51:01.577Z",
+      "updatedAt": "2026-03-04T23:51:01.578Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-069EF141",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "sdfsfsfdsdf",
+      "description": "hello this is a test grievance and I guess its working properly Kannada language",
+      "category": "Education",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "status": "Resolved (Pending Verification)",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-04T20:30:20.042Z",
+      "updatedAt": "2026-03-04T22:03:11.868Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-04T21:52:20.132Z"
+    },
+    {
+      "id": "GRV-6ECD1E6B",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "asfasddfa",
+      "description": "sfdasfasfsfsfsfsfsddddddddddddd",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-04T19:42:30.771Z",
+      "updatedAt": "2026-03-04T19:44:17.844Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-04T19:44:17.844Z"
+    },
+    {
+      "id": "GRV-47C7257B",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "kbnbkbk",
+      "description": "[Voice input: मेरे गाँव में पिछले तीन महीने से सड़क टूटी हुई है।]",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-04T05:46:44.298Z",
+      "updatedAt": "2026-03-04T05:47:31.472Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-04T05:47:31.472Z"
+    },
+    {
+      "id": "GRV-F6167A58",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "jbhuguguihhgyugyuguygygugu",
+      "description": "[Voice input: मेरे गाँव में पिछले तीन महीने से सड़क टूटी हुई है।]jjihjkhjihi",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-02T04:20:55.408Z",
+      "updatedAt": "2026-03-02T04:20:55.408Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-0AF74DFC",
+      "userId": "USR-BA0D1BB7",
+      "citizenName": "t",
+      "title": "dfsfafsff",
+      "description": "[Voice input: मेरे गाँव में पिछले तीन महीने से सड़क टूटी हुई है।]",
+      "category": "Roads & Infrastructure",
+      "state": "Tamil Nadu",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-02T04:08:24.420Z",
+      "updatedAt": "2026-03-02T04:08:24.420Z",
+      "resolvedAt": null
+    },
     {
       "id": "GRV-CDF0C668",
       "userId": "USR-072EBC2B",
@@ -351,17 +676,17 @@
       "category": "Finance",
       "state": "Punjab",
       "district": "Lucknow",
-      "status": "Pending",
+      "status": "In Progress",
       "sentiment": "Highly Negative",
       "sentimentScore": 0.05,
-      "priority": "Medium",
+      "priority": "High",
       "assignedOfficer": "OFC-006",
       "documents": [],
       "isDuplicate": true,
       "fraudScore": 0.72,
       "adminNote": null,
       "createdAt": "2026-02-24T00:00:00.000Z",
-      "updatedAt": "2026-02-26T00:00:00.000Z",
+      "updatedAt": "2026-03-04T22:00:52.099Z",
       "resolvedAt": null
     },
     {
@@ -1397,7 +1722,8 @@
       "deadline": null,
       "state": "All India",
       "isActive": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "beneficiaries": 2
     },
     {
       "id": "SCH-003",
@@ -1418,7 +1744,8 @@
       "deadline": "2026-12-31",
       "state": "All India",
       "isActive": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "beneficiaries": 3
     },
     {
       "id": "SCH-004",
@@ -1481,7 +1808,8 @@
       "deadline": null,
       "state": "All India",
       "isActive": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "beneficiaries": 1
     },
     {
       "id": "SCH-007",
@@ -1778,6 +2106,22 @@
       "state": "All India",
       "isActive": true,
       "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "SCH-1772661330087",
+      "name": "test",
+      "category": "",
+      "state": "All India",
+      "benefit": "123123",
+      "eligibility": "123123",
+      "description": "123",
+      "minAge": 18,
+      "maxAge": 65,
+      "maxIncome": "123123",
+      "isActive": false,
+      "beneficiaries": 2,
+      "createdAt": "2026-03-04T21:55:30.087Z",
+      "updatedAt": "2026-03-05T05:10:09.330Z"
     }
   ],
   "officers": [],
@@ -1799,9 +2143,10 @@
       "departmentAlerted": "Water & Sanitation",
       "alertSentAt": "2026-02-28 10:00 AM",
       "description": "AI model predicts 85%+ probability of flood-related grievance surge in next 14 days based on IMD data and historical patterns.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-20T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-20T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:51:55.342Z"
     },
     {
       "id": "PRESEVA-002",
@@ -1820,9 +2165,10 @@
       "departmentAlerted": "Agriculture",
       "alertSentAt": "2026-02-28 11:30 AM",
       "description": "Unusual drought pattern detected. Historical data shows 300% grievance increase in this corridor during similar weather conditions.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-22T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-22T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:51:57.255Z"
     },
     {
       "id": "PRESEVA-003",
@@ -1841,9 +2187,10 @@
       "departmentAlerted": "Healthcare",
       "alertSentAt": "2026-02-28 09:15 AM",
       "description": "Vector disease pattern detected from health complaints. Dengue or malaria outbreak probability high in next 7-10 days.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-24T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-24T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:55:45.626Z"
     },
     {
       "id": "PRESEVA-004",
@@ -1862,9 +2209,10 @@
       "departmentAlerted": "Infrastructure",
       "alertSentAt": "2026-02-28 02:45 PM",
       "description": "Multiple bridge and road complaints in same corridor. Systemic infrastructure failure predicted without intervention.",
-      "status": "Department Notified",
-      "prevented": false,
-      "createdAt": "2026-02-25T00:00:00.000Z"
+      "status": "Action Taken",
+      "prevented": true,
+      "createdAt": "2026-02-25T00:00:00.000Z",
+      "resolvedAt": "2026-03-02T17:55:47.262Z"
     }
   ],
   "notifications": [
@@ -1941,6 +2289,177 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-01T18:56:09.542Z"
+    },
+    {
+      "id": "NOTIF-A914DBC6",
+      "userId": "USR-BA0D1BB7",
+      "grievanceId": "GRV-0AF74DFC",
+      "message": "Your grievance \"dfsfafsff\" has been filed. Tracking ID: GRV-0AF74DFC",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-02T04:08:24.421Z"
+    },
+    {
+      "id": "NOTIF-29DE9CAA",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-F6167A58",
+      "message": "Your grievance \"jbhuguguihhgyugyuguygygugu\" has been filed. Tracking ID: GRV-F6167A58",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-02T04:20:55.409Z"
+    },
+    {
+      "id": "NOTIF-5AB58A63",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-47C7257B",
+      "message": "Your grievance \"kbnbkbk\" has been filed. Tracking ID: GRV-47C7257B",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-04T05:46:44.299Z"
+    },
+    {
+      "id": "NOTIF-B0C3D77C",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-47C7257B",
+      "message": "Your grievance GRV-47C7257B status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T05:47:15.282Z"
+    },
+    {
+      "id": "NOTIF-F6C7D1BB",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-6ECD1E6B",
+      "message": "Your grievance \"asfasddfa\" has been filed. Tracking ID: GRV-6ECD1E6B",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-04T19:42:30.773Z"
+    },
+    {
+      "id": "NOTIF-BF472AD4",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-6ECD1E6B",
+      "message": "Your grievance GRV-6ECD1E6B status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T19:44:01.664Z"
+    },
+    {
+      "id": "NOTIF-250A47F8",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance \"sdfsfsfdsdf\" has been filed. Tracking ID: GRV-069EF141",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-04T20:30:20.043Z"
+    },
+    {
+      "id": "NOTIF-9F56F4A9",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T20:32:02.089Z"
+    },
+    {
+      "id": "NOTIF-E9403C9B",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-046",
+      "message": "Your grievance GRV-046 status updated to: Escalated",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T21:59:28.402Z"
+    },
+    {
+      "id": "NOTIF-C715D1D5",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-046",
+      "message": "Your grievance GRV-046 status updated to: In Progress",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:00:52.100Z"
+    },
+    {
+      "id": "NOTIF-3772AE34",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Escalated",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:01:30.390Z"
+    },
+    {
+      "id": "NOTIF-4DE19FA0",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Escalated",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:01:59.676Z"
+    },
+    {
+      "id": "NOTIF-93405CF2",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:02:06.291Z"
+    },
+    {
+      "id": "NOTIF-C5B4BB5E",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-069EF141",
+      "message": "Your grievance GRV-069EF141 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-04T22:03:11.869Z"
+    },
+    {
+      "id": "NOTIF-5318C55A",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-E459B8D7",
+      "message": "Your grievance \"testetstseteststeet\" has been filed. Tracking ID: GRV-E459B8D7",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-04T23:51:01.579Z"
+    },
+    {
+      "id": "NOTIF-5D69643E",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-C330F324",
+      "message": "Your grievance \"Sudesh is a very long text grievance 101 hello by yes ok bye\" has been filed. Tracking ID: GRV-C330F324",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T06:44:31.710Z"
+    },
+    {
+      "id": "NOTIF-8066CD75",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-C330F324",
+      "message": "Your grievance GRV-C330F324 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-05T06:44:44.078Z"
+    },
+    {
+      "id": "NOTIF-9C1E8FD7",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-871473A6",
+      "message": "Your grievance \"test\" has been filed. Tracking ID: GRV-871473A6",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T07:13:56.397Z"
+    },
+    {
+      "id": "NOTIF-1DBF59A3",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-871473A6",
+      "message": "Your grievance GRV-871473A6 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-05T07:15:12.405Z"
     }
   ],
   "communityPosts": [
@@ -1964,7 +2483,7 @@
       "content": "Sharing my experience so others can benefit. File your complaint with the block-level agricultural officer directly, not the call centre.",
       "category": "Finance",
       "state": "Kerala",
-      "votes": 892,
+      "votes": 894,
       "isPetition": false,
       "petitionCount": 0,
       "responses": [
@@ -1974,8 +2493,307 @@
           "createdAt": "2026-02-16T00:00:00.000Z"
         }
       ],
-      "createdAt": "2026-02-14T00:00:00.000Z"
+      "createdAt": "2026-02-14T00:00:00.000Z",
+      "voters": [
+        "USR-189352E8",
+        "USR-DBFEF729"
+      ]
+    },
+    {
+      "id": "POST-65C95426",
+      "userId": "USR-CIT-001",
+      "authorName": "Ramesh Kumar",
+      "title": "hello",
+      "content": "testalslslfslfdl",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "votes": 2,
+      "voters": [
+        "USR-DBFEF729",
+        "USR-CIT-001"
+      ],
+      "isPetition": false,
+      "responses": [],
+      "createdAt": "2026-03-04T05:49:10.497Z"
+    },
+    {
+      "id": "POST-381AC54C",
+      "userId": "USR-CIT-001",
+      "authorName": "Ramesh Kumar",
+      "title": "55555555555",
+      "content": "5555555555555555555555",
+      "category": "Infrastructure",
+      "state": "Uttar Pradesh",
+      "votes": 2,
+      "voters": [
+        "USR-CIT-001",
+        "USR-DBFEF729"
+      ],
+      "isPetition": false,
+      "responses": [],
+      "createdAt": "2026-03-04T19:45:04.269Z"
     }
   ],
-  "chatHistory": []
+  "chatHistory": [],
+  "sevaNews": [
+    {
+      "id": "NEWS-001",
+      "title": "PM Kisan Enhanced: ₹8,000/year from April 2026",
+      "titleHi": "पीएम किसान: अप्रैल 2026 से ₹8,000/वर्ष",
+      "body": "The government has announced an increase in PM Kisan Samman Nidhi from ₹6,000 to ₹8,000 per year, effective April 2026. All registered farmers will automatically receive the enhanced amount.",
+      "category": "Agriculture",
+      "date": "2026-02-25",
+      "tags": [
+        "PM Kisan",
+        "farmers"
+      ],
+      "impact": "high",
+      "affectedStates": [
+        "All India"
+      ],
+      "beneficiaries": "12 Crore Farmers"
+    },
+    {
+      "id": "NEWS-002",
+      "title": "500 New Mobile Health Clinics for Remote Villages",
+      "titleHi": "दूरदराज के गांवों के लिए 500 नई मोबाइल स्वास्थ्य क्लीनिक",
+      "body": "Ministry of Health has launched 500 mobile health clinics targeting the most remote 10,000 villages. Each clinic carries essential medicines and diagnostic equipment.",
+      "category": "Healthcare",
+      "date": "2026-02-24",
+      "tags": [
+        "health",
+        "rural",
+        "mobile clinic"
+      ],
+      "impact": "high",
+      "affectedStates": [
+        "Bihar",
+        "Jharkhand",
+        "Odisha",
+        "Rajasthan",
+        "UP"
+      ],
+      "beneficiaries": "4 Crore Rural Citizens"
+    },
+    {
+      "id": "NEWS-003",
+      "title": "MGNREGS Wages Increased to ₹267/day in Uttar Pradesh",
+      "titleHi": "यूपी में मनरेगा मजदूरी ₹267/दिन हुई",
+      "body": "The daily wage under MGNREGS has been revised upward in Uttar Pradesh from ₹220 to ₹267 per day.",
+      "category": "Labour & Employment",
+      "date": "2026-02-23",
+      "tags": [
+        "MGNREGS",
+        "wages"
+      ],
+      "impact": "medium",
+      "affectedStates": [
+        "Uttar Pradesh"
+      ],
+      "beneficiaries": "2.3 Crore Rural Households"
+    },
+    {
+      "id": "NEWS-004",
+      "title": "National Scholarship Portal Deadline Extended to March 15",
+      "titleHi": "राष्ट्रीय छात्रवृत्ति पोर्टल की समय सीमा 15 मार्च तक बढ़ी",
+      "body": "The National Scholarship Portal deadline for all central scholarships has been extended to March 15, 2026.",
+      "category": "Education",
+      "date": "2026-02-22",
+      "tags": [
+        "scholarship",
+        "NSP"
+      ],
+      "impact": "medium",
+      "affectedStates": [
+        "All India"
+      ],
+      "beneficiaries": "40 Lakh Students"
+    }
+  ],
+  "escrowProjects": [
+    {
+      "id": "ESC-26001",
+      "title": "Village Road Paving — Varanasi Ward 4",
+      "contractor": "NH Infra Ltd",
+      "budget": 1250000,
+      "lockedAmount": 1250000,
+      "disbursedAmount": 0,
+      "status": "Locked (Awaiting Citizen Verification)",
+      "grievanceId": "GRV-2601001",
+      "progress": 100,
+      "verificationPhoto": "https://images.unsplash.com/photo-1596464716127-f2a82984de30?q=80&w=400&auto=format&fit=crop",
+      "completionDate": "2026-02-26",
+      "citizenVerified": false,
+      "rating": 0
+    },
+    {
+      "id": "ESC-26002",
+      "title": "Water Pipeline Repair — Patna North",
+      "contractor": "AquaSolutions Corp",
+      "budget": 450000,
+      "lockedAmount": 0,
+      "disbursedAmount": 450000,
+      "status": "Disbursed (Verified by Citizens)",
+      "grievanceId": "GRV-2601045",
+      "progress": 100,
+      "verificationPhoto": "https://images.unsplash.com/photo-1541810270632-63321033485b?q=80&w=400&auto=format&fit=crop",
+      "completionDate": "2026-02-20",
+      "citizenVerified": true,
+      "rating": 5
+    },
+    {
+      "id": "ESC-26003",
+      "title": "Primary School Building Extension — Ranchi",
+      "contractor": "BuildWell Cooperatives",
+      "budget": 2800000,
+      "lockedAmount": 2800000,
+      "disbursedAmount": 0,
+      "status": "Work In Progress",
+      "grievanceId": "GRV-2601098",
+      "progress": 65,
+      "verificationPhoto": null,
+      "completionDate": null,
+      "citizenVerified": false,
+      "rating": 0
+    }
+  ],
+  "ghostAuditAlerts": [
+    {
+      "id": "AUD-001",
+      "grievanceId": "GRV-2605432",
+      "officer": "Officer Bose",
+      "action": "Ticket Closed (Suspicious)",
+      "aiReasoning": "Officer closed the ticket within 2 hours of assignment without attaching a resolution photo or field notes. Historical average for this category is 48 hours.",
+      "consequence": "Ticket Reopened (Bypassed Officer)",
+      "impact": "Stopped fraudulent closure of road repair request.",
+      "timestamp": "2026-02-27 14:20",
+      "severity": "high",
+      "verifiedByCitizen": false
+    },
+    {
+      "id": "AUD-002",
+      "grievanceId": "GRV-2605488",
+      "officer": "Officer Rao",
+      "action": "Marked Resolved",
+      "aiReasoning": "Sentiment analysis of citizen metadata indicates negative sentiment at closure site. GPS coordinates of officer dont match grievance location.",
+      "consequence": "Pending Citizen Verification",
+      "impact": "Ensuring worker presence for water supply maintenance.",
+      "timestamp": "2026-02-27 15:45",
+      "severity": "medium",
+      "verifiedByCitizen": null
+    },
+    {
+      "id": "AUD-003",
+      "grievanceId": "GRV-2605512",
+      "officer": "Officer Mehta",
+      "action": "Duplicate Closure Pattern",
+      "aiReasoning": "Pattern matching reveals 5 identical closures with the same copy-pasted resolution text in 1 hour.",
+      "consequence": "Manual Audit Triggered (Escrow Locked)",
+      "impact": "Protected ₹5.4 Lakh in sanitation contract funds.",
+      "timestamp": "2026-02-27 11:30",
+      "severity": "critical",
+      "verifiedByCitizen": false
+    }
+  ],
+  "schemeApplications": [
+    {
+      "id": "APP-1772660857596",
+      "schemeId": "SCH-002",
+      "schemeName": "Ayushman Bharat PM-JAY",
+      "userId": "USR-21D4DD4F",
+      "userName": "a",
+      "additionalInfo": "test",
+      "documents": [
+        "Residence Proof",
+        "Income Certificate",
+        "Aadhaar Card",
+        "Bank Account Details",
+        "Passport Photo"
+      ],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T21:47:37.596Z"
+    },
+    {
+      "id": "APP-1772660901603",
+      "schemeId": "SCH-002",
+      "schemeName": "Ayushman Bharat PM-JAY",
+      "userId": "USR-21D4DD4F",
+      "userName": "a",
+      "additionalInfo": "",
+      "documents": [
+        "Passport Photo"
+      ],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T21:48:21.603Z"
+    },
+    {
+      "id": "APP-1772661390433",
+      "schemeId": "SCH-1772661330087",
+      "schemeName": "test",
+      "userId": "USR-CIT-001",
+      "userName": "Ramesh Kumar",
+      "additionalInfo": "",
+      "documents": [
+        "Passport Photo"
+      ],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T21:56:30.433Z"
+    },
+    {
+      "id": "APP-1772668361981",
+      "schemeId": "SCH-003",
+      "schemeName": "PM Awas Yojana (Urban)",
+      "userId": "USR-CIT-001",
+      "userName": "Ramesh Kumar",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T23:52:41.981Z"
+    },
+    {
+      "id": "APP-1772668372983",
+      "schemeId": "SCH-003",
+      "schemeName": "PM Awas Yojana (Urban)",
+      "userId": "USR-CIT-001",
+      "userName": "Ramesh Kumar",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-04T23:52:52.983Z"
+    },
+    {
+      "id": "APP-1772687098119",
+      "schemeId": "SCH-1772661330087",
+      "schemeName": "test",
+      "userId": "USR-D2256B3B",
+      "userName": "hello",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-05T05:04:58.119Z"
+    },
+    {
+      "id": "APP-1772692535358",
+      "schemeId": "SCH-003",
+      "schemeName": "PM Awas Yojana (Urban)",
+      "userId": "USR-CIT-001",
+      "userName": "Ramesh Kumar",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-05T06:35:35.358Z"
+    },
+    {
+      "id": "APP-1772696257460",
+      "schemeId": "SCH-006",
+      "schemeName": "Pradhan Mantri Jan Dhan Yojana",
+      "userId": "USR-D797C965",
+      "userName": "test",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-05T07:37:37.460Z"
+    }
+  ],
+  "petitions": []
 }

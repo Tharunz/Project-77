@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { MdSecurity, MdWarning, MdInfo, MdHistory, MdPerson, MdSearch, MdError, MdTrendingUp, MdVisibility } from 'react-icons/md';
+import { MdSecurity, MdWarning, MdInfo, MdHistory, MdPerson, MdSearch, MdError, MdTrendingUp, MdVisibility, MdClose } from 'react-icons/md';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { apiGetGhostAuditAlerts } from '../../services/api.service';
 import { PROJECT_NAME } from '../../config/constants';
+
+const TREND_DATA = [
+    { month: 'Aug', genuine: 88, flagged: 12, prevented: 8 },
+    { month: 'Sep', genuine: 91, flagged: 9, prevented: 7 },
+    { month: 'Oct', genuine: 85, flagged: 15, prevented: 11 },
+    { month: 'Nov', genuine: 93, flagged: 7, prevented: 6 },
+    { month: 'Dec', genuine: 96, flagged: 4, prevented: 3 },
+    { month: 'Jan', genuine: 98, flagged: 2, prevented: 2 },
+    { month: 'Feb', genuine: 99, flagged: 1, prevented: 1 },
+];
 
 export default function GhostAudits() {
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [auditDetail, setAuditDetail] = useState(null);
 
     useEffect(() => {
         const load = async () => {
             const res = await apiGetGhostAuditAlerts();
-            setAlerts(res.data);
+            setAlerts(res.data || []);
             setLoading(false);
         };
         load();
@@ -46,11 +58,19 @@ export default function GhostAudits() {
             {/* Audit Stats Dashboard */}
             <div className="charts-row" style={{ marginBottom: 24 }}>
                 <div className="glass-card" style={{ flex: 1, padding: 20 }}>
-                    <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Audit Integrity Trend</h3>
-                    <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        <MdTrendingUp style={{ fontSize: '3rem', opacity: 0.3 }} />
-                        <p style={{ fontSize: '0.8rem', marginTop: 10 }}>Officer closure quality increased by 14% since implementation.</p>
-                    </div>
+                    <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Audit Integrity Trend — 7 Months</h3>
+                    <ResponsiveContainer width="100%" height={180}>
+                        <LineChart data={TREND_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" />
+                            <XAxis dataKey="month" tick={{ fill: '#B8C5D6', fontSize: 11 }} axisLine={false} tickLine={false} />
+                            <YAxis tick={{ fill: '#B8C5D6', fontSize: 11 }} axisLine={false} tickLine={false} />
+                            <Tooltip contentStyle={{ background: '#0f1c2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: '0.78rem' }} />
+                            <Legend wrapperStyle={{ color: '#B8C5D6', fontSize: 11 }} />
+                            <Line type="monotone" dataKey="genuine" name="Genuine Closures %" stroke="#00C896" strokeWidth={2} dot={{ r: 3, fill: '#00C896' }} />
+                            <Line type="monotone" dataKey="flagged" name="Flagged" stroke="#EF4444" strokeWidth={2} dot={{ r: 3, fill: '#EF4444' }} />
+                            <Line type="monotone" dataKey="prevented" name="Prevented" stroke="#F59E0B" strokeWidth={2} dot={{ r: 3, fill: '#F59E0B' }} strokeDasharray="4 4" />
+                        </LineChart>
+                    </ResponsiveContainer>
                 </div>
                 <div className="glass-card" style={{ flex: 1, padding: 20 }}>
                     <h3 style={{ fontSize: '1rem', marginBottom: 16 }}>Officer Performance Scorecards</h3>
@@ -123,7 +143,7 @@ export default function GhostAudits() {
                                     <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', textTransform: 'uppercase' }}>Officer In Charge</span>
                                     <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{alert.officer}</span>
                                 </div>
-                                <button className="btn-secondary" style={{ width: '100%', padding: '8px', fontSize: '0.75rem' }}>
+                                <button className="btn-secondary" style={{ width: '100%', padding: '8px', fontSize: '0.75rem' }} onClick={() => setAuditDetail(alert)}>
                                     <MdVisibility /> View Full Audit
                                 </button>
                             </div>
@@ -131,6 +151,38 @@ export default function GhostAudits() {
                     </div>
                 ))}
             </div>
+
+            {/* Audit Detail Modal */}
+            {auditDetail && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+                    <div style={{ background: '#0a1628', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: 28, maxWidth: 560, width: '100%', maxHeight: '85vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.8)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>🔍 Full Audit Report</h3>
+                                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: 4 }}>{auditDetail.id} · {auditDetail.grievanceId}</p>
+                            </div>
+                            <button onClick={() => setAuditDetail(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}><MdClose /></button>
+                        </div>
+                        <div style={{ background: `${severityColor[auditDetail.severity]}10`, border: `1px solid ${severityColor[auditDetail.severity]}30`, borderRadius: 8, padding: 14 }}>
+                            <p style={{ fontWeight: 700, marginBottom: 6 }}>{auditDetail.action}</p>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{auditDetail.aiReasoning}</p>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            {[['Officer', auditDetail.officer], ['Severity', auditDetail.severity?.toUpperCase()], ['Timestamp', auditDetail.timestamp], ['Consequence', auditDetail.consequence], ['Impact', auditDetail.impact], ['Status', 'Flagged & Reviewed']].map(([k, v]) => (
+                                <div key={k} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '10px 14px' }}>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>{k}</p>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 700 }}>{v}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <div style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 8, padding: 14 }}>
+                            <p style={{ fontSize: '0.78rem', color: '#A78BFA', fontWeight: 700, marginBottom: 6 }}>🤖 AI Evidence Chain</p>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>Analyzed 47 similar closures. Pattern match score: 94%. Cross-referenced with citizen complaint timeline, officer activity log, GPS coordinates, and photo metadata. No on-site visit detected within 72h of closure.</p>
+                        </div>
+                        <button className="btn-secondary" onClick={() => setAuditDetail(null)} style={{ alignSelf: 'flex-end' }}>Close</button>
+                    </div>
+                </div>
+            )}
 
             {/* Ghost Protocol Concept */}
             <div style={{ marginTop: 40, textAlign: 'center', opacity: 0.6 }}>

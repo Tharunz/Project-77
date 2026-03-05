@@ -1,1 +1,1 @@
-export const PROJECT_NAME = 'Project-77';
+export const PROJECT_NAME = 'Project NCIE';

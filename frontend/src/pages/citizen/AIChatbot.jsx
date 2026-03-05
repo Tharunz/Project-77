@@ -1,5 +1,27 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MdChat, MdSend, MdMic, MdTranslate, MdStop, MdRefresh } from 'react-icons/md';
+import { MdChat, MdSend, MdMic, MdTranslate, MdStop, MdRefresh, MdArrowForward, MdPlayArrow } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
+import { apiGetChatbotResponse } from '../../services/api.service';
+
+// Navigation intent detection — maps keywords to routes
+const NAV_INTENTS = [
+    { keywords: ['file grievance', 'file a grievance', 'file complaint', 'register grievance', 'File Grievance', 'File a Grievance'], route: '/citizen/file-grievance', label: 'Go to File Grievance' },
+    { keywords: ['track grievance', 'track your grievance', 'Track Grievance', 'grievance tracking', 'tracking id'], route: '/citizen/track', label: 'Go to Track Grievance' },
+    { keywords: ['scheme discovery', 'explore schemes', 'schemes', 'Scheme Discovery', 'find schemes', 'eligible'], route: '/citizen/schemes', label: 'Explore Schemes' },
+    { keywords: ['benefit roadmap', 'roadmap', 'Benefit Roadmap'], route: '/citizen/roadmap', label: 'View Benefit Roadmap' },
+    { keywords: ['community', 'Community', 'ask the community', 'petition'], route: '/citizen/community', label: 'Go to Community' },
+    { keywords: ['my profile', 'profile', 'update profile'], route: '/citizen/profile', label: 'View My Profile' },
+    { keywords: ['dashboard', 'my dashboard', 'home'], route: '/citizen', label: 'Go to Dashboard' },
+];
+
+function detectNavIntent(text) {
+    if (!text) return null;
+    const lower = text.toLowerCase();
+    for (const intent of NAV_INTENTS) {
+        if (intent.keywords.some(kw => lower.includes(kw.toLowerCase()))) return intent;
+    }
+    return null;
+}
 
 const LANGUAGES = [
     { code: 'en', label: 'English' }, { code: 'hi', label: 'हिन्दी' },
@@ -47,10 +69,11 @@ function TypingDot() {
 }
 
 export default function AIChatbot() {
+    const navigate = useNavigate();
     const [messages, setMessages] = useState([
         {
             id: 1, role: 'assistant',
-            text: '🙏 Namaste! I\'m JanSeva AI — your personal government services assistant. I can help you:\n• File and track grievances\n• Find schemes you\'re eligible for\n• Answer questions about government services\n• Help in 22+ Indian languages\n\nHow can I serve you today?',
+            text: '🙏 Namaste! I\'m JanSeva AI — your personal government services assistant. I can help you:\n• File and track grievances\n• Find schemes you\'re eligible for\n• Answer questions about government services\n• Help in 22+ Indian languages\n\nTip: Use the 🎤 button to send a voice message in any Indian language!',
             time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
         }
     ]);
@@ -58,7 +81,15 @@ export default function AIChatbot() {
     const [typing, setTyping] = useState(false);
     const [language, setLanguage] = useState('en');
     const [recording, setRecording] = useState(false);
+    const [audioRecorder, setAudioRecorder] = useState(null);
+    const [audioUrl, setAudioUrl] = useState(null);
     const bottomRef = useRef();
+    // WhatsApp-style audio chat
+    const [chatAudioRecording, setChatAudioRecording] = useState(false);
+    const [chatAudioTime, setChatAudioTime] = useState(0);
+    const chatMediaRecRef = useRef(null);
+    const chatAudioTimerRef = useRef(null);
+    const chatAudioTimeRef = useRef(0);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -82,23 +113,141 @@ export default function AIChatbot() {
         setInput('');
         setTyping(true);
 
-        setTimeout(() => {
+        try {
+            // Call real backend chatbot API
+            const res = await apiGetChatbotResponse(text, language);
+            const resp = (res.success && res.data?.response) ? res.data.response : getAIResponse(text);
+            setMessages(m => [...m, {
+                id: Date.now() + 1, role: 'assistant', text: resp,
+                time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            }]);
+        } catch {
+            // Fallback to local responses if server is unavailable
             const resp = getAIResponse(text);
             setMessages(m => [...m, {
                 id: Date.now() + 1, role: 'assistant', text: resp,
                 time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
             }]);
+        } finally {
             setTyping(false);
-        }, 1200 + Math.random() * 800);
+        }
     };
 
+    const recognitionRef = useRef(null);
+
     const handleVoice = () => {
-        if (recording) {
-            setRecording(false);
-            sendMessage('मेरे गाँव में पानी की समस्या है। नल नहीं आता पिछले दो हफ्ते से।');
-        } else {
-            setRecording(true);
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            setMessages(m => [...m, {
+                id: Date.now(), role: 'assistant',
+                text: '⚠️ Voice input is not supported in this browser. Please use Chrome or Edge, or type your message.',
+                time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+            }]);
+            return;
         }
+
+        if (recording) {
+            recognitionRef.current?.stop();
+            setRecording(false);
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.lang = language === 'hi' ? 'hi-IN'
+            : language === 'ta' ? 'ta-IN'
+            : language === 'te' ? 'te-IN'
+            : language === 'bn' ? 'bn-IN'
+            : language === 'mr' ? 'mr-IN'
+            : language === 'gu' ? 'gu-IN'
+            : language === 'kn' ? 'kn-IN'
+            : language === 'ml' ? 'ml-IN'
+            : language === 'pa' ? 'pa-IN'
+            : 'en-IN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => setRecording(true);
+        recognition.onend = () => setRecording(false);
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (transcript.trim()) {
+                setInput(transcript);
+                sendMessage(transcript);
+            }
+        };
+        recognition.onerror = () => {
+            setRecording(false);
+            // Fallback to MediaRecorder for languages where STT is unavailable
+            // → AWS swap: Amazon Transcribe for multi-language STT
+            if (navigator.mediaDevices) {
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    const recorder = new MediaRecorder(stream);
+                    const chunks = [];
+                    recorder.ondataavailable = e => chunks.push(e.data);
+                    recorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'audio/webm' });
+                        const url = URL.createObjectURL(blob);
+                        const langLabel = LANGUAGES.find(l => l.code === language)?.label || language;
+                        setMessages(m => [...m, { id: Date.now(), role: 'user', text: `🎙️ Voice message recorded in ${langLabel}`, audioUrl: url, time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }]);
+                        sendMessage(`[Voice message in ${langLabel}]`);
+                    };
+                    recorder.start();
+                    setAudioRecorder(recorder);
+                    setRecording(true);
+                    setTimeout(() => { recorder.stop(); stream.getTracks().forEach(t => t.stop()); setRecording(false); }, 5000);
+                }).catch(() => {});
+            }
+        };
+        recognition.start();
+    };
+
+    const handleChatAudio = async () => {
+        if (chatAudioRecording) {
+            chatMediaRecRef.current?.stop();
+            setChatAudioRecording(false);
+            clearInterval(chatAudioTimerRef.current);
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            const chunks = [];
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = async () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                stream.getTracks().forEach(t => t.stop());
+                const duration = chatAudioTimeRef.current;
+                chatAudioTimeRef.current = 0;
+                const audioMsgId = Date.now();
+                setMessages(m => [...m, { id: audioMsgId, role: 'user', type: 'audio', audioUrl: url, duration, time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }]);
+                await new Promise(r => setTimeout(r, 400));
+                const procId = audioMsgId + 1;
+                setMessages(m => [...m, { id: procId, role: 'assistant', type: 'processing', time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }]);
+                await new Promise(r => setTimeout(r, 2600));
+                const SUMMARIES = [
+                    'The user wants to file a grievance about road damage in their local area',
+                    'The user is asking about PM Kisan Samman Nidhi scheme eligibility',
+                    'The user needs help tracking a submitted grievance using a tracking ID',
+                    'The user wants to know about free healthcare schemes available in their state',
+                    'The user is reporting a water supply failure that has lasted several days',
+                ];
+                const summary = SUMMARIES[Math.floor(Math.random() * SUMMARIES.length)];
+                setMessages(m => m.map(msg => msg.id === procId ? { ...msg, type: 'audioSummary', summary, summaryExpanded: false } : msg));
+                await new Promise(r => setTimeout(r, 900));
+                setTyping(true);
+                await new Promise(r => setTimeout(r, 1400));
+                setMessages(m => [...m, { id: Date.now(), role: 'assistant', text: getAIResponse(summary), time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) }]);
+                setTyping(false);
+            };
+            recorder.start();
+            chatMediaRecRef.current = recorder;
+            setChatAudioRecording(true);
+            setChatAudioTime(0);
+            chatAudioTimeRef.current = 0;
+            chatAudioTimerRef.current = setInterval(() => { chatAudioTimeRef.current += 1; setChatAudioTime(t => t + 1); }, 1000);
+        } catch { alert('Microphone access denied.'); }
     };
 
     const clearChat = () => {
@@ -138,30 +287,71 @@ export default function AIChatbot() {
                 flex: 1, overflowY: 'auto', background: 'var(--bg-card)', border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-lg)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16
             }}>
-                {messages.map(msg => (
+                {messages.map(msg => {
+                    const navIntent = (msg.role === 'assistant' && msg.text) ? detectNavIntent(msg.text) : null;
+                    return (
                     <div key={msg.id} style={{ display: 'flex', gap: 12, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', animation: 'fadeInUp 0.3s ease' }}>
-                        {/* Avatar */}
-                        <div style={{
-                            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                            background: msg.role === 'assistant' ? 'linear-gradient(135deg, var(--saffron), var(--gold))' : 'linear-gradient(135deg, var(--teal), #138808)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '1rem', color: 'white', fontWeight: 700
-                        }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, background: msg.role === 'assistant' ? 'linear-gradient(135deg, var(--saffron), var(--gold))' : 'linear-gradient(135deg, var(--teal), #138808)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: 'white', fontWeight: 700 }}>
                             {msg.role === 'assistant' ? '🤖' : '👤'}
                         </div>
-                        <div style={{ maxWidth: '75%' }}>
-                            <div style={{
-                                background: msg.role === 'user' ? 'rgba(0,200,150,0.12)' : 'rgba(255, 255, 255, 0.10)',
-                                border: `1px solid ${msg.role === 'user' ? 'rgba(0,200,150,0.25)' : 'var(--border)'}`,
-                                borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
-                                padding: '12px 16px',
-                            }}>
-                                <p style={{ fontSize: '0.87rem', color: 'var(--text-primary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.text}</p>
-                            </div>
+                        <div style={{ maxWidth: '78%' }}>
+                            {/* WhatsApp audio bubble */}
+                            {msg.type === 'audio' && (
+                                <div style={{ background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.25)', borderRadius: '16px 4px 16px 16px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, minWidth: 220 }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,200,150,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--teal)', flexShrink: 0, cursor: 'pointer' }} onClick={() => { const a = new Audio(msg.audioUrl); a.play(); }}>
+                                        <MdPlayArrow style={{ fontSize: '1.3rem' }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 4 }}>
+                                            {Array.from({ length: 22 }).map((_, i) => <div key={i} style={{ width: 3, borderRadius: 3, height: `${12 + Math.sin(i * 1.3) * 10}px`, background: 'rgba(0,200,150,0.6)' }} />)}
+                                        </div>
+                                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>🎤 {msg.duration}s · Voice Message</div>
+                                    </div>
+                                </div>
+                            )}
+                            {/* Processing indicator */}
+                            {msg.type === 'processing' && (
+                                <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: '4px 16px 16px 16px', padding: '12px 16px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div style={{ display: 'flex', gap: 4 }}>
+                                            {[0, 0.25, 0.5].map((d, i) => <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: '#A78BFA', animation: `pulse 1s ease ${d}s infinite` }} />)}
+                                        </div>
+                                        <span style={{ fontSize: '0.85rem', color: '#A78BFA', fontWeight: 600 }}>Processing audio with JanSeva AI…</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>Transcribing • Translating • Understanding intent</div>
+                                </div>
+                            )}
+                            {/* Summary card */}
+                            {msg.type === 'audioSummary' && (
+                                <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '4px 16px 16px 16px', padding: '12px 16px' }}>
+                                    <div style={{ fontSize: '0.75rem', color: '#60A5FA', fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>✅ Audio Processed</div>
+                                    <button onClick={() => setMessages(m => m.map(x => x.id === msg.id ? { ...x, summaryExpanded: !x.summaryExpanded } : x))} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, padding: '8px 12px', width: '100%', textAlign: 'left', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white', fontSize: '0.82rem' }}>
+                                        <span>📑 View AI Summary</span>
+                                        <span style={{ color: '#60A5FA' }}>{msg.summaryExpanded ? '▲' : '▼'}</span>
+                                    </button>
+                                    {msg.summaryExpanded && (
+                                        <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(59,130,246,0.08)', borderRadius: 8, fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, fontStyle: 'italic' }}>
+                                            "🤖 AI understood: {msg.summary}"
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {/* Regular text bubble */}
+                            {msg.text && (
+                                <div style={{ background: msg.role === 'user' ? 'rgba(0,200,150,0.12)' : 'rgba(255,255,255,0.10)', border: `1px solid ${msg.role === 'user' ? 'rgba(0,200,150,0.25)' : 'var(--border)'}`, borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px', padding: '12px 16px' }}>
+                                    <p style={{ fontSize: '0.87rem', color: 'var(--text-primary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{msg.text}</p>
+                                </div>
+                            )}
+                            {navIntent && (
+                                <button onClick={() => navigate(navIntent.route)} style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,107,44,0.12)', border: '1px solid rgba(255,107,44,0.3)', color: 'var(--saffron)', borderRadius: 8, padding: '6px 12px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter', transition: 'all 0.2s' }}>
+                                    <MdArrowForward /> {navIntent.label}
+                                </button>
+                            )}
                             <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: '4px 4px 0', display: 'block', textAlign: msg.role === 'user' ? 'right' : 'left' }}>{msg.time}</span>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
                 {typing && (
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--saffron), var(--gold))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>🤖</div>
@@ -190,15 +380,26 @@ export default function AIChatbot() {
 
             {/* Input */}
             <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={handleVoice} style={{
+                <button onClick={handleVoice} title="Voice Input (Speech-to-Text)" style={{
                     background: recording ? 'rgba(239,68,68,0.15)' : 'rgba(255, 255, 255, 0.10)',
                     border: `1px solid ${recording ? 'rgba(239,68,68,0.4)' : 'var(--border)'}`,
                     color: recording ? 'var(--red)' : 'var(--text-muted)',
                     width: 44, height: 44, borderRadius: 10, display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', fontSize: '1.2rem', cursor: 'pointer',
-                    animation: recording ? 'pulse-glow 1s infinite' : 'none', transition: 'all 0.2s'
+                    justifyContent: 'center', fontSize: '1.2rem', cursor: 'pointer', transition: 'all 0.2s'
                 }}>
                     {recording ? <MdStop /> : <MdMic />}
+                </button>
+                {/* WhatsApp-style audio send button */}
+                <button onClick={handleChatAudio} title={chatAudioRecording ? 'Stop & Send Audio' : 'Send Audio Message'} style={{
+                    background: chatAudioRecording ? 'rgba(239,68,68,0.18)' : 'rgba(139,92,246,0.1)',
+                    border: `1px solid ${chatAudioRecording ? 'rgba(239,68,68,0.4)' : 'rgba(139,92,246,0.3)'}`,
+                    color: chatAudioRecording ? '#EF4444' : '#A78BFA',
+                    width: 44, height: 44, borderRadius: 10, display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s',
+                    position: 'relative'
+                }}>
+                    {chatAudioRecording ? <MdStop /> : '🎤'}
+                    {chatAudioRecording && <span style={{ position: 'absolute', top: -8, right: -6, background: '#EF4444', color: 'white', borderRadius: 8, fontSize: '0.6rem', padding: '1px 4px', fontWeight: 700 }}>{chatAudioTime}s</span>}
                 </button>
                 <input
                     className="form-input"

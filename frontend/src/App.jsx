@@ -1,41 +1,45 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import './index.css';
 import './App.css';
 
-// Layouts
-import AdminLayout from './layouts/AdminLayout';
-import CitizenLayout from './layouts/CitizenLayout';
+// Layouts — lazy loaded so they don't block the homepage
+const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
+const CitizenLayout = lazy(() => import('./layouts/CitizenLayout'));
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import GrievanceManagement from './pages/admin/GrievanceManagement';
-import SentimentPanel from './pages/admin/SentimentPanel';
-import IndiaHeatmap from './pages/admin/IndiaHeatmap';
-import SchemeManagement from './pages/admin/SchemeManagement';
-import NotificationsPanel from './pages/admin/NotificationsPanel';
-import FraudDetection from './pages/admin/FraudDetection';
-import Analytics from './pages/admin/Analytics';
-import DistressIndex from './pages/admin/DistressIndex';
-import SLATracker from './pages/admin/SLATracker';
-import PreSeva from './pages/admin/PreSeva';
-import EscrowManagement from './pages/admin/EscrowManagement';
-import GhostAudits from './pages/admin/GhostAudits';
+// Admin Pages — all lazy
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const GrievanceManagement = lazy(() => import('./pages/admin/GrievanceManagement'));
+const SentimentPanel = lazy(() => import('./pages/admin/SentimentPanel'));
+const IndiaHeatmap = lazy(() => import('./pages/admin/IndiaHeatmap'));
+const SchemeManagement = lazy(() => import('./pages/admin/SchemeManagement'));
+const NotificationsPanel = lazy(() => import('./pages/admin/NotificationsPanel'));
+const FraudDetection = lazy(() => import('./pages/admin/FraudDetection'));
+const Analytics = lazy(() => import('./pages/admin/Analytics'));
+const DistressIndex = lazy(() => import('./pages/admin/DistressIndex'));
+const SLATracker = lazy(() => import('./pages/admin/SLATracker'));
+const PreSeva = lazy(() => import('./pages/admin/PreSeva'));
+const EscrowManagement = lazy(() => import('./pages/admin/EscrowManagement'));
+const GhostAudits = lazy(() => import('./pages/admin/GhostAudits'));
 
-// Citizen Pages
-import HomePage from './pages/citizen/HomePage';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/RegisterPage';
-import CitizenDashboard from './pages/citizen/CitizenDashboard';
-import SchemeDiscovery from './pages/citizen/SchemeDiscovery';
-import GrievanceFiling from './pages/citizen/GrievanceFiling';
-import GrievanceTracking from './pages/citizen/GrievanceTracking';
-import AIChatbot from './pages/citizen/AIChatbot';
-import ProfilePage from './pages/citizen/ProfilePage';
-import BenefitRoadmap from './pages/citizen/BenefitRoadmap';
-import Community from './pages/citizen/Community';
-import SevaNews from './pages/citizen/SevaNews';
+// Citizen Pages — all lazy
+const HomePage = lazy(() => import('./pages/citizen/HomePage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const CitizenDashboard = lazy(() => import('./pages/citizen/CitizenDashboard'));
+const SchemeDiscovery = lazy(() => import('./pages/citizen/SchemeDiscovery'));
+const GrievanceFiling = lazy(() => import('./pages/citizen/GrievanceFiling'));
+const GrievanceTracking = lazy(() => import('./pages/citizen/GrievanceTracking'));
+const AIChatbot = lazy(() => import('./pages/citizen/AIChatbot'));
+const ProfilePage = lazy(() => import('./pages/citizen/ProfilePage'));
+const BenefitRoadmap = lazy(() => import('./pages/citizen/BenefitRoadmap'));
+const Community = lazy(() => import('./pages/citizen/Community'));
+const SevaNews = lazy(() => import('./pages/citizen/SevaNews'));
+const EngagementDashboard = lazy(() => import('./pages/citizen/EngagementDashboard'));
+const MySchemeApplications = lazy(() => import('./pages/citizen/MySchemeApplications'));
+const OnboardingPage = lazy(() => import('./pages/auth/OnboardingPage'));
 
 // Loading Spinner
 const Loader = () => (
@@ -66,6 +70,7 @@ const ProtectedCitizenRoute = ({ children }) => {
 
 function AppRoutes() {
   return (
+    <Suspense fallback={<Loader />}>
     <Routes>
       {/* Public */}
       <Route path="/" element={<HomePage />} />
@@ -100,20 +105,28 @@ function AppRoutes() {
         <Route path="roadmap" element={<BenefitRoadmap />} />
         <Route path="community" element={<Community />} />
         <Route path="news" element={<SevaNews />} />
+        <Route path="engagement" element={<EngagementDashboard />} />
+        <Route path="schemes/applications" element={<MySchemeApplications />} />
       </Route>
+
+      {/* Onboarding — after registration */}
+      <Route path="/onboarding" element={<ProtectedCitizenRoute><OnboardingPage /></ProtectedCitizenRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <BrowserRouter>
+      <LanguageProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </LanguageProvider>
+    </BrowserRouter>
   );
 }

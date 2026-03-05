@@ -1,5 +1,5 @@
 // =============================================
-// API SERVICE LAYER — Project-77
+// API SERVICE LAYER — Project NCIE
 // All API calls go here. Replace mock data with real endpoints.
 // =============================================
 
@@ -17,7 +17,7 @@ import {
 // Simulate async delay (only used for pending mock features now)
 const delay = (ms = 400) => new Promise(res => setTimeout(res, ms));
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 // Helper: Setup auth headers using the user's localStorage JWT token
 const getAuthHeaders = () => {
@@ -38,12 +38,19 @@ const apiFetch = async (endpoint, options = {}) => {
                 ...options.headers
             }
         });
-        const data = await res.json();
-        // Even if status is 4xx or 5xx, the backend always responds with JSON `{ success: false, error: ... }`
-        return data;
+        const text = await res.text();
+        if (!text || !text.trim()) {
+            return { success: false, error: 'Server returned an empty response. Is the backend running?' };
+        }
+        try {
+            return JSON.parse(text);
+        } catch {
+            console.error(`Non-JSON response at ${endpoint}:`, text.slice(0, 120));
+            return { success: false, error: `Server error (${res.status}). Backend may be unreachable.` };
+        }
     } catch (err) {
         console.error(`API Error at ${endpoint}:`, err);
-        return { success: false, error: err.message || 'Network request failed' };
+        return { success: false, error: 'Cannot connect to backend. Please ensure the server is running on port 5000.' };
     }
 };
 
@@ -249,22 +256,127 @@ export const apiUpdateScheme = async (id, data) => {
 };
 
 // ==============================
-//  HEATMAP
+//  HEATMAP (Group 3 — Feature 28)
 // ==============================
 export const apiGetHeatmapData = async () => {
+    const res = await apiFetch('/heatmap');
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+        // Transform array [{state, totalGrievances, resolved, pending}] into
+        // object keyed by state name with `count` field as IndiaHeatmap.jsx expects
+        const byState = {};
+        res.data.forEach(d => {
+            byState[d.state] = {
+                count: d.totalGrievances || 0,
+                resolved: d.resolved || 0,
+                pending: d.pending || 0,
+                critical: d.critical || 0,
+                distressIndex: d.distressIndex || 0,
+                resolutionRate: d.resolutionRate || 0,
+                topCategory: d.topCategory || 'General'
+            };
+        });
+        return { success: true, data: byState };
+    }
+    // Fallback to mock if backend empty
     await delay(400);
     return { success: true, data: mockHeatmapData };
+};
+
+export const apiGetHeatmapSummary = async () => {
+    return await apiFetch('/heatmap/summary');
+};
+
+export const apiGetHeatmapStateDetail = async (stateName) => {
+    return await apiFetch(`/heatmap/state/${encodeURIComponent(stateName)}`);
 };
 
 // ==============================
 //  SENTIMENT
 // ==============================
 export const apiGetCriticalGrievances = async () => {
+    const res = await apiFetch('/grievance/critical');
+    if (res.success && Array.isArray(res.data)) return res;
+    // Fallback to mock if backend returns error (e.g. not admin)
     await delay(400);
     const data = mockGrievances
         .filter(g => g.sentimentScore < 0.3 || g.status === 'Critical')
         .sort((a, b) => a.sentimentScore - b.sentimentScore);
     return { success: true, data };
+};
+
+// ==============================
+//  COMMUNITY (Group 3 — Features 29 & 30)
+// ==============================
+export const apiGetCommunityPosts = async (filters = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    const endpoint = `/community/posts${qs ? '?' + qs : ''}`;
+    const res = await apiFetch(endpoint);
+    if (res.success && Array.isArray(res.data)) return res;
+    // Fallback to mock
+    await delay(400);
+    return { success: true, data: mockCommunityPosts };
+};
+
+export const apiCreateCommunityPost = async (data) => {
+    return await apiFetch('/community/posts', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+};
+
+export const apiUpvotePost = async (id) => {
+    return await apiFetch(`/community/posts/${id}/vote`, { method: 'POST' });
+};
+
+export const apiAddPostResponse = async (id, content) => {
+    return await apiFetch(`/community/posts/${id}/respond`, {
+        method: 'POST',
+        body: JSON.stringify({ content })
+    });
+};
+
+export const apiGetPetitions = async (filters = {}) => {
+    const qs = new URLSearchParams(filters).toString();
+    return await apiFetch(`/community/petitions${qs ? '?' + qs : ''}`);
+};
+
+export const apiCreatePetition = async (data) => {
+    return await apiFetch('/community/petitions', {
+        method: 'POST',
+        body: JSON.stringify(data)
+    });
+};
+
+export const apiSignPetition = async (id) => {
+    return await apiFetch(`/community/petitions/${id}/sign`, { method: 'POST' });
+};
+
+// ==============================
+//  CHATBOT (Group 3 — Feature 21)
+// ==============================
+export const apiGetChatbotResponse = async (message, lang = 'en') => {
+    return await apiFetch('/chatbot/message', {
+        method: 'POST',
+        body: JSON.stringify({ message, lang })
+    });
+};
+
+export const apiClearChatHistory = async (userId) => {
+    return await apiFetch(`/chatbot/history/${userId}`, { method: 'DELETE' });
+};
+
+// ==============================
+//  TRANSLATE (Group 3 — Feature 22)
+// ==============================
+export const apiTranslateText = async (text, targetLang) => {
+    return await apiFetch('/translate', {
+        method: 'POST',
+        body: JSON.stringify({ text, targetLang })
+    });
+};
+
+export const apiGetSupportedLanguages = async () => {
+    return await apiFetch('/translate/languages');
 };
 
 // ==============================
@@ -306,6 +418,10 @@ export const apiTrackGrievance = async (trackingId) => {
 export const apiSearchGrievances = async (query = {}, page = 1, limit = 20) => {
     const qs = new URLSearchParams({ ...query, page, limit }).toString();
     return await apiFetch(`/grievance/search?${qs}`);
+};
+
+export const apiSummarizeGrievance = async (id) => {
+    return await apiFetch(`/grievance/${id}/summarize`, { method: 'POST' });
 };
 
 // ==============================
@@ -368,6 +484,73 @@ export const apiMarkNotificationRead = async (id) => {
 };
 
 // ==============================
+//  PROFILE & DATA PRIVACY (M-06, M-07)
+// ==============================
+export const apiGetProfile = async () => {
+    return await apiFetch('/auth/profile');
+};
+
+export const apiUpdateProfile = async (updates) => {
+    return await apiFetch('/auth/profile', {
+        method: 'PUT',
+        body: JSON.stringify(updates)
+    });
+};
+
+export const apiExportData = async () => {
+    return await apiFetch('/auth/data-export');
+};
+
+export const apiDeleteAccount = async () => {
+    return await apiFetch('/auth/account', { method: 'DELETE' });
+};
+
+// ==============================
+//  GROUP 4 & 5: CITIZEN SPECIFIC APIS
+// ==============================
+export const apiGetCitizenScore = async () => {
+    return await apiFetch('/citizen/score');
+};
+
+export const apiGetCitizenFootprint = async () => {
+    return await apiFetch('/citizen/footprint');
+};
+
+export const apiGetCitizenPredictFuture = async () => {
+    return await apiFetch('/citizen/predict-future');
+};
+
+export const apiGetSevaNews = async () => {
+    return await apiFetch('/citizen/news');
+};
+
+export const apiGetEscrowProjects = async () => {
+    return await apiFetch('/citizen/escrow');
+};
+
+export const apiVerifyEscrow = async (id, rating, photo) => {
+    return await apiFetch(`/citizen/escrow/${id}/verify`, {
+        method: 'POST',
+        body: JSON.stringify({ rating, photo })
+    });
+};
+
+// ==============================
+//  GROUP 4: ADMIN SPECIFIC APIS
+// ==============================
+export const apiGetOfficersWall = async () => {
+    return await apiFetch('/admin/officers/wall');
+};
+
+export const apiGetAdminEscrow = async () => {
+    return await apiFetch('/admin/escrow');
+};
+
+export const apiGetGhostAuditAlerts = async () => {
+    return await apiFetch('/admin/ghost-audits');
+};
+
+// ==============================
 //  NEW FEATURE APIs (Stubs/Others)
 // ==============================
 
@@ -385,16 +568,87 @@ export const apiMarkPrevented = async (id) => {
 // Feature 15: Bharat Distress Index
 export const apiGetDistressIndex = async () => { await delay(400); return { success: true, data: mockDistressIndex }; };
 
-// Feature 16: JanConnect Community
-export const apiGetCommunityPosts = async () => { await delay(400); return { success: true, data: mockCommunityPosts }; };
-export const apiUpvotePost = async (id) => { await delay(200); return { success: true }; };
+// ==============================
+//  AUTH EXTRAS (Password, OTP, KYC)
+// ==============================
+export const apiChangePassword = async (currentPassword, newPassword) => {
+    return await apiFetch('/auth/change-password', {
+        method: 'PUT',
+        body: JSON.stringify({ currentPassword, newPassword })
+    });
+};
 
-// Feature 19: Seva News
-export const apiGetSevaNews = async () => { await delay(400); return { success: true, data: mockSevaNews }; };
+export const apiSendOTP = async (phone) => {
+    return await apiFetch('/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ phone })
+    });
+};
 
-// Feature 27 & 20: Digital Budget Escrow
-export const apiGetEscrowProjects = async () => { await delay(500); return { success: true, data: mockEscrowProjects }; };
-export const apiVerifyEscrow = async (id, rating, photo) => { await delay(800); return { success: true }; };
+export const apiVerifyOTP = async (otp) => {
+    return await apiFetch('/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ otp })
+    });
+};
 
-// Feature 28: AI Ghost Audits
-export const apiGetGhostAuditAlerts = async () => { await delay(400); return { success: true, data: mockGhostAuditAlerts }; };
+// ==============================
+//  SCHEME MANAGEMENT (Admin CRUD extras)
+// ==============================
+export const apiDeleteScheme = async (id) => {
+    return await apiFetch(`/schemes/${id}`, { method: 'DELETE' });
+};
+
+export const apiApplyScheme = async (schemeId, applicationData) => {
+    return await apiFetch(`/schemes/${schemeId}/apply`, {
+        method: 'POST',
+        body: JSON.stringify(applicationData)
+    });
+};
+
+// ==============================
+//  BOOKMARKS
+// ==============================
+export const apiGetBookmarkedSchemes = async () => {
+    return await apiFetch('/schemes/bookmarked');
+};
+
+export const apiBookmarkScheme = async (schemeId) => {
+    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'POST' });
+};
+
+export const apiUnbookmarkScheme = async (schemeId) => {
+    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'DELETE' });
+};
+
+// ==============================
+//  PRESEVA EXTRAS
+// ==============================
+export const apiPresevAssignAlert = async (id, assignData) => {
+    return await apiFetch(`/preseva/alerts/${id}/assign`, {
+        method: 'POST',
+        body: JSON.stringify(assignData)
+    });
+};
+
+export const apiGetPresevaPredictionsByState = async (state) => {
+    return await apiFetch(`/preseva/alerts?state=${encodeURIComponent(state)}`);
+};
+
+// ==============================
+//  SCHEME APPLICATIONS (F11)
+// ==============================
+export const apiGetMySchemeApplications = async () => {
+    const res = await apiFetch('/schemes/my-applications');
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) return res;
+    // Mock fallback — ready for AWS backend swap
+    await delay(300);
+    return {
+        success: true,
+        data: [
+            { id: 'APP-001', schemeId: 'SCH-001', schemeName: 'PM Kisan Samman Nidhi', category: 'Agriculture', submittedAt: '2026-02-10T10:00:00Z', status: 'Approved', additionalInfo: 'Kisan registration number: KR-2024-UP-0182' },
+            { id: 'APP-002', schemeId: 'SCH-002', schemeName: 'Ayushman Bharat PMJAY', category: 'Healthcare', submittedAt: '2026-01-28T14:30:00Z', status: 'Under Review', additionalInfo: '' },
+            { id: 'APP-003', schemeId: 'SCH-003', schemeName: 'PM Ujjwala Yojana', category: 'Energy', submittedAt: '2026-02-18T09:15:00Z', status: 'Submitted', additionalInfo: 'LPG consumer number requested' },
+        ]
+    };
+};

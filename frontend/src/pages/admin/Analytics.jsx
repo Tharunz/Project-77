@@ -31,10 +31,10 @@ export default function Analytics() {
             apiGetStateAnalytics(), apiGetMonthlyTrend(),
             apiGetCategoryBreakdown(), apiGetSentimentTrend()
         ]).then(([s, t, c, st]) => {
-            setStateData(s.data);
-            setTrend(t.data);
-            setCatData(c.data);
-            setSentTrend(st.data);
+            setStateData(s.data || []);
+            setTrend(t.data || []);
+            setCatData(c.data || []);
+            setSentTrend(st.data || []);
             setLoading(false);
         });
     }, []);

@@ -1,37 +1,42 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LanguagePill, useLanguage } from '../context/LanguageContext';
 import {
     MdDashboard, MdSchool, MdEdit, MdTrackChanges,
     MdChat, MdPerson, MdLogout, MdMenu, MdClose, MdChevronRight,
-    MdMap, MdPeople, MdNewspaper
+    MdMap, MdPeople, MdNewspaper, MdBarChart, MdAssignment
 } from 'react-icons/md';
+import { PROJECT_NAME } from '../config/constants';
 import './CitizenLayout.css';
-
-const navItems = [
-    { to: '/citizen', icon: <MdDashboard />, label: 'My Dashboard', end: true },
-    { to: '/citizen/schemes', icon: <MdSchool />, label: 'Explore Schemes' },
-    { to: '/citizen/file-grievance', icon: <MdEdit />, label: 'File Grievance' },
-    { to: '/citizen/track', icon: <MdTrackChanges />, label: 'Track Grievance' },
-    { to: '/citizen/roadmap', icon: <MdMap />, label: 'Benefit Roadmap', badge: 'AI' },
-    { to: '/citizen/chatbot', icon: <MdChat />, label: 'AI Assistant' },
-    { to: '/citizen/community', icon: <MdPeople />, label: 'Community' },
-    { to: '/citizen/news', icon: <MdNewspaper />, label: 'Seva News' },
-    { to: '/citizen/profile', icon: <MdPerson />, label: 'My Profile' },
-];
 
 export default function CitizenLayout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const handleLogout = () => { logout(); navigate('/login'); };
+
+    const navItems = [
+        { to: '/citizen', icon: <MdDashboard />, label: t('dashboard'), end: true },
+        { to: '/citizen/schemes', icon: <MdSchool />, label: t('schemes') },
+        { to: '/citizen/schemes/applications', icon: <MdAssignment />, label: t('myApplications') },
+        { to: '/citizen/file-grievance', icon: <MdEdit />, label: t('fileGrievance') },
+        { to: '/citizen/track', icon: <MdTrackChanges />, label: t('trackGrievance') },
+        { to: '/citizen/roadmap', icon: <MdMap />, label: t('roadmap'), badge: 'AI' },
+        { to: '/citizen/chatbot', icon: <MdChat />, label: t('assistant') },
+        { to: '/citizen/engagement', icon: <MdBarChart />, label: 'CI Score' },
+        { to: '/citizen/community', icon: <MdPeople />, label: t('community') },
+        { to: '/citizen/news', icon: <MdNewspaper />, label: t('news') },
+        { to: '/citizen/profile', icon: <MdPerson />, label: t('profile') },
+    ];
 
     return (
         <div className="citizen-shell">
             {/* Top Nav Bar */}
             <header className="citizen-header">
-                <div className="citizen-logo">
+                <Link to="/" className="citizen-logo" style={{ textDecoration: 'none' }}>
                     <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
                         <circle cx="20" cy="20" r="20" fill="rgba(255,107,44,0.15)" />
                         <circle cx="20" cy="20" r="12" stroke="#FF6B2C" strokeWidth="2" fill="none" />
@@ -41,8 +46,8 @@ export default function CitizenLayout() {
                                 transform={`rotate(${i * 45} 20 20)`} strokeLinecap="round" />
                         ))}
                     </svg>
-                    <span className="citizen-logo-text">Project<span>-77</span></span>
-                </div>
+                    <span className="citizen-logo-text">{PROJECT_NAME}</span>
+                </Link>
 
                 <nav className="citizen-nav-desktop">
                     {navItems.map(item => (
@@ -58,6 +63,7 @@ export default function CitizenLayout() {
                 </nav>
 
                 <div className="citizen-header-right">
+                    <LanguagePill />
                     <div className="citizen-user-badge">
                         <div className="citizen-avatar">{user?.name?.[0] || 'C'}</div>
                         <span className="citizen-name-text">{user?.name?.split(' ')[0] || 'Citizen'}</span>

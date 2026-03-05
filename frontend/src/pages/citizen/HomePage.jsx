@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState, Suspense, lazy, useCallback, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { MdArrowForward, MdShield } from 'react-icons/md';
+import { MdArrowForward, MdShield, MdDashboard, MdPerson } from 'react-icons/md';
+import { useAuth } from '../../context/AuthContext';
 import IntelligenceTerminal from '../../components/IntelligenceTerminal';
 import HowItWorksBriefing from '../../components/HowItWorksBriefing';
 import MobileParticles from '../../components/MobileParticles';
 import QuantumHeroBg from '../../components/QuantumHeroBg';
+import DesktopParticles from '../../components/DesktopParticles';
 import { PROJECT_NAME } from '../../config/constants';
 import './HomePage.css';
 
@@ -68,6 +70,9 @@ const TickerItem = memo(({ text, isNew }) => (
 
 const ItNav = memo(() => {
     const [scrolled, setScrolled] = useState(false);
+    const { user } = useAuth();
+    const isCitizen = user?.role === 'citizen';
+
     useEffect(() => {
         const fn = () => setScrolled(window.scrollY > 32);
         window.addEventListener('scroll', fn, { passive: true });
@@ -76,14 +81,28 @@ const ItNav = memo(() => {
 
     return (
         <nav className={`it-nav ${scrolled ? 'scrolled' : ''}`}>
-            <Link to="/" className="it-logo"><Chakra size={26} /> Project<strong>-77</strong><div className="it-live"><div className="it-live-dot" /> LIVE</div></Link>
+            <Link to="/" className="it-logo"><Chakra size={26} /> Project<strong> NCIE</strong><div className="it-live"><div className="it-live-dot" /> LIVE</div></Link>
             <div className="it-nav-links">
                 <a href="#preseva" className="it-nav-a">PreSeva</a>
                 <a href="#caps" className="it-nav-a">Seva Modules</a>
                 <a href="#how" className="it-nav-a">System Protocol</a>
                 <div className="it-sep" />
-                <Link to="/login" className="it-ghost">Citizen Login</Link>
-                <Link to="/register" className="it-solid">Access Portal <MdArrowForward /></Link>
+                {isCitizen ? (
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(255,107,44,0.1)', borderRadius: 8, border: '1px solid rgba(255,107,44,0.25)', cursor: 'default' }}>
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,var(--saffron),#00C896)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem', color: '#fff', flexShrink: 0 }}>
+                                {user.name?.[0]?.toUpperCase() || 'C'}
+                            </div>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-white)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name?.split(' ')[0]}</span>
+                        </div>
+                        <Link to="/citizen" className="it-solid"><MdDashboard style={{ marginRight: 4 }} /> My Dashboard</Link>
+                    </>
+                ) : (
+                    <>
+                        <Link to="/login" className="it-ghost">Citizen Login</Link>
+                        <Link to="/register" className="it-solid">Access Portal <MdArrowForward /></Link>
+                    </>
+                )}
             </div>
         </nav>
     );
@@ -157,6 +176,7 @@ export default function HomePage() {
             {/* Hero — Split */}
             <section className="it-hero" style={{ position: 'relative' }}>
                 <QuantumHeroBg />
+                <DesktopParticles />
                 <MobileParticles />
                 <div className="it-hero-left" style={{ position: 'relative', zIndex: 10 }}>
                     <div className="it-hero-tag">AI-Powered Citizen Services</div>
@@ -167,8 +187,8 @@ export default function HomePage() {
                     </h1>
                     <div className="hero-cinematic-desc sr ae-levitate" ref={useSR()}>
                         <div className="text-line">
-                            <span className="line-content ae-laser-text" data-text="Project-77 unifies every citizen service, predicts every">
-                                Project-77 unifies <span className="ae-flicker delay-1">every citizen service</span>, predicts every
+                            <span className="line-content ae-laser-text" data-text="Project NCIE unifies every citizen service, predicts every">
+                                Project NCIE unifies <span className="ae-flicker delay-1">every citizen service</span>, predicts every
                             </span>
                         </div>
                         <div className="text-line">
@@ -421,7 +441,7 @@ export default function HomePage() {
             <section className="it-cta">
                 <div className="it-cta-box sr" ref={sr5}>
                     <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 900 }}>
-                        <span style={{ color: 'white' }}>Project-77.</span><br />
+                        <span style={{ color: 'white' }}>Project NCIE.</span><br />
                         <span style={{ color: '#FF6B2C' }}>India's Digital Governance Revolution.</span>
                     </h2>
                     <p>
@@ -441,7 +461,7 @@ export default function HomePage() {
             <footer className="it-footer">
                 <Link to="/" className="it-logo"><Chakra size={16} /> <strong>{PROJECT_NAME}</strong></Link>
                 <div style={{ marginTop: 20 }}>
-                    <p style={{ color: 'white', marginBottom: 4 }}>Project-77 · India's Civic Operating System</p>
+                    <p style={{ color: 'white', marginBottom: 4 }}>Project NCIE · India's Civic Operating System</p>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>A Digital India Initiative · Powered by AWS · Serving 1.4 Billion Citizens</p>
                 </div>
                 <p style={{ marginTop: 20, fontSize: '0.75rem', opacity: 0.5 }}>© 2026 {PROJECT_NAME}. All rights reserved.</p>
