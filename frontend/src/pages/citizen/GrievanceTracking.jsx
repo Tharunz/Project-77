@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MdTrackChanges, MdSearch, MdCheckCircle, MdHourglassEmpty, MdEdit, MdArrowForward, MdPhotoCamera, MdStar, MdStarBorder, MdCloudUpload, MdVerifiedUser, MdClose } from 'react-icons/md';
 import { apiTrackGrievance, apiVerifyResolution, apiGetEscrowProjects, apiVerifyEscrow } from '../../services/api.service';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { apiGetMyGrievances } from '../../services/api.service';
 
 function EscrowVerificationPanel({ grievanceId, onSuccess, showToast }) {
@@ -175,6 +176,7 @@ function StatusTimeline({ timeline }) {
 
 export default function GrievanceTracking() {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [trackingId, setTrackingId] = useState('');
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { MdPerson, MdEdit, MdSave, MdClose, MdLocationOn, MdCake, MdEmail, MdAttachMoney, MdDownload, MdDeleteForever, MdLock, MdPhone, MdVerified, MdBookmark, MdSchool, MdArrowForward, MdShield } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { INDIAN_STATES } from '../../mock/mockData';
@@ -83,8 +84,26 @@ export default function ProfilePage() {
         setSaving(true);
         const res = await apiUpdateProfile({ name: form.name, email: form.email, state: form.state, age: form.age, income: form.income });
         setSaving(false);
-        if (res.success && res.data) login({ ...user, ...res.data });
-        else login({ ...user, ...form });
+        if (res.success && res.data) {
+            login({ ...user, ...res.data });
+        } else {
+            login({ ...user, ...form });
+        }
+        // Re-fetch full profile to sync stats and ensure DB state is reflected
+        apiGetProfile().then(r => {
+            if (r.success && r.data) {
+                login({ ...user, ...r.data });
+                if (r.data.stats) {
+                    const s = r.data.stats;
+                    setProfileStats([
+                        { label: 'Grievances Filed', value: s.totalGrievances ?? 0, color: '#3B82F6' },
+                        { label: 'Resolved', value: s.resolvedGrievances ?? 0, color: '#00C896' },
+                        { label: 'Pending', value: s.pendingGrievances ?? 0, color: '#F59E0B' },
+                        { label: 'Schemes Matched', value: s.schemesMatched ?? 0, color: '#8B5CF6' },
+                    ]);
+                }
+            }
+        });
         setEditMode(false);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
@@ -310,23 +329,30 @@ export default function ProfilePage() {
             </div>
 
             {/* Bookmarked Schemes */}
-            {bookmarks.length > 0 && (
-                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>
-                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Bookmarked Schemes ({bookmarks.length})</h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {bookmarks.map(s => (
-                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: catColors[s.category] || '#6B7280', flexShrink: 0 }} />
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
-                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.category} • {s.state}</p>
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>
+                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Bookmarked Schemes {bookmarks.length > 0 && `(${bookmarks.length})`}</h4>
+                    {bookmarks.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                            <MdBookmark style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
+                            No bookmarked schemes yet.<br />
+                            <Link to="/citizen/schemes" style={{ color: 'var(--saffron)', fontWeight: 600 }}>Browse Schemes →</Link>
+                        </div>
+                    )}
+                    {bookmarks.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {bookmarks.map(s => (
+                                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: catColors[s.category] || '#6B7280', flexShrink: 0 }} />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.category} • {s.state}</p>
+                                    </div>
+                                    <button onClick={() => handleUnbookmark(s.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, fontSize: '1rem' }} title="Remove bookmark">✕</button>
                                 </div>
-                                <button onClick={() => handleUnbookmark(s.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, fontSize: '1rem' }} title="Remove bookmark">✕</button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+                            ))}
+                        </div>
+                    )}
+            </div>
 
             {/* Data & Privacy */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>

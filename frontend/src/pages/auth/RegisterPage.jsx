@@ -78,7 +78,12 @@ export default function RegisterPage() {
 
     useEffect(() => {
         if (step === 4 && registeredUser) {
-            const t = setTimeout(() => { login(registeredUser); navigate('/citizen'); }, 2800);
+            const t = setTimeout(() => {
+                login(registeredUser);
+                // Check if already done onboarding (e.g. re-registration edge case)
+                const done = localStorage.getItem('ncie_onboarding_done');
+                navigate(done ? '/citizen' : '/onboarding');
+            }, 2800);
             return () => clearTimeout(t);
         }
     }, [step, registeredUser]);

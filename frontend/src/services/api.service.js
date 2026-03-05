@@ -420,6 +420,10 @@ export const apiSearchGrievances = async (query = {}, page = 1, limit = 20) => {
     return await apiFetch(`/grievance/search?${qs}`);
 };
 
+export const apiSummarizeGrievance = async (id) => {
+    return await apiFetch(`/grievance/${id}/summarize`, { method: 'POST' });
+};
+
 // ==============================
 //  ADMIN SPECIFICS (Integrated Group 2)
 // ==============================
@@ -642,9 +646,9 @@ export const apiGetMySchemeApplications = async () => {
     return {
         success: true,
         data: [
-            { id: 'SA-001', schemeName: 'PM Kisan Samman Nidhi', category: 'Agriculture', appliedOn: '2026-02-10', status: 'Approved', benefit: '₹6,000/year', color: '#00C896' },
-            { id: 'SA-002', schemeName: 'Ayushman Bharat PMJAY', category: 'Healthcare', appliedOn: '2026-01-28', status: 'Under Review', benefit: '₹5 lakh cover', color: '#3B82F6' },
-            { id: 'SA-003', schemeName: 'PM Ujjwala Yojana', category: 'Energy', appliedOn: '2026-02-18', status: 'Applied', benefit: 'Free LPG connection', color: '#F59E0B' },
+            { id: 'APP-001', schemeId: 'SCH-001', schemeName: 'PM Kisan Samman Nidhi', category: 'Agriculture', submittedAt: '2026-02-10T10:00:00Z', status: 'Approved', additionalInfo: 'Kisan registration number: KR-2024-UP-0182' },
+            { id: 'APP-002', schemeId: 'SCH-002', schemeName: 'Ayushman Bharat PMJAY', category: 'Healthcare', submittedAt: '2026-01-28T14:30:00Z', status: 'Under Review', additionalInfo: '' },
+            { id: 'APP-003', schemeId: 'SCH-003', schemeName: 'PM Ujjwala Yojana', category: 'Energy', submittedAt: '2026-02-18T09:15:00Z', status: 'Submitted', additionalInfo: 'LPG consumer number requested' },
         ]
     };
 };

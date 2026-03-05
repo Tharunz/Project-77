@@ -277,8 +277,8 @@ export default function FraudDetection() {
 
             {/* Flag Investigation Modal */}
             {flagModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,11,24,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 20 }}>
-                    <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 16, padding: 28, maxWidth: 440, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 20 }}>
+                    <div style={{ background: '#0a1628', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 16, padding: 28, maxWidth: 440, width: '100%', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.8)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                                 <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#A78BFA' }}>🚩 Flag for Investigation</h3>

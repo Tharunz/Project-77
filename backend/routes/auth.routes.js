@@ -197,7 +197,7 @@ router.get('/profile', protect, (req, res, next) => {
 // ─── PUT /api/auth/profile ────────────────────────────────────────────────────
 router.put('/profile', protect, (req, res, next) => {
     try {
-        const { name, state, district, age, income, gender } = req.body;
+        const { name, email, state, district, age, income, gender } = req.body;
 
         const db_instance = db.getDb();
         const user = db_instance.get('users').find({ id: req.user.id }).value();
@@ -211,10 +211,19 @@ router.put('/profile', protect, (req, res, next) => {
             });
         }
 
+        // If email is changing, ensure it's not taken by another account
+        if (email && email !== user.email) {
+            const existing = db_instance.get('users').find({ email }).value();
+            if (existing && existing.id !== req.user.id) {
+                return res.status(409).json({ success: false, data: null, message: 'Email already in use by another account.', timestamp: new Date().toISOString() });
+            }
+        }
+
         const parsedAge = age !== undefined && age !== '' ? parseInt(age) : undefined;
         const parsedIncome = income !== undefined && income !== '' ? parseInt(income) : undefined;
         const updates = {
             ...(name && { name: name.trim() }),
+            ...(email && { email: email.trim().toLowerCase() }),
             ...(state && { state }),
             ...(district && { district }),
             ...(parsedAge !== undefined && !isNaN(parsedAge) && { age: parsedAge }),

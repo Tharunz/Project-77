@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose, MdBookmark, MdBookmarkBorder, MdShare, MdSend } from 'react-icons/md';
+import { Link } from 'react-router-dom';
+import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose, MdBookmark, MdBookmarkBorder, MdShare, MdSend, MdTrackChanges } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
-import { apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine, apiBookmarkScheme, apiUnbookmarkScheme, apiGetBookmarkedSchemes, apiApplyScheme } from '../../services/api.service';
+import { useLanguage } from '../../context/LanguageContext';
+import { apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine, apiBookmarkScheme, apiUnbookmarkScheme, apiGetBookmarkedSchemes, apiApplyScheme, apiGetMySchemeApplications } from '../../services/api.service';
 import { INDIAN_STATES } from '../../mock/mockData';
 
 const CATEGORIES = ['Agriculture', 'Healthcare', 'Housing', 'Education', 'Labour & Employment', 'Pension & Social Security', 'Women & Child'];
@@ -14,6 +16,7 @@ const catColors = {
 
 export default function SchemeDiscovery() {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [schemes, setSchemes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -80,6 +83,13 @@ export default function SchemeDiscovery() {
                 const bm = {};
                 res.data.forEach(s => { bm[s.id] = true; });
                 setBookmarks(bm);
+            }
+        });
+        apiGetMySchemeApplications().then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                const applied = {};
+                res.data.forEach(a => { if (a.schemeId) applied[a.schemeId] = true; });
+                setApplyDone(applied);
             }
         });
     }, []);
@@ -234,11 +244,18 @@ export default function SchemeDiscovery() {
                                 <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14, animation: 'fadeIn 0.3s ease' }}>
                                     <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>{s.description}</p>
                                     {applyDone[s.id] ? (
-                                        <div style={{ padding: '10px 14px', background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 8, fontSize: '0.85rem', color: 'var(--teal)', textAlign: 'center' }}>✓ Application Submitted!</div>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                            <div style={{ padding: '10px 14px', background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 8, fontSize: '0.85rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                                                <MdCheck /> Application Submitted
+                                            </div>
+                                            <Link to="/citizen/schemes/applications" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 14px', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 8, fontSize: '0.82rem', color: '#3B82F6', fontWeight: 700, textDecoration: 'none' }}>
+                                                <MdTrackChanges /> Track Application <MdArrowForward style={{ fontSize: '0.85rem' }} />
+                                            </Link>
+                                        </div>
                                     ) : (
                                         <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', fontSize: '0.85rem' }}
                                             onClick={e => { e.stopPropagation(); setApplyModal(s); setApplyForm({ additionalInfo: '', documents: [] }); }}>
-                                            <MdSend /> Apply for this Scheme
+                                            <MdSend /> {t('applyNow')}
                                         </button>
                                     )}
                                 </div>

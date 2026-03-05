@@ -14,6 +14,10 @@ function QuantumHeroBg() {
         if (!canvas || !container) return;
 
         try {
+            // Set pixel dimensions BEFORE transfer — canvas default is 300×150
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
+
             // Transfer control to Offscreen Worker for GPGPU acceleration
             const offscreen = canvas.transferControlToOffscreen();
             const worker = new Worker(new URL('../workers/animationWorker.js', import.meta.url), { type: 'module' });

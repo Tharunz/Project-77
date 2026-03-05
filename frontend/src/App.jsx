@@ -38,6 +38,8 @@ const BenefitRoadmap = lazy(() => import('./pages/citizen/BenefitRoadmap'));
 const Community = lazy(() => import('./pages/citizen/Community'));
 const SevaNews = lazy(() => import('./pages/citizen/SevaNews'));
 const EngagementDashboard = lazy(() => import('./pages/citizen/EngagementDashboard'));
+const MySchemeApplications = lazy(() => import('./pages/citizen/MySchemeApplications'));
+const OnboardingPage = lazy(() => import('./pages/auth/OnboardingPage'));
 
 // Loading Spinner
 const Loader = () => (
@@ -104,7 +106,11 @@ function AppRoutes() {
         <Route path="community" element={<Community />} />
         <Route path="news" element={<SevaNews />} />
         <Route path="engagement" element={<EngagementDashboard />} />
+        <Route path="schemes/applications" element={<MySchemeApplications />} />
       </Route>
+
+      {/* Onboarding — after registration */}
+      <Route path="/onboarding" element={<ProtectedCitizenRoute><OnboardingPage /></ProtectedCitizenRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

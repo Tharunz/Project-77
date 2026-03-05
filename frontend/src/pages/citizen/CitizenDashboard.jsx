@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics, MdShield, MdMap, MdClose, MdBookmark, MdStar } from 'react-icons/md';
 import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail, apiGetMySchemeApplications, apiGetBookmarkedSchemes } from '../../services/api.service';
 
@@ -9,6 +10,7 @@ const STATUS_COLORS = { Pending: '#F59E0B', Resolved: '#00C896', Critical: '#EF4
 
 export default function CitizenDashboard() {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [grievances, setGrievances] = useState([]);
     const [schemes, setSchemes] = useState([]);
     const [roadmap, setRoadmap] = useState(null);
@@ -24,15 +26,24 @@ export default function CitizenDashboard() {
         const load = async () => {
             setLoading(true);
             try {
-                const [g, s, r, gp] = await Promise.all([
+                // Load applications first so we can pass applied schemeIds to benefit gap
+                const [g, s, r, sa, bk] = await Promise.all([
                     apiGetMyGrievances(),
                     apiGetMatchedSchemes(),
                     apiGetBenefitRoadmap(),
-                    apiGetBenefitGap()
+                    apiGetMySchemeApplications(),
+                    apiGetBookmarkedSchemes()
                 ]);
                 setGrievances(g && Array.isArray(g.data) ? g.data : []);
                 setSchemes(s && Array.isArray(s.data) ? s.data : []);
                 setRoadmap(r && r.data ? r.data : null);
+                const appliedApps = (sa.success && Array.isArray(sa.data)) ? sa.data : [];
+                setSchemeApplications(appliedApps);
+                if (bk.success && Array.isArray(bk.data)) setBookmarks(bk.data);
+
+                // Pass applied schemeIds so benefit gap reflects real claimed count
+                const claimedIds = appliedApps.map(a => a.schemeId).filter(Boolean);
+                const gp = await apiGetBenefitGap(claimedIds);
                 setGap(gp && gp.data ? gp.data : null);
             } catch (err) {
                 console.error("Dashboard load error:", err);
@@ -57,44 +68,53 @@ export default function CitizenDashboard() {
                     if (hd.success && hd.data) setDistressData(hd.data);
                 } catch (_) {}
             }
-
-            // Load scheme applications and bookmarks
-            try {
-                const [sa, bk] = await Promise.all([apiGetMySchemeApplications(), apiGetBookmarkedSchemes()]);
-                if (sa.success && Array.isArray(sa.data)) setSchemeApplications(sa.data);
-                if (bk.success && Array.isArray(bk.data)) setBookmarks(bk.data);
-            } catch (_) {}
         };
         load();
     }, [user?.id]);
 
     const quickActions = [
-        { to: '/citizen/file-grievance', icon: <MdEdit />, label: 'File Grievance', color: '#FF6B2C', desc: 'Raise a new complaint' },
-        { to: '/citizen/schemes', icon: <MdSchool />, label: 'Browse Schemes', color: '#00C896', desc: 'Discover benefits' },
-        { to: '/citizen/track', icon: <MdTrackChanges />, label: 'Track Status', color: '#3B82F6', desc: 'Check your cases' },
-        { to: '/citizen/chatbot', icon: <MdChat />, label: 'AI Assistant', color: '#8B5CF6', desc: 'Ask anything' },
+        { to: '/citizen/file-grievance', icon: <MdEdit />, label: t('fileGrievance'), color: '#FF6B2C', desc: 'Raise a new complaint' },
+        { to: '/citizen/schemes', icon: <MdSchool />, label: t('schemes'), color: '#00C896', desc: 'Discover benefits' },
+        { to: '/citizen/track', icon: <MdTrackChanges />, label: t('trackGrievance'), color: '#3B82F6', desc: 'Check your cases' },
+        { to: '/citizen/chatbot', icon: <MdChat />, label: t('aiAssistant'), color: '#8B5CF6', desc: 'Ask anything' },
     ];
 
     const stats = [
-        { label: 'Total Filed', value: (grievances || []).length, color: '#3B82F6' },
-        { label: 'Resolved', value: (grievances || []).filter(g => g.status === 'Resolved').length, color: '#00C896' },
+        { label: t('totalFiled'), value: (grievances || []).length, color: '#3B82F6' },
+        { label: t('resolved'), value: (grievances || []).filter(g => g.status === 'Resolved').length, color: '#00C896' },
         { label: 'Missed Benefits', value: gap ? gap.gapCount : 0, color: '#EF4444' },
-        { label: 'Matched Schemes', value: gap ? gap.eligibleCount : (schemes || []).length, color: '#8B5CF6' },
+        { label: t('matchedSchemes'), value: gap ? gap.eligibleCount : (schemes || []).length, color: '#8B5CF6' },
     ];
 
     return (
         <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-            {/* PRESEVA Alert Banner */}
+            {/* PRESEVA Alert Banner — Prominent */}
             {presevaAlert && !dismissedAlert && (
-                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 10, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#EF4444', boxShadow: '0 0 8px #EF4444', flexShrink: 0, animation: 'pulse 1.5s ease-in-out infinite' }} />
-                    <MdShield style={{ color: '#EF4444', fontSize: '1.2rem', flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#EF4444' }}>⚡ PRESEVA Alert — </span>
-                        <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{presevaAlert.title} predicted in <strong>{presevaAlert.daysUntil} days</strong> in <strong>{presevaAlert.district}, {presevaAlert.state}</strong>. Government has been notified.</span>
+                <div style={{
+                    background: 'linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.05) 100%)',
+                    border: '1px solid rgba(239,68,68,0.4)',
+                    borderLeft: '4px solid #EF4444',
+                    borderRadius: 12, padding: '16px 20px',
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    position: 'relative', overflow: 'hidden',
+                    boxShadow: '0 4px 24px rgba(239,68,68,0.12)'
+                }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #EF4444, #F97316, transparent)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                        <MdShield style={{ color: '#EF4444', fontSize: '1.6rem' }} />
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', boxShadow: '0 0 10px #EF4444', animation: 'pulse 1.2s ease-in-out infinite' }} />
                     </div>
-                    <button onClick={() => setDismissedAlert(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0 }}><MdClose /></button>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.7rem', fontFamily: 'JetBrains Mono', color: '#F87171', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>⚡ PRESEVA Predictive Alert — {presevaAlert.urgency?.toUpperCase() || 'CRITICAL'}</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: 3 }}>{presevaAlert.title}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Predicted in <strong style={{ color: '#FCA5A5' }}>{presevaAlert.daysUntil} days</strong> in {presevaAlert.district}, {presevaAlert.state}. <span style={{ color: '#00C896' }}>Government departments have been automatically alerted.</span></div>
+                    </div>
+                    <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                        <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.6rem', fontWeight: 900, color: '#EF4444' }}>{presevaAlert.probability}%</div>
+                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Probability</div>
+                    </div>
+                    <button onClick={() => setDismissedAlert(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0, alignSelf: 'flex-start' }}><MdClose /></button>
                 </div>
             )}
 
@@ -105,16 +125,31 @@ export default function CitizenDashboard() {
                 position: 'relative', overflow: 'hidden'
             }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, var(--saffron), var(--teal))' }} />
-                <h1 style={{ fontSize: '1.4rem', marginBottom: 6 }}>
-                    Namaste, <span style={{ color: 'var(--saffron)' }}>{user?.name?.split(' ')[0] || 'Citizen'}</span> 🙏
-                </h1>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                    Your personal dashboard — 2nd Gen AI features now fully integrated.
-                </p>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                    {user?.state && <span className="badge badge-inprogress">📍 {user.state}</span>}
-                    {user?.age && <span className="badge badge-pending">🎂 Age {user.age}</span>}
-                    {gap && <span className="badge badge-critical" style={{ background: 'rgba(239,68,68,0.15)', borderColor: '#EF4444' }}>⚠️ {gap.gapCount} Missed Benefits</span>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                        <h1 style={{ fontSize: '1.4rem', marginBottom: 6 }}>
+                            Namaste, <span style={{ color: 'var(--saffron)' }}>{user?.name?.split(' ')[0] || 'Citizen'}</span> 🙏
+                        </h1>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                            Your personal PRESEVA-aware governance dashboard — AI features active.
+                        </p>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                            {user?.state && <span className="badge badge-inprogress">📍 {user.state}</span>}
+                            {user?.age && <span className="badge badge-pending">🎂 Age {user.age}</span>}
+                            {gap && <span className="badge badge-critical" style={{ background: 'rgba(239,68,68,0.15)', borderColor: '#EF4444' }}>⚠️ {gap.gapCount} Missed Benefits</span>}
+                            {distressData && <span style={{ fontSize: '0.72rem', fontWeight: 700, background: 'rgba(139,92,246,0.15)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 100, padding: '2px 8px' }}>📊 Area Distress: {distressData.distressIndex || Math.round(((distressData.pending || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%</span>}
+                        </div>
+                    </div>
+                    {/* CI Score badge */}
+                    <Link to="/citizen/engagement" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                        <div style={{ background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 12, padding: '12px 16px', textAlign: 'center', minWidth: 90, transition: 'transform 0.2s', cursor: 'pointer' }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                            <MdStar style={{ color: '#00C896', fontSize: '1.3rem' }} />
+                            <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.3rem', fontWeight: 900, color: '#00C896', lineHeight: 1, marginTop: 4 }}>{user?.ciScore || user?.janShaktiScore || 0}</div>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--teal)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>CI Score</div>
+                        </div>
+                    </Link>
                 </div>
             </div>
 
@@ -134,7 +169,7 @@ export default function CitizenDashboard() {
                         You are currently missing out on <strong style={{ color: '#EF4444' }}>{gap.gapCount}</strong> schemes you are eligible for. Your profile qualifies for {gap.eligibleCount} benefits, but only {gap.claimedCount} are registered.
                     </p>
                     <Link to="/citizen/schemes" className="btn-secondary" style={{ marginTop: 14, alignSelf: 'flex-start', color: '#EF4444', borderColor: '#EF4444' }}>
-                        Resolve Benefit Gaps <MdArrowForward />
+                        {t('resolveGaps')} <MdArrowForward />
                     </Link>
                 </div>
             )}
@@ -230,20 +265,26 @@ export default function CitizenDashboard() {
 
             {/* Quick Actions */}
             <div>
-                <h2 style={{ fontSize: '1.1rem', marginBottom: 14, fontWeight: 700 }}>Quick Actions</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
+                <h2 style={{ fontSize: '1.1rem', marginBottom: 14, fontWeight: 700 }}>{t('quickActions')}</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
                     {quickActions.map(action => (
                         <Link key={action.to} to={action.to} style={{
-                            background: `${action.color}10`,
-                            border: `1px solid ${action.color}30`,
-                            borderRadius: 'var(--radius)', padding: '18px 20px',
-                            display: 'flex', flexDirection: 'column', gap: 8, textDecoration: 'none',
-                            transition: 'var(--transition)'
+                            background: `${action.color}08`,
+                            border: `1px solid ${action.color}25`,
+                            borderRadius: 'var(--radius-lg)', padding: '22px 20px',
+                            display: 'flex', flexDirection: 'column', gap: 10, textDecoration: 'none',
+                            transition: 'all 0.2s ease',
+                            position: 'relative', overflow: 'hidden'
                         }}
-                            className="glass-card">
-                            <span style={{ fontSize: '1.4rem', color: action.color }}>{action.icon}</span>
-                            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-white)' }}>{action.label}</span>
-                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{action.desc}</span>
+                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 32px ${action.color}20`; e.currentTarget.style.borderColor = `${action.color}50`; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = `${action.color}25`; }}>
+                            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${action.color}, transparent)` }} />
+                            <div style={{ width: 44, height: 44, borderRadius: 12, background: `${action.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: action.color }}>{action.icon}</div>
+                            <div>
+                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-white)', marginBottom: 3 }}>{action.label}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{action.desc}</div>
+                            </div>
+                            <MdArrowForward style={{ color: action.color, fontSize: '1rem', alignSelf: 'flex-end', opacity: 0.7 }} />
                         </Link>
                     ))}
                 </div>

@@ -26,14 +26,13 @@ function MissionCard({ mission, onDispatch, onResolve }) {
     const statusConfig = { pending: { label: 'AWAITING DISPATCH', color: '#F59E0B' }, dispatched: { label: 'RESOURCES DEPLOYED', color: '#3B82F6' }, resolved: { label: 'THREAT NEUTRALISED', color: '#00C896' } }[mission.status];
     return (
         <div style={{ background: urgConf.bg, border: `1px solid ${urgConf.border}`, borderLeft: `4px solid ${urgConf.color}`, borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 8, right: 12, fontSize: '2rem', opacity: 0.12 }}>{mission.icon}</div>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <div style={{ fontSize: '1.4rem' }}>{mission.icon}</div>
-                <div style={{ flex: 1 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: `${urgConf.color}18`, border: `1px solid ${urgConf.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0 }}>{mission.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 800, fontSize: '0.92rem', marginBottom: 3 }}>{mission.title}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{mission.district}, {mission.state} · {mission.dept}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 5 }}>{mission.district}, {mission.state} · {mission.dept}</div>
+                    <CountdownTimer hours={mission.timeLeft} />
                 </div>
-                <CountdownTimer hours={mission.timeLeft} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {[{ l: 'Confidence', v: `${mission.confidence}%`, c: urgConf.color }, { l: 'Citizens at Risk', v: mission.citizensAtRisk.toLocaleString(), c: '#A78BFA' }, { l: 'Officers', v: mission.officersDeployed || '—', c: mission.officersDeployed ? '#00C896' : 'var(--text-muted)' }].map(d => (

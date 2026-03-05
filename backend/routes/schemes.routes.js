@@ -348,6 +348,26 @@ router.get('/benefit-roadmap', protect, (req, res, next) => {
     }
 });
 
+// ─── GET /api/schemes/my-applications ────────────────────────────────────────
+// Must be BEFORE /:id to avoid route conflict
+router.get('/my-applications', protect, (req, res, next) => {
+    try {
+        const db_instance = db.getDb();
+        let apps = [];
+        try {
+            apps = db_instance.get('schemeApplications').filter({ userId: req.user.id }).value() || [];
+        } catch (_) { apps = []; }
+        // Sort newest first
+        apps = [...apps].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        return res.status(200).json({
+            success: true,
+            data: apps,
+            message: `${apps.length} scheme application(s) found.`,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) { next(err); }
+});
+
 // ─── GET /api/schemes/bookmarked ─────────────────────────────────────────────
 // Must be BEFORE /:id to avoid route conflict
 router.get('/bookmarked', protect, (req, res, next) => {

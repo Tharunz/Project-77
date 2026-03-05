@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MdEdit, MdSend, MdMic, MdAttachFile, MdCheckCircle, MdCopyAll, MdClose, MdStop, MdPlayArrow, MdRefresh } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { INDIAN_STATES, GRIEVANCE_CATEGORIES } from '../../mock/mockData';
 
 const API_BASE = '/api';
@@ -25,6 +26,7 @@ function AudioWaveform({ active, bars = 20 }) {
 
 export default function GrievanceFiling() {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const [inputMode, setInputMode] = useState('text'); // 'text' | 'audio'
     const [form, setForm] = useState({
         citizenName: user?.name || '',
@@ -103,7 +105,7 @@ export default function GrievanceFiling() {
             formData.append('category', form.category);
             formData.append('state', form.state);
             formData.append('priority', form.priority);
-            formData.append('voiceNote', audioBlob, 'grievance-audio.webm');
+            formData.append('documents', audioBlob, 'grievance-audio.webm');
             const token = getToken();
             const response = await fetch(`${API_BASE}/grievance/file`, {
                 method: 'POST',
@@ -192,10 +194,13 @@ export default function GrievanceFiling() {
         setCharCount(e.target.value.length);
     };
 
+    const submittedAudioUrl = submitted?.documents?.[0]?.url || null;
+    const isAudioGrievance = submitted?.description?.startsWith('[Audio grievance');
+
     if (submitted) return (
         <div style={{
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            minHeight: '60vh', textAlign: 'center', gap: 20
+            minHeight: '60vh', textAlign: 'center', gap: 20, maxWidth: 520, margin: '0 auto'
         }}>
             <div style={{
                 width: 80, height: 80, borderRadius: '50%',
@@ -203,15 +208,23 @@ export default function GrievanceFiling() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '2.5rem', color: 'var(--teal)'
             }}><MdCheckCircle /></div>
-            <h2 style={{ fontSize: '1.8rem', color: 'var(--teal)' }}>Grievance Submitted! 🎉</h2>
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--teal)' }}>{t('grievanceSubmitted')} 🎉</h2>
             <p style={{ color: 'var(--text-secondary)', maxWidth: 460, lineHeight: 1.6 }}>
                 Your grievance has been successfully registered. You will receive updates as it progresses.
             </p>
+            {/* Audio playback for audio grievances */}
+            {isAudioGrievance && submittedAudioUrl && (
+                <div style={{ width: '100%', background: 'rgba(0,200,150,0.06)', border: '1px solid rgba(0,200,150,0.25)', borderRadius: 10, padding: '14px 18px' }}>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--teal)', fontWeight: 700, marginBottom: 8 }}>🎤 Your Submitted Audio — play it back anytime</p>
+                    <audio controls src={submittedAudioUrl} style={{ width: '100%' }} />
+                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>{submitted.description}</p>
+                </div>
+            )}
             <div style={{
                 background: 'rgba(0,200,150,0.08)', border: '1px solid rgba(0,200,150,0.25)',
-                borderRadius: 'var(--radius)', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 6
+                borderRadius: 'var(--radius)', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 6, width: '100%'
             }}>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>Your Tracking ID</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{t('trackingId')}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontFamily: 'monospace', fontSize: '1.4rem', fontWeight: 800, color: 'var(--teal)' }}>{submitted.id}</span>
                     <button onClick={() => navigator.clipboard?.writeText(submitted.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem' }}>
@@ -220,24 +233,25 @@ export default function GrievanceFiling() {
                 </div>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Save this ID to track your grievance</p>
             </div>
-            <button className="btn-primary" onClick={() => setSubmitted(null)} style={{ marginTop: 8 }}>
-                File Another Grievance
-            </button>
+            <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                <button className="btn-secondary" onClick={() => window.location.href = '/citizen/track'}>{t('trackStatus')}</button>
+                <button className="btn-primary" onClick={() => setSubmitted(null)}>{t('fileAnother')}</button>
+            </div>
         </div>
     );
 
     return (
         <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 720, margin: '0 auto' }}>
             <div>
-                <h1 className="section-title"><MdEdit className="icon" /> File a Grievance</h1>
+                <h1 className="section-title"><MdEdit className="icon" /> {t('fileGrievanceTitle')}</h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: 4 }}>Describe your issue clearly. AI will analyze and prioritize your grievance.</p>
             </div>
 
             {/* Mode Tabs */}
             <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 4 }}>
-                {[{ key: 'text', icon: '✍️', label: 'Text Grievance' }, { key: 'audio', icon: '🎤', label: 'Audio Grievance (Any Language)' }].map(t => (
-                    <button key={t.key} type="button" onClick={() => setInputMode(t.key)} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none', background: inputMode === t.key ? 'rgba(255,107,44,0.15)' : 'transparent', color: inputMode === t.key ? 'var(--saffron)' : 'var(--text-secondary)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                        {t.icon} {t.label}
+                {[{ key: 'text', icon: '✍️', label: 'Text Grievance' }, { key: 'audio', icon: '🎤', label: t('audioGrievance') + ' (Any Language)' }].map(tab => (
+                    <button key={tab.key} type="button" onClick={() => setInputMode(tab.key)} style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none', background: inputMode === tab.key ? 'rgba(255,107,44,0.15)' : 'transparent', color: inputMode === tab.key ? 'var(--saffron)' : 'var(--text-secondary)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                        {tab.icon} {tab.label}
                     </button>
                 ))}
             </div>
@@ -283,7 +297,7 @@ export default function GrievanceFiling() {
                         </div>
                         {!audioBlob ? (
                             <button type="button" onClick={audioRecording ? stopAudioRecording : startAudioRecording} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', borderRadius: 50, border: 'none', background: audioRecording ? '#EF4444' : 'linear-gradient(135deg,#FF6B2C,#EF4444)', color: 'white', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer', boxShadow: audioRecording ? '0 0 24px rgba(239,68,68,0.5)' : 'none' }}>
-                                {audioRecording ? <><MdStop /> Stop Recording</> : <><MdMic /> Start Recording</>}
+                                {audioRecording ? <><MdStop /> {t('stopRecording')}</> : <><MdMic /> {t('startRecording')}</>}
                             </button>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
@@ -293,9 +307,9 @@ export default function GrievanceFiling() {
                                     <span style={{ fontSize: '0.78rem', color: 'var(--teal)', fontWeight: 700, whiteSpace: 'nowrap' }}>{audioTime}s</span>
                                 </div>
                                 <div style={{ display: 'flex', gap: 10, width: '100%' }}>
-                                    <button type="button" onClick={resetAudio} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}><MdRefresh /> Re-record</button>
+                                    <button type="button" onClick={resetAudio} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}><MdRefresh /> {t('reRecord')}</button>
                                     <button type="button" onClick={handleAudioSubmit} disabled={loading} style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,var(--saffron),#EF4444)', color: 'white', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                                        {loading ? 'Submitting...' : <><MdSend /> Submit Audio Grievance</>}
+                                        {loading ? t('loading') : <><MdSend /> {t('submitAudio')}</>}
                                     </button>
                                 </div>
                             </div>

@@ -26,12 +26,12 @@
       "janShaktiScore": 72,
       "createdAt": "2026-01-15T08:30:00.000Z",
       "bookmarkedSchemes": [],
-      "pendingPhone": "1231231231",
-      "pendingOtp": null,
-      "otpExpiry": null,
+      "pendingPhone": "1234123412",
+      "pendingOtp": "1234",
+      "otpExpiry": 1772693178299,
       "phone": "1231231231",
       "mobileVerified": true,
-      "updatedAt": "2026-03-04T23:54:09.207Z"
+      "updatedAt": "2026-03-05T06:40:59.349Z"
     },
     {
       "id": "USR-CIT-002",
@@ -294,9 +294,121 @@
       "phone": "1231231231",
       "mobileVerified": true,
       "updatedAt": "2026-03-04T21:42:12.497Z"
+    },
+    {
+      "id": "USR-D2256B3B",
+      "name": "hello",
+      "email": "tn@gmail.com",
+      "password": "$2a$10$pWSDVq9Pmlw58rha/43taerRLyZrKR3M.b/ZHAOZfmhOeB/3AohFK",
+      "state": "Tamil Nadu",
+      "district": null,
+      "age": 14,
+      "income": 124123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T05:04:25.123Z",
+      "pendingPhone": "1234123412",
+      "pendingOtp": null,
+      "otpExpiry": null,
+      "phone": "1234123412",
+      "mobileVerified": true,
+      "updatedAt": "2026-03-05T05:07:05.823Z"
+    },
+    {
+      "id": "USR-D797C965",
+      "name": "test",
+      "email": "test@gmail.com",
+      "password": "$2a$10$os1WR7BkQ1uPjR9b/8JdUuMvWJLFiTxphSyVsYmAI0fnKVxAoLj66",
+      "state": "Nagaland",
+      "district": null,
+      "age": 14,
+      "income": 123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T07:28:49.479Z"
     }
   ],
   "grievances": [
+    {
+      "id": "GRV-871473A6",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "test",
+      "description": "[Audio grievance recorded in English] Duration: 2s",
+      "category": "Electricity",
+      "state": "Mizoram",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "doc-1772694836393-813063913.webm",
+          "originalName": "grievance-audio.webm",
+          "mimetype": "audio/webm",
+          "size": 42800,
+          "url": "http://localhost:5000/uploads/doc-1772694836393-813063913.webm"
+        }
+      ],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T07:13:56.396Z",
+      "updatedAt": "2026-03-05T07:15:23.226Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-05T07:15:23.226Z"
+    },
+    {
+      "id": "GRV-C330F324",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "Sudesh is a very long text grievance 101 hello by yes ok bye",
+      "description": "Sudesh is a very long text grievance 101 hello by yes ok bye",
+      "category": "Police & Law",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.508,
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T06:44:31.709Z",
+      "updatedAt": "2026-03-05T06:46:17.934Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-05T06:46:17.934Z"
+    },
+    {
+      "id": "GRV-E459B8D7",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "testetstseteststeet",
+      "description": "sfsdfsdfsdfsdfsdfsfsdfsdfsdfsdfsdf",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [],
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-04T23:51:01.577Z",
+      "updatedAt": "2026-03-04T23:51:01.578Z",
+      "resolvedAt": null
+    },
     {
       "id": "GRV-069EF141",
       "userId": "USR-CIT-001",
@@ -1538,28 +1650,6 @@
       "createdAt": "2026-01-01T00:00:00.000Z",
       "updatedAt": "2026-01-03T00:00:00.000Z",
       "resolvedAt": null
-    },
-    {
-      "id": "GRV-E459B8D7",
-      "userId": "USR-CIT-001",
-      "citizenName": "Ramesh Kumar",
-      "title": "testetstseteststeet",
-      "description": "sfsdfsdfsdfsdfsdfsfsdfsdfsdfsdfsdf",
-      "category": "Healthcare",
-      "state": "Uttar Pradesh",
-      "district": "Lucknow",
-      "status": "Pending",
-      "sentiment": "Neutral",
-      "sentimentScore": 0.5,
-      "priority": "Medium",
-      "assignedOfficer": null,
-      "documents": [],
-      "isDuplicate": false,
-      "fraudScore": 0.05,
-      "adminNote": null,
-      "createdAt": "2026-03-04T23:51:01.577Z",
-      "updatedAt": "2026-03-04T23:51:01.578Z",
-      "resolvedAt": null
     }
   ],
   "schemes": [
@@ -1627,7 +1717,7 @@
       "state": "All India",
       "isActive": true,
       "createdAt": "2026-01-01T00:00:00.000Z",
-      "beneficiaries": 2
+      "beneficiaries": 3
     },
     {
       "id": "SCH-004",
@@ -1690,7 +1780,8 @@
       "deadline": null,
       "state": "All India",
       "isActive": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "beneficiaries": 1
     },
     {
       "id": "SCH-007",
@@ -1999,10 +2090,10 @@
       "minAge": 18,
       "maxAge": 65,
       "maxIncome": "123123",
-      "isActive": true,
-      "beneficiaries": 1,
+      "isActive": false,
+      "beneficiaries": 2,
       "createdAt": "2026-03-04T21:55:30.087Z",
-      "updatedAt": "2026-03-04T21:55:30.087Z"
+      "updatedAt": "2026-03-05T05:10:09.330Z"
     }
   ],
   "officers": [],
@@ -2305,6 +2396,42 @@
       "type": "success",
       "isRead": false,
       "sentAt": "2026-03-04T23:51:01.579Z"
+    },
+    {
+      "id": "NOTIF-5D69643E",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-C330F324",
+      "message": "Your grievance \"Sudesh is a very long text grievance 101 hello by yes ok bye\" has been filed. Tracking ID: GRV-C330F324",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T06:44:31.710Z"
+    },
+    {
+      "id": "NOTIF-8066CD75",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-C330F324",
+      "message": "Your grievance GRV-C330F324 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-05T06:44:44.078Z"
+    },
+    {
+      "id": "NOTIF-9C1E8FD7",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-871473A6",
+      "message": "Your grievance \"test\" has been filed. Tracking ID: GRV-871473A6",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T07:13:56.397Z"
+    },
+    {
+      "id": "NOTIF-1DBF59A3",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-871473A6",
+      "message": "Your grievance GRV-871473A6 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-05T07:15:12.405Z"
     }
   ],
   "communityPosts": [
@@ -2605,6 +2732,39 @@
       "documents": [],
       "status": "Submitted",
       "submittedAt": "2026-03-04T23:52:52.983Z"
+    },
+    {
+      "id": "APP-1772687098119",
+      "schemeId": "SCH-1772661330087",
+      "schemeName": "test",
+      "userId": "USR-D2256B3B",
+      "userName": "hello",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-05T05:04:58.119Z"
+    },
+    {
+      "id": "APP-1772692535358",
+      "schemeId": "SCH-003",
+      "schemeName": "PM Awas Yojana (Urban)",
+      "userId": "USR-CIT-001",
+      "userName": "Ramesh Kumar",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-05T06:35:35.358Z"
+    },
+    {
+      "id": "APP-1772696257460",
+      "schemeId": "SCH-006",
+      "schemeName": "Pradhan Mantri Jan Dhan Yojana",
+      "userId": "USR-D797C965",
+      "userName": "test",
+      "additionalInfo": "",
+      "documents": [],
+      "status": "Submitted",
+      "submittedAt": "2026-03-05T07:37:37.460Z"
     }
   ],
   "petitions": []

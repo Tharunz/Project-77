@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState, Suspense, lazy, useCallback, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { MdArrowForward, MdShield } from 'react-icons/md';
+import { MdArrowForward, MdShield, MdDashboard, MdPerson } from 'react-icons/md';
+import { useAuth } from '../../context/AuthContext';
 import IntelligenceTerminal from '../../components/IntelligenceTerminal';
 import HowItWorksBriefing from '../../components/HowItWorksBriefing';
 import MobileParticles from '../../components/MobileParticles';
 import QuantumHeroBg from '../../components/QuantumHeroBg';
+import DesktopParticles from '../../components/DesktopParticles';
 import { PROJECT_NAME } from '../../config/constants';
 import './HomePage.css';
 
@@ -68,6 +70,9 @@ const TickerItem = memo(({ text, isNew }) => (
 
 const ItNav = memo(() => {
     const [scrolled, setScrolled] = useState(false);
+    const { user } = useAuth();
+    const isCitizen = user?.role === 'citizen';
+
     useEffect(() => {
         const fn = () => setScrolled(window.scrollY > 32);
         window.addEventListener('scroll', fn, { passive: true });
@@ -82,8 +87,22 @@ const ItNav = memo(() => {
                 <a href="#caps" className="it-nav-a">Seva Modules</a>
                 <a href="#how" className="it-nav-a">System Protocol</a>
                 <div className="it-sep" />
-                <Link to="/login" className="it-ghost">Citizen Login</Link>
-                <Link to="/register" className="it-solid">Access Portal <MdArrowForward /></Link>
+                {isCitizen ? (
+                    <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(255,107,44,0.1)', borderRadius: 8, border: '1px solid rgba(255,107,44,0.25)', cursor: 'default' }}>
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,var(--saffron),#00C896)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.82rem', color: '#fff', flexShrink: 0 }}>
+                                {user.name?.[0]?.toUpperCase() || 'C'}
+                            </div>
+                            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-white)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name?.split(' ')[0]}</span>
+                        </div>
+                        <Link to="/citizen" className="it-solid"><MdDashboard style={{ marginRight: 4 }} /> My Dashboard</Link>
+                    </>
+                ) : (
+                    <>
+                        <Link to="/login" className="it-ghost">Citizen Login</Link>
+                        <Link to="/register" className="it-solid">Access Portal <MdArrowForward /></Link>
+                    </>
+                )}
             </div>
         </nav>
     );
@@ -157,6 +176,7 @@ export default function HomePage() {
             {/* Hero — Split */}
             <section className="it-hero" style={{ position: 'relative' }}>
                 <QuantumHeroBg />
+                <DesktopParticles />
                 <MobileParticles />
                 <div className="it-hero-left" style={{ position: 'relative', zIndex: 10 }}>
                     <div className="it-hero-tag">AI-Powered Citizen Services</div>
