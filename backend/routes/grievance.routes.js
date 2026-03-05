@@ -21,6 +21,11 @@ const { publishEvent } = require('../services/events.service');
 const { notifyNewGrievance } = require('../services/realtime.service');
 const { logGrievanceFiled } = require('../services/logger.service');
 const db = require('../db/database');
+const dbService = require('../services/db.service');
+
+// ─── DynamoDB table names ──────────────────────────────────────────────────────
+const GRIEVANCES_TABLE = process.env.DYNAMO_GRIEVANCES_TABLE || 'ncie-grievances';
+
 
 // ─── POST /api/grievance/file ─────────────────────────────────────────────────
 router.post('/file', protect, upload.array('documents', 5), async (req, res, next) => {
@@ -103,6 +108,18 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
         };
 
         db_instance.get('grievances').push(grievance).write();
+
+        // ── DynamoDB dual-write (when ENABLE_DYNAMO=true) ─────────────────────
+        if (dbService.isDynamo()) {
+            const dynamoItem = {
+                grievanceId: grievance.id,      // PK
+                citizenId: req.user.userId || req.user.id,  // for GSI citizenId-index
+                ...grievance
+            };
+            dbService.put(GRIEVANCES_TABLE, dynamoItem).catch(err =>
+                console.error('[DYNAMO] grievance put failed:', err.message)
+            );
+        }
 
         // Create in-app notification
         createNotification(
@@ -251,14 +268,45 @@ router.get('/track/:id', (req, res, next) => {
 });
 
 // ─── GET /api/grievance/my-grievances ─────────────────────────────────────────
-router.get('/my-grievances', protect, (req, res, next) => {
+router.get('/my-grievances', protect, async (req, res, next) => {
     try {
-        const db_instance = db.getDb();
+        const userId = req.user.id || req.user.userId;
         const { page = 1, limit = 10, status, category, sortBy = 'createdAt', order = 'desc' } = req.query;
 
-        let grievances = db_instance.get('grievances')
-            .filter({ userId: req.user.id })
-            .value();
+        let grievances = [];
+
+        if (dbService.isDynamo()) {
+            // ── Try GSI citizenId-index first ──────────────────────────────────
+            try {
+                grievances = await dbService.query(
+                    GRIEVANCES_TABLE,
+                    {
+                        expression: '#cid = :cid',
+                        names: { '#cid': 'citizenId' },
+                        values: { ':cid': userId }
+                    },
+                    { indexName: 'citizenId-index' }
+                ) || [];
+            } catch (dErr) {
+                console.warn('[DYNAMO] my-grievances GSI failed, scanning:', dErr.message);
+                // GSI not ready yet — fall back to full table scan with client-side filter
+                try {
+                    const all = await dbService.scan(GRIEVANCES_TABLE) || [];
+                    grievances = all.filter(g => g.citizenId === userId || g.userId === userId);
+                } catch (scanErr) {
+                    console.error('[DYNAMO] scan failed:', scanErr.message);
+                    // Last resort: local lowdb
+                    const db_instance = db.getDb();
+                    grievances = db_instance.get('grievances').filter(g => g.userId === userId || g.userId === req.user.email).value();
+                }
+            }
+        } else {
+            // ── Local lowdb ──────────────────────────────────────────────────
+            const db_instance = db.getDb();
+            grievances = db_instance.get('grievances')
+                .filter(g => g.userId === userId || g.userId === req.user.email)
+                .value();
+        }
 
         if (status) grievances = grievances.filter(g => g.status === status);
         if (category) grievances = grievances.filter(g => g.category === category);
@@ -440,6 +488,12 @@ router.patch('/update/:id', protect, adminOnly, async (req, res, next) => {
 
         db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).assign(updates).write();
 
+        // ── DynamoDB update (when enabled) ────────────────────────────────
+        if (dbService.isDynamo()) {
+            dbService.update(GRIEVANCES_TABLE, { grievanceId: req.params.id.toUpperCase() }, updates)
+                .catch(err => console.error('[DYNAMO] grievance update failed:', err.message));
+        }
+
         const updated = db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).value();
 
         // Notify citizen
@@ -581,12 +635,62 @@ router.delete('/:id', protect, adminOnly, (req, res, next) => {
 
         db_instance.get('grievances').remove({ id: req.params.id.toUpperCase() }).write();
 
+        // ── DynamoDB delete (when enabled) ───────────────────────────────
+        if (dbService.isDynamo()) {
+            dbService.delete(GRIEVANCES_TABLE, { grievanceId: req.params.id.toUpperCase() })
+                .catch(err => console.error('[DYNAMO] grievance delete failed:', err.message));
+        }
+
         return res.status(200).json({
             success: true,
             data: { id: req.params.id },
             message: `Grievance ${req.params.id} deleted successfully.`,
             timestamp: new Date().toISOString()
         });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── GET /api/grievance/:id/documents ────────────────────────────────────────
+router.get('/:id/documents', protect, async (req, res, next) => {
+    try {
+        const id = req.params.id.toUpperCase();
+        const db_instance = db.getDb();
+        const grievance = db_instance.get('grievances').find(g => g.id === id).value();
+
+        // Also try DynamoDB if enabled
+        let final = grievance;
+        if (!grievance && dbService.isDynamo()) {
+            try {
+                final = await dbService.get(GRIEVANCES_TABLE, { grievanceId: id });
+            } catch (_) { }
+        }
+
+        if (!final) {
+            return res.status(404).json({ success: false, message: 'Grievance not found.' });
+        }
+
+        const documents = final.documents || final.attachments || [];
+
+        // Normalize documents array — each item may be a string URL or object
+        const normalized = documents.map((doc, i) => {
+            const url = typeof doc === 'string' ? doc : (doc.url || doc.path || null);
+            const name = typeof doc === 'string'
+                ? (url ? url.split('/').pop() : `Document ${i + 1}`)
+                : (doc.originalName || doc.filename || doc.name || `Document ${i + 1}`);
+            const mimetype = typeof doc === 'object' ? (doc.mimetype || '') : '';
+            const isImage = mimetype.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+            const isAudio = mimetype.startsWith('audio/') || /\.(webm|ogg|mp3|wav|m4a)$/i.test(name);
+            return {
+                url: url ? (url.startsWith('http') ? url : `http://localhost:${process.env.PORT || 5000}${url}`) : null,
+                name,
+                type: isImage ? 'image' : isAudio ? 'audio' : 'document',
+                uploadedAt: typeof doc === 'object' ? (doc.uploadedAt || final.createdAt) : final.createdAt
+            };
+        });
+
+        return res.json(normalized);
     } catch (err) {
         next(err);
     }

@@ -29,7 +29,7 @@ const getAuthHeaders = () => {
 };
 
 // Helper: Generic Fetch Wrapper to process JSON and catch server errors
-const apiFetch = async (endpoint, options = {}) => {
+export const apiFetch = async (endpoint, options = {}) => {
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
@@ -63,6 +63,8 @@ export const apiLogin = async (email, password) => {
         body: JSON.stringify({ email, password })
     });
     if (res.success && res.data) {
+        // res.data.token is the IdToken when Cognito is enabled, or local JWT otherwise.
+        // Both cases: store as 'token' so getAuthHeaders() sends it as Bearer.
         localStorage.setItem('token', res.data.token);
         return { success: true, user: res.data.user, token: res.data.token };
     }
@@ -213,6 +215,7 @@ export const apiGetSchemes = async (filters = {}) => {
     if (filters.category) queryParams.append('category', filters.category);
     if (filters.state) queryParams.append('state', filters.state);
     if (filters.search) queryParams.append('search', filters.search);
+    queryParams.append('limit', '500');
 
     const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
     const res = await apiFetch(`/schemes${qs}`);
@@ -607,18 +610,24 @@ export const apiApplyScheme = async (schemeId, applicationData) => {
 };
 
 // ==============================
-//  BOOKMARKS
+//  BOOKMARKS (Issue 12 — DynamoDB backed)
 // ==============================
 export const apiGetBookmarkedSchemes = async () => {
-    return await apiFetch('/schemes/bookmarked');
+    const res = await apiFetch('/bookmarks/my');
+    if (res.success) return res;
+    return { success: true, data: [] };
 };
 
-export const apiBookmarkScheme = async (schemeId) => {
-    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'POST' });
+export const apiBookmarkScheme = async (scheme) => {
+    // scheme = { schemeId, name, category, state, description, benefit }
+    return await apiFetch('/bookmarks/add', {
+        method: 'POST',
+        body: JSON.stringify(scheme)
+    });
 };
 
 export const apiUnbookmarkScheme = async (schemeId) => {
-    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'DELETE' });
+    return await apiFetch(`/bookmarks/${schemeId}`, { method: 'DELETE' });
 };
 
 // ==============================

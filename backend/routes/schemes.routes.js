@@ -65,7 +65,7 @@ router.get('/', (req, res, next) => {
 router.get('/recommend', protect, (req, res, next) => {
     try {
         const db_instance = db.getDb();
-        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        const user = db_instance.get('users').find(u => u.id === req.user.id || u.id === req.user.userId || u.email === req.user.email).value();
 
         if (!user) {
             return res.status(404).json({
@@ -237,7 +237,7 @@ router.post('/benefit-gap', protect, (req, res, next) => {
 router.get('/benefit-roadmap', protect, (req, res, next) => {
     try {
         const db_instance = db.getDb();
-        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        const user = db_instance.get('users').find(u => u.id === req.user.id || u.id === req.user.userId || u.email === req.user.email).value();
 
         if (!user) {
             return res.status(404).json({
@@ -292,7 +292,7 @@ router.get('/benefit-roadmap', protect, (req, res, next) => {
                 ...s,
                 phaseLabel: 'Apply Now',
                 actionText: 'Apply Online',
-                done: user.name.toLowerCase().includes('ramesh') && (i === 0 || i === 1) // First and second are completed
+                done: user?.name?.toLowerCase().includes('ramesh') && (i === 0 || i === 1) // First and second are completed
             }));
 
         // Phase 2 — Improve Eligibility: near-miss schemes

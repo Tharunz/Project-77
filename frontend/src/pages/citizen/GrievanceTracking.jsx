@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { MdTrackChanges, MdSearch, MdCheckCircle, MdHourglassEmpty, MdEdit, MdArrowForward, MdPhotoCamera, MdStar, MdStarBorder, MdCloudUpload, MdVerifiedUser, MdClose } from 'react-icons/md';
-import { apiTrackGrievance, apiVerifyResolution, apiGetEscrowProjects, apiVerifyEscrow } from '../../services/api.service';
+import { MdTrackChanges, MdSearch, MdCheckCircle, MdHourglassEmpty, MdArrowForward, MdStar, MdStarBorder, MdCloudUpload, MdVerifiedUser, MdClose, MdContentCopy, MdVolumeUp } from 'react-icons/md';
+import { apiTrackGrievance, apiVerifyResolution, apiGetEscrowProjects, apiVerifyEscrow, apiGetMyGrievances, apiFetch } from '../../services/api.service';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { apiGetMyGrievances } from '../../services/api.service';
 
 function EscrowVerificationPanel({ grievanceId, onSuccess, showToast }) {
     const [rating, setRating] = useState(0);
@@ -185,16 +184,49 @@ export default function GrievanceTracking() {
     const [loadingMine, setLoadingMine] = useState(false);
     const [showMine, setShowMine] = useState(false);
     const [notification, setNotification] = useState(null);
+    const [copied, setCopied] = useState(false);
+    const [voiceLoading, setVoiceLoading] = useState(false);
 
     const showToast = (type, message) => {
         setNotification({ type, message });
         setTimeout(() => setNotification(null), 5000);
     };
 
-    const handlePhotoUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setPhoto(URL.createObjectURL(file));
+    const handleCopyId = (id) => {
+        navigator.clipboard.writeText(id).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
+
+    const handleVoiceRead = async (grievance) => {
+        setVoiceLoading(true);
+        try {
+            const text = `Grievance ID ${grievance.id}. Title: ${grievance.title}. Status: ${grievance.status}. Filed in ${grievance.state} under ${grievance.category}. ${grievance.description ? grievance.description.slice(0, 200) : ''}`;
+            const res = await apiFetch('/polly/speak', {
+                method: 'POST',
+                body: JSON.stringify({ text, languageCode: 'en-IN', voiceId: 'Aditi' })
+            });
+            if (res.success && res.data?.audioUrl) {
+                const audio = new Audio(res.data.audioUrl);
+                audio.play();
+            } else if (res.success && res.data?.audioBase64) {
+                const audio = new Audio(`data:audio/mpeg;base64,${res.data.audioBase64}`);
+                audio.play();
+            } else {
+                // Fallback: browser TTS
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-IN';
+                window.speechSynthesis.speak(utterance);
+            }
+        } catch (err) {
+            // Fallback: browser TTS
+            const text = `Grievance ${result?.id || ''}. Status: ${result?.status || 'Unknown'}.`;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-IN';
+            window.speechSynthesis.speak(utterance);
+        } finally {
+            setVoiceLoading(false);
         }
     };
 
@@ -307,7 +339,17 @@ export default function GrievanceTracking() {
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
                         <div style={{ minWidth: 0, flex: 1 }}>
-                            <span style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: 'var(--saffron)' }}>{result.id}</span>
+                            {/* Issue 6: Styled grievance ID with copy button */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                <span style={{ fontFamily: 'monospace', fontSize: '0.88rem', color: 'var(--saffron)', background: 'rgba(255,107,44,0.1)', border: '1px solid rgba(255,107,44,0.25)', borderRadius: 6, padding: '3px 10px', letterSpacing: '0.05em', fontWeight: 700 }}>{result.id}</span>
+                                <button title="Copy ID" onClick={() => handleCopyId(result.id)} style={{ background: copied ? 'rgba(0,200,150,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${copied ? 'rgba(0,200,150,0.3)' : 'var(--border)'}`, borderRadius: 6, padding: '3px 8px', cursor: 'pointer', color: copied ? '#00C896' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', transition: 'all 0.2s' }}>
+                                    <MdContentCopy style={{ fontSize: '0.9rem' }} />{copied ? 'Copied!' : 'Copy'}
+                                </button>
+                                {/* Issue 7: Polly TTS voice button */}
+                                <button title="Listen (Polly TTS)" onClick={() => handleVoiceRead(result)} disabled={voiceLoading} style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 6, padding: '3px 8px', cursor: voiceLoading ? 'not-allowed' : 'pointer', color: '#60A5FA', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.75rem', transition: 'all 0.2s' }}>
+                                    <MdVolumeUp style={{ fontSize: '0.95rem' }} />{voiceLoading ? 'Reading...' : 'Listen'}
+                                </button>
+                            </div>
                             <h2 style={{ fontSize: '1.1rem', marginTop: 4, wordBreak: 'break-word' }}>{result.title}</h2>
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: 4 }}>
                                 {result.citizenName} · {result.state} · {result.category}
@@ -347,6 +389,37 @@ export default function GrievanceTracking() {
                             onSuccess={(uploadedPhoto) => handleVerifyResolution(result, uploadedPhoto)}
                             showToast={showToast}
                         />
+                    )}
+
+                    {/* Issue 6: Attached Documents */}
+                    {result.documents && result.documents.length > 0 && (
+                        <div style={{ marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>📎 Attached Documents</h4>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                                {result.documents.map((doc, i) => {
+                                    const url = doc.url || doc;
+                                    const name = doc.originalName || doc.filename || `Document ${i + 1}`;
+                                    const isImage = doc.mimetype ? doc.mimetype.startsWith('image/') : /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+                                    const isAudio = doc.mimetype ? doc.mimetype.startsWith('audio/') : /\.(webm|ogg|mp3|wav|m4a)$/i.test(name);
+                                    return (
+                                        <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: 8, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, minWidth: 140, maxWidth: 200 }}>
+                                            {isImage ? (
+                                                <a href={url} target="_blank" rel="noreferrer">
+                                                    <img src={url} alt={name} style={{ width: '100%', height: 80, objectFit: 'cover', borderRadius: 4, display: 'block' }} onError={e => { e.target.style.display = 'none'; }} />
+                                                </a>
+                                            ) : isAudio ? (
+                                                <audio controls src={url} style={{ width: '100%' }} />
+                                            ) : (
+                                                <a href={url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 60, background: 'rgba(59,130,246,0.07)', borderRadius: 4, fontSize: '0.8rem', color: '#60A5FA', fontWeight: 600, textDecoration: 'none' }}>
+                                                    📄 View Document
+                                                </a>
+                                            )}
+                                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     )}
                 </div>
             )}

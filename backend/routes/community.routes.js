@@ -150,7 +150,8 @@ router.post('/posts/:id/vote', protect, (req, res, next) => {
         }
 
         const voters = post.voters || [];
-        const alreadyVoted = voters.includes(req.user.id);
+        const userId = req.user.id || req.user.userId;
+        const alreadyVoted = voters.includes(userId);
 
         let newVotes;
         let newVoters;
@@ -158,12 +159,12 @@ router.post('/posts/:id/vote', protect, (req, res, next) => {
 
         if (alreadyVoted) {
             // Remove vote (toggle off)
-            newVoters = voters.filter(v => v !== req.user.id);
+            newVoters = voters.filter(v => v !== userId);
             newVotes = Math.max(0, (post.votes || 0) - 1);
             action = 'removed';
         } else {
             // Add vote
-            newVoters = [...voters, req.user.id];
+            newVoters = [...voters, userId];
             newVotes = (post.votes || 0) + 1;
             action = 'added';
         }
@@ -347,7 +348,9 @@ router.post('/petitions/:id/sign', protect, (req, res, next) => {
         }
 
         const signers = petition.signers || [];
-        if (signers.includes(req.user.id)) {
+        const userId = req.user.id || req.user.userId;
+
+        if (signers.includes(userId)) {
             return res.status(409).json({
                 success: false, data: null,
                 message: 'You have already signed this petition.',
@@ -355,10 +358,10 @@ router.post('/petitions/:id/sign', protect, (req, res, next) => {
             });
         }
 
-        const newSigners = [...signers, req.user.id];
+        const newSigners = [...signers, userId];
         const newCount = (petition.petitionCount || 0) + 1;
         const newVotes = (petition.votes || 0) + 1;
-        const newVoters = [...(petition.voters || []), req.user.id];
+        const newVoters = [...(petition.voters || []), userId];
 
         // Check if petition reached target
         const targetReached = newCount >= (petition.targetSignatures || 1000);

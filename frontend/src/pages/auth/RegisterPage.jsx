@@ -64,7 +64,7 @@ export default function RegisterPage() {
     };
 
     const handleKyc = async () => {
-        if (!aadhaar || aadhaar.replace(/\s/g,'').length < 12) { return; }
+        if (!aadhaar || aadhaar.replace(/\s/g, '').length < 12) { return; }
         setKycVerifying(true);
         await new Promise(r => setTimeout(r, 1800));
         setKycVerifying(false);
@@ -138,7 +138,7 @@ export default function RegisterPage() {
                                     { key: 'email', icon: <MdEmail />, type: 'email', placeholder: 'Email Address *', required: true },
                                     { key: 'password', icon: <MdLock />, type: 'password', placeholder: 'Create Password *', required: true },
                                     { key: 'age', icon: <MdCake />, type: 'number', placeholder: 'Age' },
-                                    { key: 'income', icon: <MdAttachMoney />, type: 'number', placeholder: 'Annual Income (₹)' },
+                                    { key: 'income', icon: <span style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: '1.2rem', marginTop: -2 }}>₹</span>, type: 'number', placeholder: 'Annual Income (₹)' },
                                 ].map(f => (
                                     <div key={f.key} className="auth-input-group">
                                         <span className="auth-input-icon">{f.icon}</span>
@@ -222,7 +222,7 @@ export default function RegisterPage() {
                                         )}
                                     </div>
                                     <button className="btn-teal" style={{ width: '100%', justifyContent: 'center' }}
-                                        disabled={kycVerifying || aadhaar.replace(/\s/g,'').length < 12 || !idUploaded}
+                                        disabled={kycVerifying || aadhaar.replace(/\s/g, '').length < 12 || !idUploaded}
                                         onClick={handleKyc}>
                                         {kycVerifying ? (
                                             <span style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>

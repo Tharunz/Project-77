@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics, MdShield, MdMap, MdClose, MdBookmark, MdStar } from 'react-icons/md';
-import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail, apiGetMySchemeApplications, apiGetBookmarkedSchemes } from '../../services/api.service';
+import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail, apiGetMySchemeApplications, apiGetBookmarkedSchemes, apiFetch } from '../../services/api.service';
 
 const STATUS_ICONS = { Pending: <MdHourglassEmpty />, Resolved: <MdCheckCircle />, Critical: <MdWarning />, 'In Progress': <MdEdit /> };
 const STATUS_COLORS = { Pending: '#F59E0B', Resolved: '#00C896', Critical: '#EF4444', 'In Progress': '#3B82F6' };
@@ -21,6 +21,8 @@ export default function CitizenDashboard() {
     const [dismissedAlert, setDismissedAlert] = useState(false);
     const [schemeApplications, setSchemeApplications] = useState([]);
     const [bookmarks, setBookmarks] = useState([]);
+    const [ciScore, setCiScore] = useState(null);
+    const [ciLevel, setCiLevel] = useState(null);
 
     useEffect(() => {
         const load = async () => {
@@ -41,6 +43,15 @@ export default function CitizenDashboard() {
                 setSchemeApplications(appliedApps);
                 if (bk.success && Array.isArray(bk.data)) setBookmarks(bk.data);
 
+                // Fetch CI Score from dedicated endpoint
+                try {
+                    const scoreRes = await apiFetch('/citizen/score');
+                    if (scoreRes.success && scoreRes.data) {
+                        setCiScore(scoreRes.data.ciScore || scoreRes.data.janShaktiScore || scoreRes.data.score);
+                        setCiLevel(scoreRes.data.level);
+                    }
+                } catch (_) { }
+
                 // Pass applied schemeIds so benefit gap reflects real claimed count
                 const claimedIds = appliedApps.map(a => a.schemeId).filter(Boolean);
                 const gp = await apiGetBenefitGap(claimedIds);
@@ -59,14 +70,14 @@ export default function CitizenDashboard() {
                     const stateAlert = alerts.data.find(a => !a.prevented && a.urgency === 'critical' && (!userState || a.state === userState || userState === a.state));
                     if (stateAlert) setPresevaAlert(stateAlert);
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             // Load heatmap/distress data for user's state
             if (user?.state) {
                 try {
                     const hd = await apiGetHeatmapStateDetail(user.state);
                     if (hd.success && hd.data) setDistressData(hd.data);
-                } catch (_) {}
+                } catch (_) { }
             }
         };
         load();
@@ -142,12 +153,15 @@ export default function CitizenDashboard() {
                     </div>
                     {/* CI Score badge */}
                     <Link to="/citizen/engagement" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                        <div style={{ background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 12, padding: '12px 16px', textAlign: 'center', minWidth: 90, transition: 'transform 0.2s', cursor: 'pointer' }}
+                        <div style={{ background: ciScore >= 60 ? 'rgba(0,200,150,0.1)' : 'rgba(255,107,44,0.08)', border: `1px solid ${ciScore >= 60 ? 'rgba(0,200,150,0.35)' : 'rgba(255,107,44,0.25)'}`, borderRadius: 12, padding: '12px 16px', textAlign: 'center', minWidth: 90, transition: 'transform 0.2s', cursor: 'pointer', position: 'relative' }}
                             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
                             onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                            <MdStar style={{ color: '#00C896', fontSize: '1.3rem' }} />
-                            <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.3rem', fontWeight: 900, color: '#00C896', lineHeight: 1, marginTop: 4 }}>{user?.ciScore || user?.janShaktiScore || 0}</div>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--teal)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>CI Score</div>
+                            <MdStar style={{ color: ciScore >= 60 ? '#00C896' : '#FF6B2C', fontSize: '1.3rem' }} />
+                            <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.3rem', fontWeight: 900, color: ciScore >= 60 ? '#00C896' : '#FF6B2C', lineHeight: 1, marginTop: 4 }}>
+                                {ciScore !== null ? ciScore : (user?.ciScore || user?.janShaktiScore || '...')}
+                            </div>
+                            <div style={{ fontSize: '0.6rem', color: ciScore >= 60 ? 'var(--teal)' : 'var(--saffron)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>CI Score</div>
+                            {ciLevel && <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: 1 }}>{ciLevel}</div>}
                         </div>
                     </Link>
                 </div>
@@ -276,8 +290,8 @@ export default function CitizenDashboard() {
                             transition: 'all 0.2s ease',
                             position: 'relative', overflow: 'hidden'
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 32px ${action.color}20`; e.currentTarget.style.borderColor = `${action.color}50`; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = `${action.color}25`; }}>
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 32px ${action.color}20`; e.currentTarget.style.borderColor = `${action.color}50`; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = `${action.color}25`; }}>
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${action.color}, transparent)` }} />
                             <div style={{ width: 44, height: 44, borderRadius: 12, background: `${action.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: action.color }}>{action.icon}</div>
                             <div>

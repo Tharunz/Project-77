@@ -101,7 +101,7 @@ export default function GrievanceManagement() {
         try {
             const res = await apiSummarizeGrievance(selected.id);
             if (res.success && res.data) setAiSummary(res.data);
-        } catch (_) {}
+        } catch (_) { }
         setAiLoading(false);
     };
 
@@ -285,11 +285,37 @@ export default function GrievanceManagement() {
                                     <span style={{ marginLeft: 8, fontSize: '0.72rem', fontWeight: 700, background: 'rgba(239,68,68,0.15)', color: '#F87171', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, padding: '1px 7px' }}>🎤 Audio Grievance</span>
                                 )}
                             </p>
-                            {/* Audio player — shown when grievance has an audio document */}
+                            {/* Audio player */}
                             {selected.documents?.some(d => d.mimetype?.startsWith('audio/') || d.url?.includes('.webm') || d.url?.includes('.ogg') || d.url?.includes('.mp3')) && (
                                 <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 10 }}>
                                     <p style={{ fontSize: '0.72rem', color: '#F87171', fontWeight: 700, marginBottom: 6 }}>🎤 Audio Recording</p>
                                     <audio controls src={selected.documents.find(d => d.mimetype?.startsWith('audio/') || d.url?.includes('.webm'))?.url} style={{ width: '100%', height: 36 }} />
+                                </div>
+                            )}
+                            {/* Document Viewer */}
+                            {selected.documents?.filter(d => !d.mimetype?.startsWith('audio/') && !d.url?.includes('.webm') && !d.url?.includes('.ogg') && !d.url?.includes('.mp3')).length > 0 && (
+                                <div style={{ marginBottom: 10 }}>
+                                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: 8 }}>📎 Attached Documents ({selected.documents.filter(d => !d.mimetype?.startsWith('audio/')).length})</p>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                        {selected.documents.filter(d => !d.mimetype?.startsWith('audio/') && !d.url?.includes('.webm')).map((doc, i) => {
+                                            const url = doc.url || doc.path;
+                                            const name = doc.originalName || doc.filename || doc.name || `Document ${i + 1}`;
+                                            const isImage = doc.mimetype?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+                                            return (
+                                                <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, overflow: 'hidden', maxWidth: isImage ? 160 : 180 }}>
+                                                    {isImage && url ? (
+                                                        <a href={url} target="_blank" rel="noreferrer">
+                                                            <img src={url} alt={name} style={{ width: '100%', height: 80, objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none'; }} />
+                                                        </a>
+                                                    ) : null}
+                                                    <div style={{ padding: '6px 8px' }}>
+                                                        <p style={{ fontSize: '0.68rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 4 }}>{name}</p>
+                                                        {url && <a href={url} target="_blank" rel="noreferrer" style={{ fontSize: '0.68rem', color: '#60A5FA', textDecoration: 'none' }}>{isImage ? '🔍 View Full' : '📄 Open'}</a>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             )}
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>

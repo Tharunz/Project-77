@@ -21,6 +21,9 @@ const {
 const { protect } = require('../middleware/auth.middleware');
 const db = require('../db/database');
 
+// Admin emails — must match auth.middleware.js
+const ADMIN_EMAILS = ['admin@gov.in'];
+
 // ─── POST /api/auth/register ──────────────────────────────────────────────────
 router.post('/register', async (req, res, next) => {
     try {
@@ -131,16 +134,19 @@ router.post('/login', async (req, res, next) => {
         if (isCognito()) {
             try {
                 const tokens = await loginUserCognito(email, password);
-                // Return a local JWT too, so existing frontend token handling works
-                const localToken = generateToken({ id: email, email, role: 'citizen', name: email.split('@')[0] });
+
+                // Determine role based on email (must match auth.middleware.js logic)
+                const role = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'citizen';
+
+                // CRITICAL: Store IdToken as `token` — middleware verifies IdToken (RS256)
+                // IdToken contains: sub, email, name, cognito:groups, custom:role
                 return res.status(200).json({
                     success: true,
                     data: {
-                        token: localToken,          // backward-compatible
+                        token: tokens.idToken,         // ← IdToken for middleware verification
                         accessToken: tokens.accessToken,
-                        idToken: tokens.idToken,
                         refreshToken: tokens.refreshToken,
-                        user: { email, role: 'citizen' }
+                        user: { email, role, name: email.split('@')[0] }
                     },
                     message: `Welcome back!`,
                     timestamp: new Date().toISOString()
@@ -200,13 +206,24 @@ router.post('/login', async (req, res, next) => {
 router.get('/profile', protect, (req, res, next) => {
     try {
         const db_instance = db.getDb();
-        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        // req.user.id works for both local JWT and Cognito (where id = sub)
+        const userId = req.user.id || req.user.userId;
+        const user = db_instance.get('users').find(u => u.id === userId || u.email === req.user.email).value();
 
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                data: null,
-                message: 'User not found.',
+            // Cognito mode: user may not exist in local DB — return token claims
+            return res.status(200).json({
+                success: true,
+                data: {
+                    id: req.user.id,
+                    userId: req.user.userId,
+                    email: req.user.email,
+                    name: req.user.name || 'Citizen',
+                    role: req.user.role,
+                    janShaktiScore: 50,
+                    stats: { totalGrievances: 0, resolvedGrievances: 0, pendingGrievances: 0, schemesMatched: 0 }
+                },
+                message: 'Profile fetched from token.',
                 timestamp: new Date().toISOString()
             });
         }
@@ -214,7 +231,7 @@ router.get('/profile', protect, (req, res, next) => {
         const { password: _, ...userWithoutPassword } = user;
 
         // Get user's grievance stats
-        const grievances = db_instance.get('grievances').filter({ userId: user.id }).value();
+        const grievances = db_instance.get('grievances').filter(g => g.userId === userId || g.userId === req.user.email).value();
         const resolved = grievances.filter(g => g.status === 'Resolved').length;
         const schemes = db_instance.get('schemes').filter({ isActive: true }).value();
         const schemesMatched = schemes.filter(s => {
@@ -338,21 +355,31 @@ router.get('/data-export', protect, (req, res, next) => {
 });
 
 // ─── DELETE /api/auth/account ─────────────────────────────────────────────────
-// → AWS swap: Cognito deleteUser + S3 delete + DynamoDB delete
 router.delete('/account', protect, async (req, res, next) => {
     try {
+        const userId = req.user.id || req.user.userId;
         const db_instance = db.getDb();
-        const user = db_instance.get('users').find({ id: req.user.id }).value();
-        if (!user) {
-            return res.status(404).json({ success: false, data: null, message: 'User not found.', timestamp: new Date().toISOString() });
+
+        // ── Cognito: delete user from Cognito user pool ─────────────────────
+        if (process.env.ENABLE_COGNITO === 'true') {
+            try {
+                const { AdminDeleteUserCommand } = require('@aws-sdk/client-cognito-identity-provider');
+                const { cognitoClient } = require('../config/aws.config');
+                await cognitoClient.send(new AdminDeleteUserCommand({
+                    UserPoolId: process.env.COGNITO_USER_POOL_ID,
+                    Username: req.user.email
+                }));
+                console.log(`[COGNITO] Deleted user: ${req.user.email}`);
+            } catch (cogErr) {
+                console.error('[COGNITO] Delete user error:', cogErr.message);
+                // Continue to delete local data even if Cognito fails
+            }
         }
 
-        // Delete all user grievances
-        db_instance.get('grievances').remove({ userId: req.user.id }).write();
-        // Delete all notifications
-        db_instance.get('notifications').remove({ userId: req.user.id }).write();
-        // Delete user account
-        db_instance.get('users').remove({ id: req.user.id }).write();
+        // ── Local DB cleanup ────────────────────────────────────────────────
+        db_instance.get('grievances').remove(g => g.userId === userId || g.userId === req.user.email).write();
+        db_instance.get('notifications').remove(n => n.userId === userId || n.userId === req.user.email).write();
+        db_instance.get('users').remove(u => u.id === userId || u.email === req.user.email).write();
 
         return res.status(200).json({
             success: true,

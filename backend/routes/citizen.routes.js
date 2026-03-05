@@ -62,6 +62,32 @@ router.get('/score', (req, res, next) => {
     }
 });
 
+// Alias route so both /score and /ci-score work
+router.get('/ci-score', (req, res, next) => {
+    const db_instance = db.getDb();
+    const userId = req.user.id;
+    let score = 50;
+    const grievances = db_instance.get('grievances').filter({ userId }).value() || [];
+    const resolvedGrievances = grievances.filter(g => g.status === 'Resolved');
+    score += grievances.length * 10;
+    score += resolvedGrievances.length * 5;
+    score = Math.min(score, 100);
+    const level = score >= 80 ? 'Platinum' : score >= 60 ? 'Gold' : score >= 40 ? 'Silver' : 'Bronze';
+    return res.status(200).json({
+        success: true,
+        data: {
+            score,
+            ciScore: score,
+            level,
+            totalGrievances: grievances.length,
+            resolvedGrievances: resolvedGrievances.length,
+            breakdown: { baseScore: 50, grievancePoints: grievances.length * 10, resolutionPoints: resolvedGrievances.length * 5 }
+        },
+        message: 'CI Score calculated.',
+        timestamp: new Date().toISOString()
+    });
+});
+
 // ─── 32. Seva Mirror citizen footprint API ────────────────────────────────────
 router.get('/footprint', (req, res, next) => {
     try {
@@ -123,8 +149,8 @@ router.get('/footprint', (req, res, next) => {
 router.get('/predict-future', (req, res, next) => {
     try {
         const db_instance = db.getDb();
-        const userId = req.user.id;
-        const user = db_instance.get('users').find({ id: userId }).value();
+        const userId = req.user.id || req.user.userId;
+        const user = db_instance.get('users').find(u => u.id === userId || u.email === req.user.email).value();
 
         if (!user) {
             return res.status(404).json({

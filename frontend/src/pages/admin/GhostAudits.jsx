@@ -41,9 +41,9 @@ export default function GhostAudits() {
             <div className="section-header" style={{ marginBottom: 32, alignItems: 'flex-start' }}>
                 <div>
                     <h1 className="dash-title"><MdSecurity className="icon" /> AI Ghost Audits</h1>
-                    <p className="dash-subtitle">Autonomous officer accountability & ticket closure verification</p>
+                    <p className="dash-subtitle">Autonomous officer accountability &amp; ticket closure verification</p>
                 </div>
-                <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                     <div className="glass-card" style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', minWidth: 160 }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Audit Accuracy</span>
                         <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--teal)' }}>98.4%</span>

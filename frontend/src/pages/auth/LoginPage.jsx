@@ -28,8 +28,8 @@ export default function LoginPage() {
     };
 
     const quickFill = (type) => {
-        if (type === 'admin') setForm({ email: 'admin@gov.in', password: 'admin123' });
-        else setForm({ email: 'ramesh@gmail.com', password: 'ramesh123' });
+        if (type === 'admin') setForm({ email: 'admin@gov.in', password: 'Admin@12345' });
+        else setForm({ email: 'ramesh@gmail.com', password: 'Ramesh@12345' });
     };
 
     return (

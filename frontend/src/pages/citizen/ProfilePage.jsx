@@ -330,28 +330,28 @@ export default function ProfilePage() {
 
             {/* Bookmarked Schemes */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>
-                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Bookmarked Schemes {bookmarks.length > 0 && `(${bookmarks.length})`}</h4>
-                    {bookmarks.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                            <MdBookmark style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
-                            No bookmarked schemes yet.<br />
-                            <Link to="/citizen/schemes" style={{ color: 'var(--saffron)', fontWeight: 600 }}>Browse Schemes →</Link>
-                        </div>
-                    )}
-                    {bookmarks.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {bookmarks.map(s => (
-                                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
-                                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: catColors[s.category] || '#6B7280', flexShrink: 0 }} />
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.category} • {s.state}</p>
-                                    </div>
-                                    <button onClick={() => handleUnbookmark(s.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, fontSize: '1rem' }} title="Remove bookmark">✕</button>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Bookmarked Schemes {bookmarks.length > 0 && `(${bookmarks.length})`}</h4>
+                {bookmarks.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        <MdBookmark style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
+                        No bookmarked schemes yet.<br />
+                        <Link to="/citizen/schemes" style={{ color: 'var(--saffron)', fontWeight: 600 }}>Browse Schemes →</Link>
+                    </div>
+                )}
+                {bookmarks.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {bookmarks.map(s => (
+                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: catColors[s.category] || '#6B7280', flexShrink: 0 }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.category} • {s.state}</p>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                                <button onClick={() => handleUnbookmark(s.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, fontSize: '1rem' }} title="Remove bookmark">✕</button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Data & Privacy */}
@@ -389,23 +389,23 @@ export default function ProfilePage() {
 
             {/* Delete Account Modal */}
             {showDeleteModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-                    <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+                    <div style={{ background: '#0D1117', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 12, padding: 32, maxWidth: 420, width: '90%', display: 'flex', flexDirection: 'column', gap: 16, position: 'relative', zIndex: 10000, opacity: 1 }}>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '3rem', marginBottom: 8 }}>⚠️</div>
-                            <h2 style={{ fontSize: '1.2rem', color: 'var(--red)', marginBottom: 8 }}>Delete Account Permanently</h2>
-                            <p style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                                This action is <strong style={{ color: 'var(--red)' }}>irreversible</strong>. All your grievances, data, and profile will be permanently deleted. You will be logged out immediately.
+                            <h2 style={{ fontSize: '1.1rem', color: '#EF4444', fontWeight: 700, marginBottom: 8 }}>Delete Account Permanently</h2>
+                            <p style={{ fontSize: '0.83rem', color: '#CBD5E1', lineHeight: 1.6 }}>
+                                This action is <strong style={{ color: '#EF4444' }}>irreversible</strong>. All your grievances, data, and profile will be permanently deleted. You will be logged out immediately.
                             </p>
                         </div>
                         <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: 14 }}>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 8 }}>Type <strong style={{ color: 'var(--red)' }}>DELETE</strong> to confirm:</p>
+                            <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginBottom: 8 }}>Type <strong style={{ color: '#EF4444' }}>DELETE</strong> to confirm:</p>
                             <input className="form-input" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="Type DELETE here" style={{ borderColor: deleteConfirm === 'DELETE' ? 'rgba(239,68,68,0.6)' : undefined }} />
                         </div>
                         <div style={{ display: 'flex', gap: 10 }}>
-                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }}>Cancel</button>
+                            <button style={{ flex: 1, padding: '10px 24px', borderRadius: 8, background: 'transparent', color: '#94A3B8', border: '1px solid #334155', cursor: 'pointer', fontWeight: 600, fontFamily: 'Inter' }} onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }}>Cancel</button>
                             <button onClick={handleDelete} disabled={deleteConfirm !== 'DELETE' || deleting}
-                                style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none', background: deleteConfirm === 'DELETE' ? '#DC2626' : 'rgba(239,68,68,0.2)', color: deleteConfirm === 'DELETE' ? 'white' : 'rgba(239,68,68,0.4)', fontWeight: 700, fontSize: '0.85rem', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontFamily: 'Inter' }}>
+                                style={{ flex: 1, padding: '10px 24px', borderRadius: 8, border: 'none', background: deleteConfirm === 'DELETE' ? '#EF4444' : 'rgba(239,68,68,0.2)', color: deleteConfirm === 'DELETE' ? 'white' : 'rgba(239,68,68,0.4)', fontWeight: 600, fontSize: '0.85rem', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontFamily: 'Inter' }}>
                                 {deleting ? 'Deleting...' : '🗑 Delete Forever'}
                             </button>
                         </div>

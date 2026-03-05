@@ -81,7 +81,8 @@ export default function SchemeDiscovery() {
         apiGetBookmarkedSchemes().then(res => {
             if (res.success && Array.isArray(res.data)) {
                 const bm = {};
-                res.data.forEach(s => { bm[s.id] = true; });
+                // Server returns objects with schemeId, legacy may return id
+                res.data.forEach(s => { bm[s.schemeId || s.id] = true; });
                 setBookmarks(bm);
             }
         });
@@ -94,13 +95,21 @@ export default function SchemeDiscovery() {
         });
     }, []);
 
-    const handleBookmark = async (e, id) => {
+    const handleBookmark = async (e, scheme) => {
         e.stopPropagation();
+        const id = scheme.id;
         if (bookmarks[id]) {
             await apiUnbookmarkScheme(id);
             setBookmarks(bm => { const n = { ...bm }; delete n[id]; return n; });
         } else {
-            await apiBookmarkScheme(id);
+            await apiBookmarkScheme({
+                schemeId: id,
+                name: scheme.name,
+                category: scheme.category,
+                state: scheme.state,
+                description: scheme.description || '',
+                benefit: scheme.benefit || ''
+            });
             setBookmarks(bm => ({ ...bm, [id]: true }));
         }
     };
@@ -221,7 +230,7 @@ export default function SchemeDiscovery() {
                                 <span style={{ background: `${catColors[s.category] || '#6B7280'}15`, color: catColors[s.category] || '#6B7280', border: `1px solid ${catColors[s.category] || '#6B7280'}30`, padding: '3px 10px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700 }}>{s.category}</span>
                                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                     <span className={`badge ${s.isActive ? 'badge-resolved' : 'badge-pending'}`}>{s.isActive ? 'Active' : 'Closed'}</span>
-                                    <button onClick={e => handleBookmark(e, s.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: bookmarks[s.id] ? '#8B5CF6' : 'var(--text-muted)', fontSize: '1.1rem', padding: 2 }} title={bookmarks[s.id] ? 'Remove bookmark' : 'Bookmark'}>
+                                    <button onClick={e => handleBookmark(e, s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: bookmarks[s.id] ? '#8B5CF6' : 'var(--text-muted)', fontSize: '1.1rem', padding: 2 }} title={bookmarks[s.id] ? 'Remove bookmark' : 'Bookmark'}>
                                         {bookmarks[s.id] ? <MdBookmark /> : <MdBookmarkBorder />}
                                     </button>
                                     <button onClick={e => handleShare(e, s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: 2 }} title="Share"><MdShare /></button>
