@@ -16,6 +16,15 @@
         /* GPU layer promotion */
         will-change: transform;
         contain: layout style;
+        /* Soft 4-sided fade — eliminates hard rectangular clip at hero bounds */
+        -webkit-mask-image:
+            linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, black 5%,  black 95%, transparent 100%);
+        -webkit-mask-composite: destination-in;
+        mask-image:
+            linear-gradient(to bottom, transparent 0%, black 10%, black 88%, transparent 100%),
+            linear-gradient(to right,  transparent 0%, black 5%,  black 95%, transparent 100%);
+        mask-composite: intersect;
     }
 }
 

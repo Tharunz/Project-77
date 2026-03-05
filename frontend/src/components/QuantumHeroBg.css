@@ -5,6 +5,14 @@
     z-index: 0;
     pointer-events: none;
     background: transparent;
+    -webkit-mask-image:
+        linear-gradient(to bottom, transparent 0%, black 12%, black 82%, transparent 100%),
+        linear-gradient(to right,  transparent 0%, black 6%,  black 94%, transparent 100%);
+    -webkit-mask-composite: destination-in;
+    mask-image:
+        linear-gradient(to bottom, transparent 0%, black 12%, black 82%, transparent 100%),
+        linear-gradient(to right,  transparent 0%, black 6%,  black 94%, transparent 100%);
+    mask-composite: intersect;
 }
 
 .hq-canvas {
