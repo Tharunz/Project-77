@@ -67,6 +67,11 @@ const dynamo = {
     async put(tableName, item) {
         const client = getDynamoClient();
         await client.send(new PutCommand({ TableName: tableName, Item: item }));
+        // Fire stream simulation (non-blocking)
+        try {
+            const { handleStreamEvent } = require('./streams.service');
+            handleStreamEvent('INSERT', tableName, item).catch(() => { });
+        } catch (_) { }
         return item;
     },
 

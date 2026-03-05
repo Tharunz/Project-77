@@ -1,9 +1,9 @@
 // ============================================
 // preseva.service.js — Predictive Grievance Prevention
-// → AWS swap: Replace with Amazon SageMaker endpoint calls
 // ============================================
 
 const db = require('../db/database');
+const { publishEvent } = require('./events.service');
 
 const THREAT_CATEGORIES = ['Water Supply', 'Infrastructure', 'Healthcare', 'Education', 'Agriculture'];
 const HIGH_RISK_STATES = ['Uttar Pradesh', 'Bihar', 'Rajasthan', 'Maharashtra', 'West Bengal'];
@@ -121,4 +121,82 @@ const fileReport = (reportData, userId) => {
     return alert;
 };
 
-module.exports = { getPredictions, getAlerts, getThreatCorridors, fileReport };
+// =============================================================================
+// PRESEVA LAMBDA INTEGRATION
+// =============================================================================
+
+const isPresevaLambda = () => process.env.ENABLE_PRESEVA_LAMBDA === 'true';
+
+// ─── Lazy Lambda client ────────────────────────────────────────────────────────
+let _lambdaClient = null;
+const getLambdaClient = () => {
+    if (!_lambdaClient) {
+        const { LambdaClient } = require('@aws-sdk/client-lambda');
+        const { awsConfig } = require('../config/aws.config');
+        _lambdaClient = new LambdaClient(awsConfig);
+    }
+    return _lambdaClient;
+};
+
+/**
+ * runPreSevaAnalysis()
+ * Invokes ncie-preseva-engine Lambda function and processes returned alerts.
+ */
+const runPreSevaAnalysis = async () => {
+    if (!isPresevaLambda()) {
+        // Return existing mock/local predictions when Lambda is disabled
+        return getPredictions();
+    }
+
+    const { InvokeCommand } = require('@aws-sdk/client-lambda');
+    const client = getLambdaClient();
+
+    const response = await client.send(new InvokeCommand({
+        FunctionName: process.env.PRESEVA_LAMBDA_ARN,
+        InvocationType: 'RequestResponse',
+        Payload: JSON.stringify({})
+    }));
+
+    const payloadStr = Buffer.from(response.Payload).toString();
+    const lambdaResult = JSON.parse(payloadStr);
+    const { alerts } = JSON.parse(lambdaResult.body);
+
+    const db_instance = db.getDb();
+
+    // Process each alert
+    for (const alert of alerts) {
+        // Save to DynamoDB (preSevaAlerts collection)
+        const existingAlert = db_instance.get('preSevaAlerts')
+            .find(a => a.state === alert.state && a.category === alert.category)
+            .value();
+
+        if (!existingAlert) {
+            db_instance.get('preSevaAlerts').push({
+                ...alert,
+                type: 'lambda_analysis',
+                prevented: false,
+                status: 'active'
+            }).write();
+        }
+
+        // Fire EventBridge (non-blocking)
+        publishEvent('PreSevaAlert', {
+            alertId: alert.alertId,
+            state: alert.state,
+            category: alert.category,
+            probability: alert.probability,
+            riskLevel: alert.riskLevel
+        }).catch(() => { });
+
+        // Push to AppSync (non-blocking)
+        try {
+            const { notifyNewAlert } = require('./realtime.service');
+            notifyNewAlert(alert).catch(() => { });
+        } catch (_) { }
+    }
+
+    return alerts;
+};
+
+module.exports = { getPredictions, getAlerts, getThreatCorridors, fileReport, runPreSevaAnalysis, isPresevaLambda };
+

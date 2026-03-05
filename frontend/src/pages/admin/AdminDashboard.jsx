@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
     ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, Legend
@@ -76,6 +76,8 @@ export default function AdminDashboard() {
     const [topStates, setTopStates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [presevaAlerts, setPresevaAlerts] = useState([]);
+    const [liveGrievances, setLiveGrievances] = useState([]);
+    const wsClientRef = useRef(null);
 
     const loadData = async () => {
         setLoading(true);
@@ -101,6 +103,63 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    // ─── AppSync Real-time Subscription ───────────────────────────────────
+    useEffect(() => {
+        const apiKey = import.meta.env.VITE_APPSYNC_API_KEY;
+        const wssUrl = import.meta.env.VITE_APPSYNC_WSS_ENDPOINT;
+        if (!apiKey || !wssUrl) return; // gracefully skip if not configured
+
+        let unsub1 = null;
+        let unsub2 = null;
+
+        import('graphql-ws').then(({ createClient }) => {
+            wsClientRef.current = createClient({
+                url: wssUrl,
+                connectionParams: { 'x-api-key': apiKey }
+            });
+
+            unsub1 = wsClientRef.current.subscribe(
+                { query: `subscription { onNewGrievance { grievanceId title status sentiment priority state category } }` },
+                {
+                    next: ({ data }) => {
+                        if (data?.onNewGrievance) {
+                            const g = data.onNewGrievance;
+                            setLiveGrievances(prev => [g, ...prev].slice(0, 50));
+                            setFeed(prev => [{
+                                id: `live-${g.grievanceId}`,
+                                type: 'new',
+                                message: `🔴 New grievance filed: "${g.title}" (${g.priority})`,
+                                state: g.state,
+                                timestamp: new Date().toISOString()
+                            }, ...prev].slice(0, 20));
+                        }
+                    },
+                    error: (err) => console.warn('[AppSync]', err),
+                    complete: () => { }
+                }
+            );
+
+            unsub2 = wsClientRef.current.subscribe(
+                { query: `subscription { onNewPreSevaAlert { alertId state probability category riskLevel } }` },
+                {
+                    next: ({ data }) => {
+                        if (data?.onNewPreSevaAlert) {
+                            setPresevaAlerts(prev => [data.onNewPreSevaAlert, ...prev].slice(0, 10));
+                        }
+                    },
+                    error: console.warn,
+                    complete: () => { }
+                }
+            );
+        }).catch(() => { }); // graphql-ws import failure is non-fatal
+
+        return () => {
+            unsub1?.();
+            unsub2?.();
+            wsClientRef.current?.dispose();
+        };
     }, []);
 
     const [isResizing, setIsResizing] = useState(false);

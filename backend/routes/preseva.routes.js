@@ -9,7 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth.middleware');
-const { getPredictions, getAlerts, getThreatCorridors, fileReport } = require('../services/preseva.service');
+const { getPredictions, getAlerts, getThreatCorridors, fileReport, runPreSevaAnalysis, isPresevaLambda } = require('../services/preseva.service');
 const db = require('../db/database');
 
 // ─── GET /api/preseva/predictions (admin) ─────────────────────────────────────
@@ -187,6 +187,23 @@ router.patch('/alerts/:id/mark-prevented', protect, adminOnly, (req, res, next) 
             success: true,
             data: db_instance.get('preSevaAlerts').find({ id: req.params.id }).value(),
             message: 'Alert marked as prevented.',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── GET /api/preseva/run (Lambda trigger — admin + demo) ────────────────────
+router.get('/run', protect, adminOnly, async (req, res, next) => {
+    try {
+        console.log('[PreSeva] Manual analysis triggered via API...');
+        const alerts = await runPreSevaAnalysis();
+        return res.status(200).json({
+            success: true,
+            data: alerts,
+            message: `PreSeva analysis complete. ${alerts.length} alert(s) generated from ${isPresevaLambda() ? 'AWS Lambda' : 'local engine'}.`,
+            source: isPresevaLambda() ? 'AWS_LAMBDA' : 'LOCAL',
             timestamp: new Date().toISOString()
         });
     } catch (err) {

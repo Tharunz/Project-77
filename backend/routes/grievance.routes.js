@@ -17,6 +17,9 @@ const { analyzeSentiment } = require('../services/sentiment.service');
 const { upload, getFileUrl, processUploadedFiles } = require('../services/storage.service');
 const { extractFromDocument } = require('../services/ocr.service');
 const { createNotification, sendGrievanceFiledEmail, sendStatusUpdateEmail } = require('../services/notification.service');
+const { publishEvent } = require('../services/events.service');
+const { notifyNewGrievance } = require('../services/realtime.service');
+const { logGrievanceFiled } = require('../services/logger.service');
 const db = require('../db/database');
 
 // ─── POST /api/grievance/file ─────────────────────────────────────────────────
@@ -114,6 +117,22 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
         if (user?.email) {
             sendGrievanceFiledEmail(user, grievance).catch(() => { });
         }
+
+        // Publish civic event (non-blocking — does not block the response)
+        publishEvent('GrievanceFiled', {
+            grievanceId: grievance.id,
+            citizenId: req.user.id,
+            state: grievance.state,
+            category: grievance.category,
+            sentiment: grievance.sentiment,
+            priority: grievance.priority
+        }).catch(() => { });
+
+        // Push to AppSync for real-time admin dashboard (non-blocking)
+        notifyNewGrievance(grievance).catch(() => { });
+
+        // Log to CloudWatch (non-blocking)
+        logGrievanceFiled({ grievanceId: grievance.id, state: grievance.state, category: grievance.category, sentiment: grievance.sentiment, priority: grievance.priority }).catch(() => { });
 
         return res.status(201).json({
             success: true,
