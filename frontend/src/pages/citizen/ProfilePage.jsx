@@ -38,6 +38,20 @@ export default function ProfilePage() {
     const [kycMsg, setKycMsg] = useState(null);
     const [kycLoading, setKycLoading] = useState(false);
     const [mobileVerified, setMobileVerified] = useState(user?.mobileVerified || false);
+    // Secondary mobile
+    const [showSecondaryMobile, setShowSecondaryMobile] = useState(false);
+    const [secondaryPhone, setSecondaryPhone] = useState('');
+    const [secondaryOtpSent, setSecondaryOtpSent] = useState(false);
+    const [secondaryOtp, setSecondaryOtp] = useState('');
+    const [secondaryMsg, setSecondaryMsg] = useState(null);
+    // Email OTP verification
+    const [emailOtpModal, setEmailOtpModal] = useState(null);
+    const [emailOtp, setEmailOtp] = useState('');
+    const [emailOtpMsg, setEmailOtpMsg] = useState(null);
+    const [emailOtpLoading, setEmailOtpLoading] = useState(false);
+    // Password OTP step
+    const [pwOtpStep, setPwOtpStep] = useState(false);
+    const [pwOtp, setPwOtp] = useState('');
 
     useEffect(() => {
         apiGetProfile().then(res => {
@@ -59,11 +73,31 @@ export default function ProfilePage() {
     }, []);
 
     const handleSave = async () => {
+        // If email changed, require email OTP verification first
+        if (form.email && form.email !== (user?.email || '')) {
+            setEmailOtpModal({ pendingEmail: form.email });
+            setEmailOtp('');
+            setEmailOtpMsg(null);
+            return;
+        }
         setSaving(true);
-        const res = await apiUpdateProfile({ name: form.name, state: form.state, age: form.age, income: form.income });
+        const res = await apiUpdateProfile({ name: form.name, email: form.email, state: form.state, age: form.age, income: form.income });
         setSaving(false);
         if (res.success && res.data) login({ ...user, ...res.data });
         else login({ ...user, ...form });
+        setEditMode(false);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+    };
+
+    const handleEmailOtpConfirm = async () => {
+        if (emailOtp !== '123456') { setEmailOtpMsg({ type: 'error', text: 'Invalid OTP. Demo: use 123456' }); return; }
+        setEmailOtpLoading(true);
+        const res = await apiUpdateProfile({ name: form.name, email: emailOtpModal.pendingEmail, state: form.state, age: form.age, income: form.income });
+        setEmailOtpLoading(false);
+        if (res.success && res.data) login({ ...user, ...res.data, email: emailOtpModal.pendingEmail });
+        else login({ ...user, ...form, email: emailOtpModal.pendingEmail });
+        setEmailOtpModal(null);
         setEditMode(false);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
@@ -88,12 +122,22 @@ export default function ProfilePage() {
     };
 
     const handlePasswordChange = async () => {
-        if (pwForm.newPw !== pwForm.confirm) { setPwMsg({ type: 'error', text: 'New passwords do not match.' }); return; }
-        if (pwForm.newPw.length < 6) { setPwMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
+        if (!pwOtpStep) {
+            if (pwForm.newPw === pwForm.current) { setPwMsg({ type: 'error', text: 'New password cannot be the same as your current password.' }); return; }
+            if (pwForm.newPw !== pwForm.confirm) { setPwMsg({ type: 'error', text: 'New passwords do not match.' }); return; }
+            if (pwForm.newPw.length < 6) { setPwMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
+            setPwSaving(true);
+            await apiSendOTP(user?.email);
+            setPwSaving(false);
+            setPwOtpStep(true);
+            setPwMsg({ type: 'success', text: 'OTP sent to your registered email. (Demo: use 123456)' });
+            return;
+        }
+        if (pwOtp !== '123456') { setPwMsg({ type: 'error', text: 'Invalid OTP. Demo: use 123456' }); return; }
         setPwSaving(true);
         const res = await apiChangePassword(pwForm.current, pwForm.newPw);
         setPwSaving(false);
-        if (res.success) { setPwMsg({ type: 'success', text: 'Password changed successfully!' }); setPwForm({ current: '', newPw: '', confirm: '' }); }
+        if (res.success) { setPwMsg({ type: 'success', text: 'Password changed successfully!' }); setPwForm({ current: '', newPw: '', confirm: '' }); setPwOtpStep(false); setPwOtp(''); }
         else setPwMsg({ type: 'error', text: res.message || 'Failed to change password.' });
     };
 
@@ -187,12 +231,38 @@ export default function ProfilePage() {
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <h4 style={{ fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7 }}><MdPhone style={{ color: 'var(--saffron)' }} /> Mobile Verification</h4>
-                    {!showKyc && <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setShowKyc(true)}>{mobileVerified ? 'Update Mobile' : 'Verify Now'}</button>}
+                    {mobileVerified && !showKyc && <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setShowSecondaryMobile(v => !v)}>{showSecondaryMobile ? 'Cancel' : '+ Add Secondary'}</button>}
+                    {!mobileVerified && !showKyc && <button className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setShowKyc(true)}>Verify Now</button>}
                 </div>
-                {!showKyc ? (
-                    <p style={{ fontSize: '0.82rem', color: mobileVerified ? 'var(--teal)' : 'var(--text-secondary)' }}>
-                        {mobileVerified ? `✓ Verified: +91 ${phone}` : 'Verify your mobile number to unlock additional features and receive SMS alerts.'}
-                    </p>
+
+                {mobileVerified && !showKyc ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(0,200,150,0.07)', border: '1px solid rgba(0,200,150,0.25)', borderRadius: 10, padding: '12px 16px' }}>
+                            <MdVerified style={{ color: 'var(--teal)', fontSize: '1.4rem', flexShrink: 0 }} />
+                            <div>
+                                <div style={{ fontWeight: 700, color: 'var(--teal)', fontSize: '0.88rem' }}>Mobile Number Verified</div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>+91 {phone ? phone.slice(0, 2) + '••••••' + phone.slice(-2) : '••••••••••'}</div>
+                            </div>
+                        </div>
+                        {showSecondaryMobile && (
+                            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 16, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Add Secondary Mobile</div>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <input className="form-input" placeholder="10-digit secondary number" value={secondaryPhone} onChange={e => setSecondaryPhone(e.target.value)} style={{ flex: 1 }} maxLength={10} />
+                                    <button className="btn-secondary" onClick={async () => { await apiSendOTP(secondaryPhone); setSecondaryOtpSent(true); setSecondaryMsg({ type: 'success', text: 'OTP sent! (Demo: 123456)' }); }} disabled={secondaryOtpSent}>Send OTP</button>
+                                </div>
+                                {secondaryOtpSent && (
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <input className="form-input" placeholder="Enter OTP (demo: 123456)" value={secondaryOtp} onChange={e => setSecondaryOtp(e.target.value)} style={{ flex: 1 }} maxLength={6} />
+                                        <button className="btn-primary" onClick={() => { if (secondaryOtp === '123456') { setSecondaryMsg({ type: 'success', text: '✓ Secondary number added!' }); setSecondaryOtpSent(false); setSecondaryPhone(''); setSecondaryOtp(''); } else setSecondaryMsg({ type: 'error', text: 'Invalid OTP' }); }}>Verify</button>
+                                    </div>
+                                )}
+                                {secondaryMsg && <p style={{ fontSize: '0.78rem', color: secondaryMsg.type === 'success' ? 'var(--teal)' : 'var(--red)' }}>{secondaryMsg.text}</p>}
+                            </div>
+                        )}
+                    </div>
+                ) : !showKyc ? (
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Verify your mobile number to unlock additional features and receive SMS alerts.</p>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div style={{ display: 'flex', gap: 8 }}>
@@ -219,12 +289,22 @@ export default function ProfilePage() {
                 </div>
                 {showPwSection && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {['current', 'newPw', 'confirm'].map((k, i) => (
-                            <input key={k} className="form-input" type="password" placeholder={i === 0 ? 'Current password' : i === 1 ? 'New password (min 6 chars)' : 'Confirm new password'}
-                                value={pwForm[k]} onChange={e => setPwForm(f => ({ ...f, [k]: e.target.value }))} />
-                        ))}
+                        {!pwOtpStep ? (
+                            ['current', 'newPw', 'confirm'].map((k, i) => (
+                                <input key={k} className="form-input" type="password" placeholder={i === 0 ? 'Current password' : i === 1 ? 'New password (min 6 chars)' : 'Confirm new password'}
+                                    value={pwForm[k]} onChange={e => setPwForm(f => ({ ...f, [k]: e.target.value }))} />
+                            ))
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>📧 Enter the OTP sent to your registered email to confirm this change.</p>
+                                <input className="form-input" placeholder="Enter OTP (demo: 123456)" value={pwOtp} onChange={e => setPwOtp(e.target.value)} maxLength={6} />
+                            </div>
+                        )}
                         {pwMsg && <p style={{ fontSize: '0.82rem', color: pwMsg.type === 'success' ? 'var(--teal)' : 'var(--red)' }}>{pwMsg.text}</p>}
-                        <button className="btn-primary" onClick={handlePasswordChange} disabled={pwSaving} style={{ alignSelf: 'flex-start' }}>{pwSaving ? 'Saving...' : <><MdLock /> Update Password</>}</button>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            {pwOtpStep && <button className="btn-secondary" style={{ fontSize: '0.82rem' }} onClick={() => { setPwOtpStep(false); setPwOtp(''); setPwMsg(null); }}>← Back</button>}
+                            <button className="btn-primary" onClick={handlePasswordChange} disabled={pwSaving} style={{ alignSelf: 'flex-start' }}>{pwSaving ? 'Sending OTP...' : pwOtpStep ? '✓ Confirm Change' : <><MdLock /> Continue →</>}</button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -261,6 +341,25 @@ export default function ProfilePage() {
                     </button>
                 </div>
             </div>
+
+            {/* Email OTP Verification Modal (F8) */}
+            {emailOtpModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,11,24,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+                    <div style={{ background: '#0D1B2E', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 16, padding: 28, maxWidth: 420, width: '100%', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>📧</div>
+                            <h3 style={{ fontWeight: 800, marginBottom: 8 }}>Verify New Email</h3>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>An OTP has been sent to <strong style={{ color: 'var(--teal)' }}>{emailOtpModal.pendingEmail}</strong> to confirm this change.</p>
+                        </div>
+                        <input className="form-input" placeholder="Enter OTP (demo: 123456)" value={emailOtp} onChange={e => setEmailOtp(e.target.value)} maxLength={6} style={{ textAlign: 'center', fontSize: '1.1rem', letterSpacing: '0.3em' }} />
+                        {emailOtpMsg && <p style={{ fontSize: '0.82rem', color: emailOtpMsg.type === 'success' ? 'var(--teal)' : 'var(--red)', textAlign: 'center' }}>{emailOtpMsg.text}</p>}
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setEmailOtpModal(null)}>Cancel</button>
+                            <button className="btn-teal" style={{ flex: 1 }} disabled={emailOtpLoading || emailOtp.length < 4} onClick={handleEmailOtpConfirm}>{emailOtpLoading ? 'Verifying...' : '✓ Confirm'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Delete Account Modal */}
             {showDeleteModal && (

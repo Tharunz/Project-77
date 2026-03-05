@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LanguagePill } from '../context/LanguageContext';
 import {
     MdDashboard, MdListAlt, MdPsychology, MdMap, MdSchool,
     MdNotifications, MdSecurity, MdAnalytics, MdLogout, MdMenu,
@@ -106,6 +107,7 @@ export default function AdminLayout() {
                 <header className="admin-topbar">
                     <div className="topbar-title">{PROJECT_NAME} — Integrated Citizen Intelligence Platform</div>
                     <div className="topbar-right">
+                        <LanguagePill />
                         <div className="topbar-status">
                             <span className="status-dot" />
                             <span>Live</span>

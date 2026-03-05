@@ -1,68 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import { MdMap, MdPlace, MdWarning, MdCheckCircle, MdHourglassEmpty } from 'react-icons/md';
+import { MdMap, MdPlace, MdWarning, MdCheckCircle, MdHourglassEmpty, MdClose } from 'react-icons/md';
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 import { apiGetHeatmapData } from '../../services/api.service';
 
-// SVG India map paths — simplified bounding box positions for each state
-const STATE_POSITIONS = {
-    'Uttar Pradesh': { x: 52, y: 32, w: 14, h: 10 },
-    'Maharashtra': { x: 38, y: 52, w: 12, h: 12 },
-    'Bihar': { x: 62, y: 30, w: 8, h: 8 },
-    'West Bengal': { x: 68, y: 34, w: 7, h: 14 },
-    'Madhya Pradesh': { x: 42, y: 40, w: 16, h: 10 },
-    'Rajasthan': { x: 28, y: 28, w: 16, h: 16 },
-    'Tamil Nadu': { x: 48, y: 72, w: 9, h: 12 },
-    'Karnataka': { x: 42, y: 63, w: 10, h: 10 },
-    'Gujarat': { x: 25, y: 42, w: 12, h: 12 },
-    'Andhra Pradesh': { x: 50, y: 60, w: 10, h: 11 },
-    'Odisha': { x: 62, y: 44, w: 9, h: 10 },
-    'Telangana': { x: 50, y: 56, w: 8, h: 8 },
-    'Jharkhand': { x: 63, y: 38, w: 7, h: 7 },
-    'Assam': { x: 76, y: 28, w: 10, h: 6 },
-    'Punjab': { x: 34, y: 18, w: 7, h: 6 },
-    'Chhattisgarh': { x: 54, y: 44, w: 9, h: 11 },
-    'Haryana': { x: 36, y: 22, w: 7, h: 6 },
-    'Kerala': { x: 43, y: 74, w: 5, h: 12 },
-    'Uttarakhand': { x: 44, y: 20, w: 8, h: 7 },
-    'Himachal Pradesh': { x: 38, y: 14, w: 8, h: 7 },
-    'Delhi': { x: 40, y: 25, w: 3, h: 3 },
-    'Jammu & Kashmir': { x: 32, y: 6, w: 14, h: 10 },
-};
+const GEO_URL = '/india_states.geojson';
 
 function getHeatColor(count, maxCount) {
+    if (!count || !maxCount) return 'rgba(255,255,255,0.04)';
     const ratio = count / maxCount;
     if (ratio > 0.8) return '#EF4444';
-    if (ratio > 0.6) return '#F59E0B';
-    if (ratio > 0.4) return '#FF6B2C';
+    if (ratio > 0.6) return '#F97316';
+    if (ratio > 0.4) return '#F59E0B';
     if (ratio > 0.2) return '#3B82F6';
     return '#00C896';
 }
 
-function getHeatOpacity(count, maxCount) {
-    return 0.3 + (count / maxCount) * 0.65;
+function getHeatLabel(count, maxCount) {
+    if (!count || !maxCount) return 'No Data';
+    const ratio = count / maxCount;
+    if (ratio > 0.8) return 'CRITICAL';
+    if (ratio > 0.6) return 'HIGH';
+    if (ratio > 0.4) return 'MEDIUM';
+    if (ratio > 0.2) return 'LOW';
+    return 'SAFE';
 }
+
+
+const normalizeStateName = (name) => {
+    if (!name) return '';
+    const n = name.trim();
+    if (n.includes('Jammu') || n === 'J&K') return 'Jammu & Kashmir';
+    if (n.includes('Andaman')) return 'Andaman and Nicobar Islands';
+    if (n.includes('Dadra') || n.includes('Daman')) return 'Dadra and Nagar Haveli and Daman and Diu';
+    if (n === 'Uttaranchal') return 'Uttarakhand';
+    if (n === 'Orissa') return 'Odisha';
+    if (n === 'Pondicherry') return 'Puducherry';
+    return n;
+};
 
 export default function IndiaHeatmap() {
     const [heatData, setHeatData] = useState({});
     const [loading, setLoading] = useState(true);
     const [hoveredState, setHoveredState] = useState(null);
-    const [tooltip, setTooltip] = useState({ x: 0, y: 0 });
     const [selectedState, setSelectedState] = useState(null);
 
     useEffect(() => {
         apiGetHeatmapData().then(res => {
-            setHeatData(res.data);
+            setHeatData(res.data || {});
             setLoading(false);
         });
     }, []);
 
     const maxCount = Math.max(...Object.values(heatData).map(d => d.count || 0), 1);
+    const statesSorted = Object.entries(heatData).sort((a, b) => b[1].count - a[1].count);
+    const top10 = statesSorted.slice(0, 10).map(([state, d]) => ({ state: state.split(' ').slice(0, 2).join(' '), count: d.count, color: getHeatColor(d.count, maxCount) }));
 
-    const statesSorted = Object.entries(heatData)
-        .sort((a, b) => b[1].count - a[1].count);
+    const totalGrievances = Object.values(heatData).reduce((a, d) => a + (d.count || 0), 0);
+    const totalResolved = Object.values(heatData).reduce((a, d) => a + (d.resolved || 0), 0);
+    const totalPending = Object.values(heatData).reduce((a, d) => a + (d.pending || 0), 0);
 
-    const totalGrievances = Object.values(heatData).reduce((a, d) => a + d.count, 0);
-    const totalResolved = Object.values(heatData).reduce((a, d) => a + d.resolved, 0);
-    const totalPending = Object.values(heatData).reduce((a, d) => a + d.pending, 0);
+    const selData = selectedState ? heatData[selectedState] : null;
+
+    if (loading) return <div className="dash-loading"><div className="spinner" /><span>Loading heatmap data...</span></div>;
 
     return (
         <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -70,7 +70,7 @@ export default function IndiaHeatmap() {
                 <div>
                     <h1 className="section-title"><MdMap className="icon" /> India Grievance Heatmap</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: 4 }}>
-                        State-wise grievance distribution across Bharat
+                        Real-time state-wise grievance distribution — click any state for details
                     </p>
                 </div>
             </div>
@@ -90,164 +90,119 @@ export default function IndiaHeatmap() {
                 ))}
             </div>
 
-            <div className="responsive-map-layout">
-                {/* Map Visualization */}
-                <div style={{
-                    background: 'var(--bg-card)', border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)', padding: 24,
-                    position: 'relative', minHeight: 480
-                }}>
-                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 16 }}>State-wise Heatmap</h3>
-
-                    {/* Legend */}
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
-                        {[
-                            { color: '#EF4444', label: 'Very High (>80%)' },
-                            { color: '#F59E0B', label: 'High (60-80%)' },
-                            { color: '#FF6B2C', label: 'Medium (40-60%)' },
-                            { color: '#3B82F6', label: 'Low (20-40%)' },
-                            { color: '#00C896', label: 'Very Low (<20%)' },
-                        ].map(l => (
-                            <div key={l.color} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                                <div style={{ width: 12, height: 12, borderRadius: 3, background: l.color, opacity: 0.8 }} />
-                                {l.label}
-                            </div>
-                        ))}
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Grievance Intensity:</span>
+                {[{ color: '#EF4444', label: 'Critical' }, { color: '#F97316', label: 'High' }, { color: '#F59E0B', label: 'Medium' }, { color: '#3B82F6', label: 'Low' }, { color: '#00C896', label: 'Safe' }].map(l => (
+                    <div key={l.color} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        <div style={{ width: 14, height: 14, borderRadius: 3, background: l.color }} /> {l.label}
                     </div>
+                ))}
+            </div>
 
-                    {/* Grid-based map */}
-                    <div className="heatmap-grid">
-                        {loading ? (
-                            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 60, color: 'var(--text-secondary)' }}>
-                                Loading heatmap data...
-                            </div>
-                        ) : (
-                            statesSorted.map(([state, data]) => {
+            {/* Main layout: Map + Side Panel */}
+            <div style={{ display: 'grid', gridTemplateColumns: selectedState ? '1fr 320px' : '1fr', gap: 20, transition: 'all 0.3s' }}>
+                {/* ComposableMap choropleth */}
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', position: 'relative' }}>
+                    <ComposableMap
+                        projection="geoMercator"
+                        projectionConfig={{ center: [82.5, 22.5], scale: 1100 }}
+                        width={900} height={700}
+                        style={{ width: '100%', height: 'auto', display: 'block' }}
+                    >
+                        <Geographies geography={GEO_URL}>
+                            {({ geographies }) => geographies.map(geo => {
+                                const rawName = geo.properties.NAME_1 || geo.properties.ST_NM || geo.properties.name || '';
+                                const name = normalizeStateName(rawName);
+                                const data = heatData[name] || {};
                                 const color = getHeatColor(data.count, maxCount);
-                                const opacity = getHeatOpacity(data.count, maxCount);
-                                const isSelected = selectedState === state;
-                                const abbrevs = {
-                                    'Uttar Pradesh': 'UP', 'Maharashtra': 'MH', 'Bihar': 'BR',
-                                    'West Bengal': 'WB', 'Madhya Pradesh': 'MP', 'Rajasthan': 'RJ',
-                                    'Tamil Nadu': 'TN', 'Karnataka': 'KA', 'Gujarat': 'GJ',
-                                    'Andhra Pradesh': 'AP', 'Odisha': 'OD', 'Telangana': 'TS',
-                                    'Jharkhand': 'JH', 'Assam': 'AS', 'Punjab': 'PB',
-                                    'Chhattisgarh': 'CG', 'Haryana': 'HR', 'Kerala': 'KL',
-                                    'Uttarakhand': 'UK', 'Himachal Pradesh': 'HP', 'Delhi': 'DL',
-                                    'Jammu & Kashmir': 'JK', 'Ladakh': 'LA', 'Chandigarh': 'CH',
-                                };
-
+                                const isSelected = selectedState === name;
+                                const isHovered = hoveredState === name;
                                 return (
-                                    <div
-                                        key={state}
-                                        title={`${state}: ${data.count} grievances, ${data.resolved} resolved, ${data.pending} pending`}
-                                        onClick={() => setSelectedState(isSelected ? null : state)}
+                                    <Geography
+                                        key={geo.rsmKey}
+                                        geography={geo}
+                                        onMouseEnter={() => setHoveredState(name)}
+                                        onMouseLeave={() => setHoveredState(null)}
+                                        onClick={() => setSelectedState(isSelected ? null : name)}
                                         style={{
-                                            background: color,
-                                            opacity: isSelected ? 1 : opacity,
-                                            borderRadius: 6,
-                                            padding: '10px 4px',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: 2,
-                                            border: isSelected ? `2px solid white` : '2px solid transparent',
-                                            transition: 'all 0.2s',
-                                            transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                                            default: { fill: data.count ? color : 'rgba(255,255,255,0.06)', stroke: '#1a2540', strokeWidth: 0.8, outline: 'none', opacity: isSelected ? 1 : 0.85, cursor: 'pointer' },
+                                            hover: { fill: data.count ? color : 'rgba(255,255,255,0.1)', stroke: '#ffffff', strokeWidth: 1.5, outline: 'none', opacity: 1, cursor: 'pointer' },
+                                            pressed: { outline: 'none' },
                                         }}
-                                    >
-                                        <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'white', lineHeight: 1 }}>
-                                            {abbrevs[state] || state.substring(0, 2).toUpperCase()}
-                                        </span>
-                                        <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.85)', fontWeight: 700 }}>
-                                            {data.count > 1000 ? `${(data.count / 1000).toFixed(1)}K` : data.count}
-                                        </span>
-                                    </div>
+                                    />
                                 );
-                            })
-                        )}
-                    </div>
-
-                    {/* Selected state detail */}
-                    {selectedState && heatData[selectedState] && (
-                        <div style={{
-                            marginTop: 20, zIndex: 10,
-                            background: 'rgba(10,22,40,0.95)', border: '1px solid var(--border)',
-                            borderRadius: 10, padding: '14px 18px',
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                            flexWrap: 'wrap', gap: 16
-                        }}>
-                            <div>
-                                <h4 style={{ fontSize: '0.9rem', color: 'white', marginBottom: 4 }}>{selectedState}</h4>
-                                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Click state to deselect</p>
+                            })}
+                        </Geographies>
+                    </ComposableMap>
+                    {/* Hover tooltip */}
+                    {hoveredState && heatData[hoveredState] && (
+                        <div style={{ position: 'absolute', bottom: 20, left: 20, background: 'rgba(5,11,24,0.95)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 16px', fontSize: '0.82rem', pointerEvents: 'none', backdropFilter: 'blur(8px)' }}>
+                            <div style={{ fontWeight: 800, color: 'white', marginBottom: 4 }}>{hoveredState}</div>
+                            <div style={{ color: 'var(--text-secondary)' }}>
+                                {heatData[hoveredState].count?.toLocaleString()} grievances
+                                · <span style={{ color: '#00C896' }}>{heatData[hoveredState].resolved?.toLocaleString()} resolved</span>
+                                · <span style={{ color: '#F59E0B' }}>{heatData[hoveredState].pending?.toLocaleString()} pending</span>
                             </div>
-                            <div style={{ display: 'flex', gap: 20 }}>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontWeight: 800, color: '#3B82F6', fontFamily: 'Space Grotesk', fontSize: '1.1rem' }}>
-                                        {heatData[selectedState].count.toLocaleString()}</div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Total</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontWeight: 800, color: '#00C896', fontFamily: 'Space Grotesk', fontSize: '1.1rem' }}>
-                                        {heatData[selectedState].resolved.toLocaleString()}</div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Resolved</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontWeight: 800, color: '#F59E0B', fontFamily: 'Space Grotesk', fontSize: '1.1rem' }}>
-                                        {heatData[selectedState].pending.toLocaleString()}</div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Pending</div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontWeight: 800, color: heatData[selectedState].resolved / heatData[selectedState].count > 0.6 ? '#00C896' : '#EF4444', fontFamily: 'Space Grotesk', fontSize: '1.1rem' }}>
-                                        {Math.round(heatData[selectedState].resolved / heatData[selectedState].count * 100)}%</div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Resolution</div>
-                                </div>
+                            <div style={{ marginTop: 4, fontSize: '0.75rem', color: getHeatColor(heatData[hoveredState].count, maxCount), fontWeight: 700 }}>
+                                {getHeatLabel(heatData[hoveredState].count, maxCount)}
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* State Rankings List */}
-                <div style={{
-                    background: 'var(--bg-card)', border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)', padding: 20, overflowY: 'auto', maxHeight: 580
-                }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 16 }}>State Rankings</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {statesSorted.map(([state, data], i) => {
-                            const resRate = Math.round(data.resolved / data.count * 100);
-                            const color = getHeatColor(data.count, maxCount);
-                            return (
-                                <div
-                                    key={state}
-                                    onClick={() => setSelectedState(selectedState === state ? null : state)}
-                                    style={{
-                                        background: selectedState === state ? 'rgba(255,107,44,0.08)' : 'rgba(255,255,255,0.03)',
-                                        border: `1px solid ${selectedState === state ? 'rgba(255,107,44,0.3)' : 'rgba(255, 255, 255, 0.12)'}`,
-                                        borderRadius: 8, padding: '10px 12px', cursor: 'pointer', transition: 'all 0.2s'
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                        <span style={{
-                                            background: color, color: 'white', borderRadius: 4, padding: '2px 6px',
-                                            fontSize: '0.78rem', fontWeight: 800, minWidth: 22, textAlign: 'center'
-                                        }}>{i + 1}</span>
-                                        <span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>{state}</span>
-                                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color }}>{data.count.toLocaleString()}</span>
-                                    </div>
-                                    <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <div style={{ flex: 1, height: 4, background: 'rgba(255, 255, 255, 0.12)', borderRadius: 2, overflow: 'hidden' }}>
-                                            <div style={{ width: `${resRate}%`, height: '100%', background: resRate > 60 ? '#00C896' : resRate > 40 ? '#F59E0B' : '#EF4444', borderRadius: 2 }} />
-                                        </div>
-                                        <span style={{ fontSize: '0.78rem', color: resRate > 60 ? '#00C896' : resRate > 40 ? '#F59E0B' : '#EF4444', fontWeight: 700, minWidth: 30, textAlign: 'right' }}>{resRate}%</span>
-                                    </div>
+                {/* Click-to-detail side panel */}
+                {selectedState && selData && (
+                    <div style={{ background: 'var(--bg-card)', border: `1px solid ${getHeatColor(selData.count, maxCount)}40`, borderRadius: 'var(--radius-lg)', padding: 20, display: 'flex', flexDirection: 'column', gap: 16, animation: 'fadeInUp 0.3s ease' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>{selectedState}</h3>
+                                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: getHeatColor(selData.count, maxCount), background: `${getHeatColor(selData.count, maxCount)}18`, padding: '2px 8px', borderRadius: 10 }}>{getHeatLabel(selData.count, maxCount)}</span>
+                            </div>
+                            <button onClick={() => setSelectedState(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}><MdClose /></button>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                            {[{ l: 'Total', v: selData.count?.toLocaleString(), c: '#3B82F6' }, { l: 'Resolved', v: selData.resolved?.toLocaleString(), c: '#00C896' }, { l: 'Pending', v: selData.pending?.toLocaleString(), c: '#F59E0B' }, { l: 'Resolution', v: `${Math.round((selData.resolved || 0) / Math.max(selData.count || 1, 1) * 100)}%`, c: (selData.resolved || 0) / Math.max(selData.count || 1, 1) > 0.6 ? '#00C896' : '#EF4444' }].map(d => (
+                                <div key={d.l} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px', textAlign: 'center' }}>
+                                    <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.2rem', fontWeight: 800, color: d.c }}>{d.v}</div>
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 3 }}>{d.l}</div>
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
+                        {/* Resolution bar */}
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 5 }}>
+                                <span style={{ color: 'var(--text-muted)' }}>Resolution Rate</span>
+                                <span style={{ fontWeight: 700, color: '#00C896' }}>{Math.round((selData.resolved || 0) / Math.max(selData.count || 1, 1) * 100)}%</span>
+                            </div>
+                            <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 4, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${Math.round((selData.resolved || 0) / Math.max(selData.count || 1, 1) * 100)}%`, background: '#00C896', borderRadius: 4, transition: 'width 0.8s ease' }} />
+                            </div>
+                        </div>
+                        {selData.topCategory && <div style={{ background: 'rgba(255,107,44,0.07)', border: '1px solid rgba(255,107,44,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: '0.82rem' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>Top Category: </span>
+                            <strong style={{ color: 'var(--saffron)' }}>{selData.topCategory}</strong>
+                        </div>}
                     </div>
-                </div>
+                )}
+            </div>
+
+            {/* Top 10 bar chart */}
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px 24px' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: 16 }}>Top 10 States by Grievances</h3>
+                <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={top10} margin={{ top: 0, right: 10, left: -10, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                        <XAxis dataKey="state" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={{ background: '#0a1628', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: '0.8rem' }} />
+                        <Bar dataKey="count" name="Grievances" radius={[4, 4, 0, 0]}>
+                            {top10.map((entry, i) => (
+                                <Cell key={i} fill={entry.color} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
             </div>
         </div>
     );

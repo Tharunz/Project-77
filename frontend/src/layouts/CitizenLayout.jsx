@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { LanguagePill } from '../context/LanguageContext';
 import {
     MdDashboard, MdSchool, MdEdit, MdTrackChanges,
     MdChat, MdPerson, MdLogout, MdMenu, MdClose, MdChevronRight,
@@ -60,6 +61,7 @@ export default function CitizenLayout() {
                 </nav>
 
                 <div className="citizen-header-right">
+                    <LanguagePill />
                     <div className="citizen-user-badge">
                         <div className="citizen-avatar">{user?.name?.[0] || 'C'}</div>
                         <span className="citizen-name-text">{user?.name?.split(' ')[0] || 'Citizen'}</span>

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { MdSecurity, MdCheck, MdClose, MdWarning, MdFlag, MdInfo, MdError } from 'react-icons/md';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import React, { useState, useEffect, useRef } from 'react';
+import { MdSecurity, MdCheck, MdClose, MdWarning, MdFlag, MdInfo, MdError, MdSearch } from 'react-icons/md';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { apiGetFraudDuplicates, apiReviewFraud } from '../../services/api.service';
 
 const RISK_CONFIG = {
@@ -10,10 +10,26 @@ const RISK_CONFIG = {
     Low: { color: '#3B82F6', icon: <MdInfo />, bg: 'rgba(59,130,246,0.1)' },
 };
 
+function Toast({ msg, onClose }) {
+    useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
+    if (!msg) return null;
+    return (
+        <div style={{ position: 'fixed', bottom: 28, right: 28, zIndex: 9999, background: msg.type === 'success' ? 'rgba(0,200,150,0.95)' : msg.type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(139,92,246,0.95)', color: '#fff', padding: '12px 20px', borderRadius: 10, fontWeight: 700, fontSize: '0.88rem', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeInUp 0.3s ease' }}>
+            {msg.type === 'success' ? '✓' : msg.type === 'error' ? '✗' : '🚩'} {msg.text}
+        </div>
+    );
+}
+
 export default function FraudDetection() {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
+    const [toast, setToast] = useState(null);
+    const [flagModal, setFlagModal] = useState(null); // { id, title }
+    const [flagNote, setFlagNote] = useState('');
+    const [flagging, setFlagging] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
 
     useEffect(() => {
         const load = async () => {
@@ -25,11 +41,26 @@ export default function FraudDetection() {
         load();
     }, []);
 
+    const showToast = (type, text) => setToast({ type, text });
+
     const handleAction = async (id, action) => {
-        const res = await apiReviewFraud(id, action);
-        if (res.success) {
-            setItems(is => is.map(i => (i.id === id || i._id === id) ? { ...i, status: action === 'confirm' ? 'Confirmed' : 'Dismissed' } : i));
-        }
+        // Optimistic update immediately
+        const newStatus = action === 'confirm' ? 'Confirmed' : 'Dismissed';
+        setItems(is => is.map(i => (i.id === id || i._id === id) ? { ...i, status: newStatus } : i));
+        showToast(action === 'confirm' ? 'error' : 'success', action === 'confirm' ? '🚨 Case confirmed as fraud & blocked' : '✓ Case dismissed as false positive');
+        // Fire API in background
+        apiReviewFraud(id, action).catch(() => {});
+    };
+
+    const handleFlag = async () => {
+        if (!flagModal) return;
+        setFlagging(true);
+        setItems(is => is.map(i => (i.id === flagModal.id || i._id === flagModal.id) ? { ...i, status: 'Under Investigation', flagNote } : i));
+        await new Promise(r => setTimeout(r, 600));
+        setFlagging(false);
+        setFlagModal(null);
+        setFlagNote('');
+        showToast('flag', '🚩 Case flagged for investigation');
     };
 
     const statusBadge = (status) => {
@@ -37,13 +68,20 @@ export default function FraudDetection() {
             case 'Pending Review': return <span className="badge badge-pending">⏳ Pending Review</span>;
             case 'Confirmed': return <span className="badge badge-critical">🚨 Confirmed Fraud</span>;
             case 'Dismissed': return <span className="badge badge-resolved">✔ Dismissed</span>;
+            case 'Under Investigation': return <span className="badge badge-inprogress">🚩 Under Investigation</span>;
             default: return <span className="badge">{status}</span>;
         }
     };
 
     const pendingCount = items.filter(i => i.status === 'Pending Review').length;
-    const fraudCount = items.filter(i => i.type?.toLowerCase().includes('fraud')).length;
     const extremeCount = items.filter(i => i.riskLevel === 'Extreme').length;
+
+    const displayItems = items.filter(i => {
+        const id = i.id || i._id || '';
+        const matchSearch = !searchTerm || id.toLowerCase().includes(searchTerm.toLowerCase()) || (i.primary?.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || (i.primary?.citizen || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchStatus = filterStatus === 'all' || i.status === filterStatus;
+        return matchSearch && matchStatus;
+    });
 
     return (
         <div className="page-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -131,12 +169,23 @@ export default function FraudDetection() {
                 </div>
             </div>
 
+            {/* Search + Filter */}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
+                    <MdSearch style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input className="form-input" placeholder="Search by ID, title, citizen..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ paddingLeft: 38 }} />
+                </div>
+                {['all', 'Pending Review', 'Confirmed', 'Dismissed', 'Under Investigation'].map(s => (
+                    <button key={s} onClick={() => setFilterStatus(s)} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', borderColor: filterStatus === s ? 'var(--saffron)' : 'var(--border)', background: filterStatus === s ? 'rgba(255,107,44,0.12)' : 'transparent', color: filterStatus === s ? 'var(--saffron)' : 'var(--text-secondary)' }}>{s === 'all' ? 'All Cases' : s}</button>
+                ))}
+            </div>
+
             {/* Cases List */}
             {loading ? (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: 60 }}>Scanning national grievance registry...</div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {items.map((item, i) => {
+                    {displayItems.map((item, i) => {
                         const risk = RISK_CONFIG[item.riskLevel] || RISK_CONFIG.Low;
                         const itemId = item.id || item._id;
                         return (
@@ -162,9 +211,7 @@ export default function FraudDetection() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                                             <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: 'var(--saffron)', background: 'rgba(255,107,44,0.1)', padding: '2px 6px', borderRadius: 4 }}>{itemId}</span>
                                             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: risk.color }}>{item.riskLevel} Risk</span>
-                                            <span className={`badge ${item.type?.toLowerCase() === 'fraud' ? 'badge-critical' : 'badge-inprogress'}`}>
-                                                {item.type}
-                                            </span>
+                                            <span className={`badge ${item.type?.toLowerCase() === 'fraud' ? 'badge-critical' : 'badge-inprogress'}`}>{item.type}</span>
                                             {statusBadge(item.status)}
                                         </div>
                                         <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>{item.primary?.title || item.title}</h4>
@@ -175,15 +222,10 @@ export default function FraudDetection() {
 
                                     {/* Action buttons */}
                                     {item.status === 'Pending Review' && (
-                                        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                                            <button onClick={() => handleAction(itemId, 'confirm')} style={{
-                                                background: '#EF4444', color: 'white', border: 'none',
-                                                borderRadius: 6, padding: '6px 14px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer'
-                                            }}>Block & Flag</button>
-                                            <button onClick={() => handleAction(itemId, 'dismiss')} style={{
-                                                background: 'rgba(255,255,255,0.06)', color: 'var(--text-primary)', border: '1px solid var(--border)',
-                                                borderRadius: 6, padding: '6px 14px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer'
-                                            }}>Dismiss</button>
+                                        <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
+                                            <button onClick={() => handleAction(itemId, 'confirm')} style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>🚨 Block</button>
+                                            <button onClick={() => handleAction(itemId, 'dismiss')} style={{ background: 'rgba(0,200,150,0.12)', color: '#00C896', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 6, padding: '6px 14px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>✓ Dismiss</button>
+                                            <button onClick={() => { setFlagModal({ id: itemId, title: item.primary?.title || item.title }); setFlagNote(''); }} style={{ background: 'rgba(139,92,246,0.12)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 6, padding: '6px 14px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>🚩 Investigate</button>
                                         </div>
                                     )}
                                 </div>
@@ -229,9 +271,39 @@ export default function FraudDetection() {
                             </div>
                         );
                     })}
-                    {items.length === 0 && <div style={{ textAlign: 'center', padding: 100, color: 'var(--text-muted)' }}>No security flags active in the system.</div>}
+                    {displayItems.length === 0 && <div style={{ textAlign: 'center', padding: 100, color: 'var(--text-muted)' }}>{items.length === 0 ? 'No security flags active in the system.' : 'No cases match your search/filter.'}</div>}
                 </div>
             )}
+
+            {/* Flag Investigation Modal */}
+            {flagModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,11,24,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: 20 }}>
+                    <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 16, padding: 28, maxWidth: 440, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#A78BFA' }}>🚩 Flag for Investigation</h3>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4, maxWidth: 320 }}>{flagModal.title}</p>
+                            </div>
+                            <button onClick={() => setFlagModal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}><MdClose /></button>
+                        </div>
+                        <div style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 8, padding: '10px 14px', fontSize: '0.82rem', color: '#A78BFA' }}>
+                            This case will be escalated to the Special Investigation Unit with your notes attached.
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Investigation Notes <span style={{ color: 'var(--text-muted)' }}>(required)</span></label>
+                            <textarea className="form-input" rows={4} placeholder="Describe the suspicious pattern, evidence, or reason for investigation..." value={flagNote} onChange={e => setFlagNote(e.target.value)} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setFlagModal(null)}>Cancel</button>
+                            <button onClick={handleFlag} disabled={!flagNote.trim() || flagging} style={{ flex: 1, background: 'linear-gradient(135deg, #7C3AED, #A78BFA)', color: 'white', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: flagNote.trim() ? 'pointer' : 'not-allowed', opacity: flagNote.trim() ? 1 : 0.5 }}>
+                                {flagging ? 'Flagging...' : '🚩 Flag & Escalate'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <Toast msg={toast} onClose={() => setToast(null)} />
         </div>
     );
 }

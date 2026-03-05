@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics, MdShield, MdMap, MdClose } from 'react-icons/md';
-import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail } from '../../services/api.service';
+import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics, MdShield, MdMap, MdClose, MdBookmark, MdStar } from 'react-icons/md';
+import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail, apiGetMySchemeApplications, apiGetBookmarkedSchemes } from '../../services/api.service';
 
 const STATUS_ICONS = { Pending: <MdHourglassEmpty />, Resolved: <MdCheckCircle />, Critical: <MdWarning />, 'In Progress': <MdEdit /> };
 const STATUS_COLORS = { Pending: '#F59E0B', Resolved: '#00C896', Critical: '#EF4444', 'In Progress': '#3B82F6' };
@@ -17,6 +17,8 @@ export default function CitizenDashboard() {
     const [presevaAlert, setPresevaAlert] = useState(null);
     const [distressData, setDistressData] = useState(null);
     const [dismissedAlert, setDismissedAlert] = useState(false);
+    const [schemeApplications, setSchemeApplications] = useState([]);
+    const [bookmarks, setBookmarks] = useState([]);
 
     useEffect(() => {
         const load = async () => {
@@ -55,6 +57,13 @@ export default function CitizenDashboard() {
                     if (hd.success && hd.data) setDistressData(hd.data);
                 } catch (_) {}
             }
+
+            // Load scheme applications and bookmarks
+            try {
+                const [sa, bk] = await Promise.all([apiGetMySchemeApplications(), apiGetBookmarkedSchemes()]);
+                if (sa.success && Array.isArray(sa.data)) setSchemeApplications(sa.data);
+                if (bk.success && Array.isArray(bk.data)) setBookmarks(bk.data);
+            } catch (_) {}
         };
         load();
     }, [user?.id]);
@@ -239,6 +248,83 @@ export default function CitizenDashboard() {
                     ))}
                 </div>
             </div>
+
+            {/* My Applied Schemes (F11) */}
+            {schemeApplications.length > 0 && (
+                <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><MdSchool style={{ color: '#00C896' }} /> My Scheme Applications</h2>
+                        <Link to="/citizen/schemes" style={{ fontSize: '0.82rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 4 }}>Explore More <MdArrowForward /></Link>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {schemeApplications.map(app => {
+                            const statusColor = app.status === 'Approved' ? '#00C896' : app.status === 'Rejected' ? '#EF4444' : app.status === 'Under Review' ? '#3B82F6' : '#F59E0B';
+                            return (
+                                <div key={app.id} className="glass-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor, flexShrink: 0, boxShadow: `0 0 8px ${statusColor}` }} />
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 2 }}>{app.schemeName}</p>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{app.category} · Applied {app.appliedOn} · <span style={{ color: 'var(--teal)' }}>{app.benefit}</span></p>
+                                    </div>
+                                    <span style={{ padding: '4px 10px', borderRadius: 20, background: `${statusColor}18`, border: `1px solid ${statusColor}50`, color: statusColor, fontSize: '0.75rem', fontWeight: 700 }}>{app.status}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* State Intelligence Mini-Card (F12) */}
+            {user?.state && (
+                <div style={{ background: 'linear-gradient(135deg, rgba(0,229,160,0.06), rgba(92,142,255,0.05))', border: '1px solid rgba(0,229,160,0.2)', borderRadius: 'var(--radius-lg)', padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #00E5A0, #5C8EFF)' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 14 }}>
+                        <div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>🗺️ State Intelligence — {user.state}</div>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>PRESEVA Active Predictions</h3>
+                        </div>
+                        <Link to="/citizen/file-grievance" className="btn-secondary" style={{ fontSize: '0.78rem' }}>+ Raise Grievance</Link>
+                    </div>
+                    {presevaAlert ? (
+                        <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                            <span style={{ fontSize: '1.3rem', flexShrink: 0 }}>⚡</span>
+                            <div>
+                                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#EF4444', marginBottom: 4 }}>{presevaAlert.title}</div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Predicted in <strong>{presevaAlert.state}</strong> within <strong>{presevaAlert.daysUntil} days</strong> · {presevaAlert.confidence}% confidence</div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            {[{ label: 'Active Alerts', val: '3', color: '#EF4444' }, { label: 'Prevented', val: '12', color: '#00C896' }, { label: 'Under Watch', val: '7', color: '#F59E0B' }].map(d => (
+                                <div key={d.label} style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 8px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.4rem', fontWeight: 800, color: d.color }}>{d.val}</div>
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3 }}>{d.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Bookmark Hub (F13) */}
+            {bookmarks.length > 0 && (
+                <div>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Saved Items</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                        {bookmarks.slice(0, 6).map(s => (
+                            <div key={s.id} className="glass-card" style={{ padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
+                                <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || '#8B5CF6', flexShrink: 0 }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontWeight: 700, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
+                                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>{s.category}</p>
+                                </div>
+                                <MdBookmark style={{ color: '#8B5CF6', flexShrink: 0 }} />
+                            </div>
+                        ))}
+                    </div>
+                    {bookmarks.length > 6 && <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>+{bookmarks.length - 6} more saved — <Link to="/citizen/profile" style={{ color: '#8B5CF6' }}>View All</Link></p>}
+                </div>
+            )}
 
             {/* My Grievances */}
             <div>

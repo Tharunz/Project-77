@@ -630,3 +630,21 @@ export const apiPresevAssignAlert = async (id, assignData) => {
 export const apiGetPresevaPredictionsByState = async (state) => {
     return await apiFetch(`/preseva/alerts?state=${encodeURIComponent(state)}`);
 };
+
+// ==============================
+//  SCHEME APPLICATIONS (F11)
+// ==============================
+export const apiGetMySchemeApplications = async () => {
+    const res = await apiFetch('/schemes/my-applications');
+    if (res.success && Array.isArray(res.data) && res.data.length > 0) return res;
+    // Mock fallback — ready for AWS backend swap
+    await delay(300);
+    return {
+        success: true,
+        data: [
+            { id: 'SA-001', schemeName: 'PM Kisan Samman Nidhi', category: 'Agriculture', appliedOn: '2026-02-10', status: 'Approved', benefit: '₹6,000/year', color: '#00C896' },
+            { id: 'SA-002', schemeName: 'Ayushman Bharat PMJAY', category: 'Healthcare', appliedOn: '2026-01-28', status: 'Under Review', benefit: '₹5 lakh cover', color: '#3B82F6' },
+            { id: 'SA-003', schemeName: 'PM Ujjwala Yojana', category: 'Energy', appliedOn: '2026-02-18', status: 'Applied', benefit: 'Free LPG connection', color: '#F59E0B' },
+        ]
+    };
+};

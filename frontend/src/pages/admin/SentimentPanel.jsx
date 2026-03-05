@@ -52,6 +52,17 @@ export default function SentimentPanel() {
     const [actionType, setActionType] = useState('escalate');
     const [actionDoing, setActionDoing] = useState(false);
     const [actionDone, setActionDone] = useState({});
+    const [assignStep, setAssignStep] = useState(false); // show assign-officer step after escalate
+    const [assignOfficer, setAssignOfficer] = useState('');
+    const [assignDone, setAssignDone] = useState(false);
+
+    const MOCK_OFFICERS = [
+        { id: 'O1', name: 'Suresh Patel', role: 'District Collector', state: 'Gujarat' },
+        { id: 'O2', name: 'Anita Sharma', role: 'Senior IAS Officer', state: 'Rajasthan' },
+        { id: 'O3', name: 'Rajiv Nair', role: 'Joint Secretary', state: 'Kerala' },
+        { id: 'O4', name: 'Priya Mehta', role: 'District Magistrate', state: 'Maharashtra' },
+        { id: 'O5', name: 'Arun Singh', role: 'SDM', state: 'Uttar Pradesh' },
+    ];
 
     useEffect(() => {
         const load = async () => {
@@ -179,46 +190,82 @@ export default function SentimentPanel() {
 
             {/* Take Action Modal */}
             {actionModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, maxWidth: 480, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>⚡ Take Action</h3>
-                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>{actionModal.grievance.id} — {actionModal.grievance.category}</p>
-                            </div>
-                            <button onClick={() => setActionModal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}><MdClose /></button>
-                        </div>
-                        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: 12 }}>
-                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{actionModal.grievance.description}</p>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Action Type</label>
-                            <select className="form-input" value={actionType} onChange={e => setActionType(e.target.value)}>
-                                <option value="escalate">🔺 Escalate to Critical Priority</option>
-                                <option value="assign">👮 Assign to Senior Officer</option>
-                                <option value="expedite">⏩ Mark for Expedited Resolution (48h)</option>
-                                <option value="review">🔍 Flag for Manual Review</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Action Note</label>
-                            <textarea className="form-input" rows={3} placeholder="Add a note explaining the action taken..." value={actionNote} onChange={e => setActionNote(e.target.value)} />
-                        </div>
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setActionModal(null)}>Cancel</button>
-                            <button className="btn-primary" style={{ flex: 1 }} disabled={actionDoing} onClick={async () => {
-                                setActionDoing(true);
-                                const update = actionType === 'escalate' ? { priority: 'Critical', status: 'Escalated' }
-                                    : actionType === 'expedite' ? { priority: 'High', status: 'In Progress' }
-                                    : actionType === 'review' ? { status: 'Under Review' }
-                                    : { status: 'Assigned' };
-                                await apiUpdateGrievance(actionModal.grievance.id, { ...update, actionNote, actionType });
-                                setActionDone(d => ({ ...d, [actionModal.grievance.id]: true }));
-                                setCritical(c => c.map(g => g.id === actionModal.grievance.id ? { ...g, ...update } : g));
-                                setActionDoing(false);
-                                setActionModal(null);
-                            }}>{actionDoing ? 'Saving...' : '✓ Confirm Action'}</button>
-                        </div>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,11,24,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
+                    <div style={{ background: '#0D1B2E', border: '1px solid rgba(255,107,44,0.35)', borderRadius: 16, padding: 28, maxWidth: 500, width: '100%', display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}>
+
+                        {!assignStep ? (
+                            <>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <div>
+                                        <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>⚡ Take Action</h3>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>{actionModal.grievance.id} — {actionModal.grievance.category}</p>
+                                    </div>
+                                    <button onClick={() => { setActionModal(null); setAssignStep(false); setAssignDone(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.2rem' }}><MdClose /></button>
+                                </div>
+                                <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: 12 }}>
+                                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{actionModal.grievance.description}</p>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Action Type</label>
+                                    <select className="form-input" value={actionType} onChange={e => setActionType(e.target.value)}>
+                                        <option value="escalate">🔺 Escalate to Critical Priority</option>
+                                        <option value="assign">👮 Assign to Senior Officer</option>
+                                        <option value="expedite">⏩ Mark for Expedited Resolution (48h)</option>
+                                        <option value="review">🔍 Flag for Manual Review</option>
+                                    </select>
+                                </div>
+                                {(actionType === 'assign') && (
+                                    <div className="form-group">
+                                        <label className="form-label">Assign to Officer</label>
+                                        <select className="form-input" value={assignOfficer} onChange={e => setAssignOfficer(e.target.value)}>
+                                            <option value="">Select Officer...</option>
+                                            {MOCK_OFFICERS.map(o => <option key={o.id} value={o.id}>{o.name} — {o.role} ({o.state})</option>)}
+                                        </select>
+                                    </div>
+                                )}
+                                <div className="form-group">
+                                    <label className="form-label">Action Note</label>
+                                    <textarea className="form-input" rows={3} placeholder="Add a note explaining the action taken..." value={actionNote} onChange={e => setActionNote(e.target.value)} />
+                                </div>
+                                <div style={{ display: 'flex', gap: 10 }}>
+                                    <button className="btn-secondary" style={{ flex: 1 }} onClick={() => { setActionModal(null); setAssignStep(false); }}>Cancel</button>
+                                    <button className="btn-primary" style={{ flex: 1 }} disabled={actionDoing} onClick={async () => {
+                                        setActionDoing(true);
+                                        const update = actionType === 'escalate' ? { priority: 'Critical', status: 'Escalated' }
+                                            : actionType === 'expedite' ? { priority: 'High', status: 'In Progress' }
+                                            : actionType === 'review' ? { status: 'Under Review' }
+                                            : { status: 'Assigned' };
+                                        await apiUpdateGrievance(actionModal.grievance.id, { ...update, actionNote, actionType });
+                                        setActionDone(d => ({ ...d, [actionModal.grievance.id]: true }));
+                                        setCritical(c => c.map(g => g.id === actionModal.grievance.id ? { ...g, ...update } : g));
+                                        setActionDoing(false);
+                                        if (actionType === 'escalate') { setAssignStep(true); setAssignDone(false); }
+                                        else setActionModal(null);
+                                    }}>{actionDoing ? 'Saving...' : '✓ Confirm Action'}</button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(239,68,68,0.12)', border: '2px solid #EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', margin: '0 auto 12px' }}>🚨</div>
+                                    <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#EF4444' }}>Grievance Escalated!</h3>
+                                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 6 }}>Now assign this escalated case to a senior officer for immediate action.</p>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">👮 Assign to Officer</label>
+                                    <select className="form-input" value={assignOfficer} onChange={e => setAssignOfficer(e.target.value)}>
+                                        <option value="">Select Officer to Assign...</option>
+                                        {MOCK_OFFICERS.map(o => <option key={o.id} value={o.id}>{o.name} — {o.role} ({o.state})</option>)}
+                                    </select>
+                                </div>
+                                {assignDone && <div style={{ background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 8, padding: 12, fontSize: '0.85rem', color: '#00C896', textAlign: 'center' }}>✓ Assigned to {MOCK_OFFICERS.find(o => o.id === assignOfficer)?.name}. Officer notified.</div>}
+                                <div style={{ display: 'flex', gap: 10 }}>
+                                    <button className="btn-secondary" style={{ flex: 1 }} onClick={() => { setActionModal(null); setAssignStep(false); setAssignDone(false); }}>Skip & Close</button>
+                                    {!assignDone && <button className="btn-primary" style={{ flex: 1 }} disabled={!assignOfficer} onClick={() => setAssignDone(true)}>👮 Assign Officer</button>}
+                                    {assignDone && <button className="btn-teal" style={{ flex: 1 }} onClick={() => { setActionModal(null); setAssignStep(false); setAssignDone(false); }}>✓ Done</button>}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
