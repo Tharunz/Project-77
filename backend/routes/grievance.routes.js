@@ -490,7 +490,10 @@ router.patch('/update/:id', protect, adminOnly, async (req, res, next) => {
 
         // ── DynamoDB update (when enabled) ────────────────────────────────
         if (dbService.isDynamo()) {
-            dbService.update(GRIEVANCES_TABLE, { grievanceId: req.params.id.toUpperCase() }, updates)
+            dbService.update(GRIEVANCES_TABLE, {
+                grievanceId: req.params.id.toUpperCase(),
+                createdAt: grievance.createdAt
+            }, updates)
                 .catch(err => console.error('[DYNAMO] grievance update failed:', err.message));
         }
 
@@ -637,7 +640,10 @@ router.delete('/:id', protect, adminOnly, (req, res, next) => {
 
         // ── DynamoDB delete (when enabled) ───────────────────────────────
         if (dbService.isDynamo()) {
-            dbService.delete(GRIEVANCES_TABLE, { grievanceId: req.params.id.toUpperCase() })
+            dbService.delete(GRIEVANCES_TABLE, {
+                grievanceId: req.params.id.toUpperCase(),
+                createdAt: grievance.createdAt
+            })
                 .catch(err => console.error('[DYNAMO] grievance delete failed:', err.message));
         }
 
@@ -663,8 +669,15 @@ router.get('/:id/documents', protect, async (req, res, next) => {
         let final = grievance;
         if (!grievance && dbService.isDynamo()) {
             try {
-                final = await dbService.get(GRIEVANCES_TABLE, { grievanceId: id });
-            } catch (_) { }
+                // Use query instead of get because we only have the Partition Key (grievanceId)
+                const items = await dbService.query(GRIEVANCES_TABLE, {
+                    expression: 'grievanceId = :id',
+                    values: { ':id': id }
+                });
+                if (items && items.length > 0) final = items[0];
+            } catch (err) {
+                console.warn('[DYNAMO] document fetch query failed:', err.message);
+            }
         }
 
         if (!final) {

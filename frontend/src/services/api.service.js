@@ -29,10 +29,13 @@ const getAuthHeaders = () => {
 };
 
 // Helper: Generic Fetch Wrapper to process JSON and catch server errors
-export const apiFetch = async (endpoint, options = {}) => {
+export const apiFetch = async (endpoint, options = {}, ms = 10000) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ms);
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
+            signal: controller.signal,
             headers: {
                 ...getAuthHeaders(),
                 ...options.headers
@@ -49,8 +52,14 @@ export const apiFetch = async (endpoint, options = {}) => {
             return { success: false, error: `Server error (${res.status}). Backend may be unreachable.` };
         }
     } catch (err) {
+        if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+            console.error(`API Timeout at ${endpoint}: Request took longer than ${ms}ms`);
+            return { success: false, error: 'Request timed out. Please try again.' };
+        }
         console.error(`API Error at ${endpoint}:`, err);
         return { success: false, error: 'Cannot connect to backend. Please ensure the server is running on port 5000.' };
+    } finally {
+        clearTimeout(timeout);
     }
 };
 
@@ -66,6 +75,9 @@ export const apiLogin = async (email, password) => {
         // res.data.token is the IdToken when Cognito is enabled, or local JWT otherwise.
         // Both cases: store as 'token' so getAuthHeaders() sends it as Bearer.
         localStorage.setItem('token', res.data.token);
+        if (res.data.accessToken) {
+            localStorage.setItem('access_token', res.data.accessToken);
+        }
         return { success: true, user: res.data.user, token: res.data.token };
     }
     return { success: false, error: res.message || res.error || 'Login failed' };
@@ -78,6 +90,9 @@ export const apiRegister = async (data) => {
     });
     if (res.success && res.data) {
         localStorage.setItem('token', res.data.token);
+        if (res.data.accessToken) {
+            localStorage.setItem('access_token', res.data.accessToken);
+        }
         return { success: true, user: res.data.user, token: res.data.token };
     }
     return { success: false, error: res.message || res.error || 'Registration failed' };
@@ -642,6 +657,15 @@ export const apiPresevAssignAlert = async (id, assignData) => {
 
 export const apiGetPresevaPredictionsByState = async (state) => {
     return await apiFetch(`/preseva/alerts?state=${encodeURIComponent(state)}`);
+};
+
+// ─── SageMaker PreSeva — Public Endpoints ─────────────────────────────────────
+export const apiGetPublicPredictions = async () => {
+    return await apiFetch('/preseva/public-predictions');
+};
+
+export const apiGetStatePreSeva = async (stateName) => {
+    return await apiFetch(`/preseva/state/${encodeURIComponent(stateName)}`);
 };
 
 // ==============================

@@ -26,9 +26,14 @@ export default function SchemeManagement() {
 
     const load = async () => {
         setLoading(true);
-        const res = await apiGetSchemes({ search, category: filterCat });
-        setSchemes(Array.isArray(res.data) ? res.data : []);
-        setLoading(false);
+        try {
+            const res = await apiGetSchemes({ search, category: filterCat });
+            setSchemes(Array.isArray(res.data) ? res.data : []);
+        } catch (err) {
+            console.error('[Schemes] Load error:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const openAdd = () => { setForm(emptyScheme); setEditMode(false); setEditId(null); setModal(true); };
@@ -39,13 +44,18 @@ export default function SchemeManagement() {
         const { id, name } = deleteModal;
         setDeleteModal(null);
         setDeleting(id);
-        await apiDeleteScheme(id);
-        setSchemes(ss => ss.filter(s => s.id !== id));
-        setDeleting(null);
-        // Start undo timer (6 seconds)
-        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-        setUndoToast({ id, name, progress: 100 });
-        undoTimerRef.current = setTimeout(() => setUndoToast(null), 6000);
+        try {
+            await apiDeleteScheme(id);
+            setSchemes(ss => ss.filter(s => s.id !== id));
+            // Start undo timer (6 seconds)
+            if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+            setUndoToast({ id, name, progress: 100 });
+            undoTimerRef.current = setTimeout(() => setUndoToast(null), 6000);
+        } catch (err) {
+            console.error('[Schemes] Delete error:', err);
+        } finally {
+            setDeleting(null);
+        }
     };
 
     const handleUndo = async () => {
@@ -112,75 +122,76 @@ export default function SchemeManagement() {
                             beneficiaries: rawScheme.beneficiaries || 'N/A'
                         };
                         return (
-                        <div key={scheme.id || i} className="glass-card" style={{
-                            padding: 20,
-                            animation: `fadeInUp 0.4s ease ${i * 0.04}s both`,
-                            border: `1px solid rgba(255,255,255,0.07)`
-                        }}>
-                            {/* Category tag */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                                <span style={{
-                                    background: `${catColors[scheme.category] || '#6B7280'}20`,
-                                    color: catColors[scheme.category] || '#6B7280',
-                                    border: `1px solid ${catColors[scheme.category] || '#6B7280'}40`,
-                                    padding: '3px 10px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700
-                                }}>{scheme.category}</span>
-                                <span className="badge badge-resolved">Active</span>
-                            </div>
-
-                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: 8, lineHeight: 1.3 }}>
-                                {scheme.name}
-                            </h3>
-
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
-                                {scheme.description}
-                            </p>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-                                <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
-                                    <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Benefit:</span>
-                                    <span style={{ color: 'var(--teal)', fontWeight: 600 }}>{scheme.benefit}</span>
+                            <div key={scheme.id || i} className="glass-card" style={{
+                                padding: 20,
+                                animation: `fadeInUp 0.4s ease ${i * 0.04}s both`,
+                                border: `1px solid rgba(255,255,255,0.07)`
+                            }}>
+                                {/* Category tag */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                                    <span style={{
+                                        background: `${catColors[scheme.category] || '#6B7280'}20`,
+                                        color: catColors[scheme.category] || '#6B7280',
+                                        border: `1px solid ${catColors[scheme.category] || '#6B7280'}40`,
+                                        padding: '3px 10px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700
+                                    }}>{scheme.category}</span>
+                                    <span className="badge badge-resolved">Active</span>
                                 </div>
-                                <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
-                                    <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Eligibility:</span>
-                                    <span style={{ color: 'var(--text-primary)' }}>{scheme.eligibility}</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
-                                    <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Coverage:</span>
-                                    <span style={{ color: 'var(--text-primary)' }}>{scheme.state}</span>
-                                </div>
-                                <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
-                                    <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Beneficiaries:</span>
-                                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{scheme.beneficiaries}</span>
-                                </div>
-                            </div>
 
-                            {/* Progress bar */}
-                            {scheme.applicants > 0 && (
-                                <div style={{ marginBottom: 14 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4 }}>
-                                        <span>{scheme.resolved?.toLocaleString()} served</span>
-                                        <span>{Math.round(scheme.resolved / scheme.applicants * 100)}% coverage</span>
+                                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: 8, lineHeight: 1.3 }}>
+                                    {scheme.name}
+                                </h3>
+
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
+                                    {scheme.description}
+                                </p>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+                                    <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
+                                        <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Benefit:</span>
+                                        <span style={{ color: 'var(--teal)', fontWeight: 600 }}>{scheme.benefit}</span>
                                     </div>
-                                    <div style={{ height: 5, background: 'rgba(255, 255, 255, 0.12)', borderRadius: 3, overflow: 'hidden' }}>
-                                        <div style={{
-                                            width: `${Math.round(scheme.resolved / scheme.applicants * 100)}%`,
-                                            height: '100%', background: 'linear-gradient(90deg, var(--teal), #138808)', borderRadius: 3
-                                        }} />
+                                    <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
+                                        <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Eligibility:</span>
+                                        <span style={{ color: 'var(--text-primary)' }}>{scheme.eligibility}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
+                                        <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Coverage:</span>
+                                        <span style={{ color: 'var(--text-primary)' }}>{scheme.state}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 8, fontSize: '0.78rem' }}>
+                                        <span style={{ color: 'var(--text-muted)', minWidth: 80 }}>Beneficiaries:</span>
+                                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{scheme.beneficiaries}</span>
                                     </div>
                                 </div>
-                            )}
 
-                            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                                <button className="btn-secondary" onClick={() => openEdit(scheme)} style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem' }}>
-                                    <MdEdit /> Edit
-                                </button>
-                                <button onClick={() => setDeleteModal({ id: scheme.id, name: scheme.name })} disabled={deleting === scheme.id} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600, fontFamily: 'Inter', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                    {deleting === scheme.id ? '...' : <><MdDeleteForever /> Delete</>}
-                                </button>
+                                {/* Progress bar */}
+                                {scheme.applicants > 0 && (
+                                    <div style={{ marginBottom: 14 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                                            <span>{scheme.resolved?.toLocaleString()} served</span>
+                                            <span>{Math.round(scheme.resolved / scheme.applicants * 100)}% coverage</span>
+                                        </div>
+                                        <div style={{ height: 5, background: 'rgba(255, 255, 255, 0.12)', borderRadius: 3, overflow: 'hidden' }}>
+                                            <div style={{
+                                                width: `${Math.round(scheme.resolved / scheme.applicants * 100)}%`,
+                                                height: '100%', background: 'linear-gradient(90deg, var(--teal), #138808)', borderRadius: 3
+                                            }} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                                    <button className="btn-secondary" onClick={() => openEdit(scheme)} style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem' }}>
+                                        <MdEdit /> Edit
+                                    </button>
+                                    <button onClick={() => setDeleteModal({ id: scheme.id, name: scheme.name })} disabled={deleting === scheme.id} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: 'var(--red)', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600, fontFamily: 'Inter', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        {deleting === scheme.id ? '...' : <><MdDeleteForever /> Delete</>}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    );})}
+                        );
+                    })}
                 </div>
             )}
 

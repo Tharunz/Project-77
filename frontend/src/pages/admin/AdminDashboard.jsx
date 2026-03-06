@@ -12,6 +12,7 @@ import {
     apiGetAdminAnalytics, apiGetDashboardStats, apiGetActivityFeed,
     apiGetMonthlyTrend, apiGetCategoryBreakdown, apiGetPreSevaAlerts
 } from '../../services/api.service';
+import { useLanguage } from '../../context/LanguageContext';
 import './AdminDashboard.css';
 
 const KPICard = ({ label, value, sub, icon, color, trend, trendUp }) => (
@@ -77,6 +78,7 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [presevaAlerts, setPresevaAlerts] = useState([]);
     const [liveGrievances, setLiveGrievances] = useState([]);
+    const { t } = useLanguage();
     const wsClientRef = useRef(null);
 
     const loadData = async () => {
@@ -186,7 +188,7 @@ export default function AdminDashboard() {
 
     if (loading || !stats) return (
         <div className="dash-loading">
-            <div className="spinner" /><span>Synchronizing with National Data Lake...</span>
+            <div className="spinner" /><span>{t('Synchronizing with National Data Lake...')}</span>
         </div>
     );
 
@@ -205,14 +207,14 @@ export default function AdminDashboard() {
                 <div>
                     <h1 className="dash-title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <MdDashboard className="icon" />
-                        <span>PRESEVA Command Center</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(139,92,246,0.2)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 6, padding: '2px 8px', letterSpacing: '0.08em' }}>NATIONAL INTELLIGENCE</span>
+                        <span>{t('PRESEVA Command Center')}</span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, background: 'rgba(139,92,246,0.2)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.4)', borderRadius: 6, padding: '2px 8px', letterSpacing: '0.08em' }}>{t('NATIONAL INTELLIGENCE')}</span>
                     </h1>
-                    <p className="dash-subtitle">AI-driven governance failure prediction &amp; unified citizen services intelligence</p>
+                    <p className="dash-subtitle">{t('AI-driven governance failure prediction & unified citizen services intelligence')}</p>
                 </div>
                 <div className="dash-header-right">
-                    <div className="platform-health"><span className="health-dot" />PRESEVA Active</div>
-                    <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={loadData}><MdRefresh /> Sync Live</button>
+                    <div className="platform-health"><span className="health-dot" />{t('PRESEVA Active')}</div>
+                    <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={loadData}><MdRefresh /> {t('Sync Live')}</button>
                 </div>
             </div>
 
@@ -228,12 +230,12 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#8B5CF6', boxShadow: '0 0 12px #8B5CF6', animation: 'pulse 1.5s ease-in-out infinite', flexShrink: 0 }} />
                         <div>
-                            <div style={{ fontSize: '0.68rem', fontFamily: 'JetBrains Mono', color: '#A78BFA', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 2 }}>PRESEVA — Predictive Governance Intelligence</div>
-                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>Analyzing {stats.statesCovered} states · {stats.languagesSupported} languages · Real-time failure prediction active</div>
+                            <div style={{ fontSize: '0.68rem', fontFamily: 'JetBrains Mono', color: '#A78BFA', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 2 }}>{t('PRESEVA — Predictive Governance Intelligence')}</div>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{t('Analyzing')} {stats.statesCovered || 36} {t('states')} · {stats.languagesSupported || 22} {t('languages')} · {t('Real-time failure prediction active')}</div>
                         </div>
                     </div>
                     <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                        {[{ v: presevaAlerts.length + 4, l: 'Active Predictions', c: '#8B5CF6' }, { v: criticalAlerts.length, l: 'Critical', c: '#EF4444' }, { v: preventedCount + 43, l: 'Failures Prevented', c: '#00C896' }, { v: '94.2%', l: 'Prediction Accuracy', c: '#F59E0B' }].map(s => (
+                        {[{ v: presevaAlerts.length + 4, l: t('Active Predictions'), c: '#8B5CF6' }, { v: criticalAlerts.length, l: t('Critical'), c: '#EF4444' }, { v: preventedCount + 43, l: t('Failures Prevented'), c: '#00C896' }, { v: '94.2%', l: t('Prediction Accuracy'), c: '#F59E0B' }].map(s => (
                             <div key={s.l} style={{ textAlign: 'center' }}>
                                 <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.4rem', fontWeight: 900, color: s.c }}>{s.v}</div>
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>{s.l}</div>
@@ -249,9 +251,9 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                         <h2 style={{ fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', boxShadow: '0 0 8px #EF4444', display: 'inline-block', animation: 'pulse 1.5s ease-in-out infinite' }} />
-                            Active PRESEVA Predictions
+                            {t('Active PRESEVA Predictions')}
                         </h2>
-                        <a href="/admin/preseva" style={{ fontSize: '0.78rem', color: 'var(--saffron)', fontWeight: 700, textDecoration: 'none' }}>View Full PRESEVA Module →</a>
+                        <a href="/admin/preseva" style={{ fontSize: '0.78rem', color: 'var(--saffron)', fontWeight: 700, textDecoration: 'none' }}>{t('View Full PRESEVA Module')} →</a>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
                         {presevaAlerts.map(alert => {
@@ -273,15 +275,15 @@ export default function AdminDashboard() {
                                         </div>
                                         <div style={{ textAlign: 'center', flexShrink: 0 }}>
                                             <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.5rem', fontWeight: 900, color: uc, lineHeight: 1 }}>{alert.probability}%</div>
-                                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 2 }}>PROBABILITY</div>
+                                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', marginTop: 2 }}>{t('PROBABILITY')}</div>
                                         </div>
                                     </div>
                                     <div style={{ height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 2, overflow: 'hidden', marginBottom: 12 }}>
                                         <div style={{ height: '100%', width: `${alert.probability}%`, background: `linear-gradient(90deg, ${uc}, ${uc}88)`, borderRadius: 2, transition: 'width 1s ease' }} />
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: 4 }}>{alert.status || 'Awaiting Action'}</span>
-                                        <a href="/admin/preseva" style={{ fontSize: '0.75rem', fontWeight: 700, color: uc, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>Dispatch →</a>
+                                        <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: 4 }}>{t(alert.status || 'Awaiting Action')}</span>
+                                        <a href="/admin/preseva" style={{ fontSize: '0.75rem', fontWeight: 700, color: uc, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>{t('Dispatch')} →</a>
                                     </div>
                                 </div>
                             );
@@ -292,15 +294,15 @@ export default function AdminDashboard() {
 
             {/* Impact Banner */}
             <div className="impact-banner">
-                <div className="impact-item"><span className="impact-number">1.4B</span><span className="impact-label">Citizens Served</span></div>
+                <div className="impact-item"><span className="impact-number">1.4B</span><span className="impact-label">{t('Citizens Served')}</span></div>
                 <div className="impact-divider" />
-                <div className="impact-item"><span className="impact-number">{stats.schemesAvailable}+</span><span className="impact-label">Active Schemes</span></div>
+                <div className="impact-item"><span className="impact-number">{stats.schemesAvailable}+</span><span className="impact-label">{t('Active Schemes')}</span></div>
                 <div className="impact-divider" />
-                <div className="impact-item"><span className="impact-number">{stats.statesCovered}</span><span className="impact-label">States & UTs</span></div>
+                <div className="impact-item"><span className="impact-number">{stats.statesCovered}</span><span className="impact-label">{t('States & UTs')}</span></div>
                 <div className="impact-divider" />
-                <div className="impact-item"><span className="impact-number">{stats.languagesSupported}</span><span className="impact-label">Languages</span></div>
+                <div className="impact-item"><span className="impact-number">{stats.languagesSupported}</span><span className="impact-label">{t('Languages')}</span></div>
                 <div className="impact-divider" />
-                <div className="impact-item"><span className="impact-number" style={{ color: '#00C896' }}>{resolutionPct}%</span><span className="impact-label">Resolution Rate</span></div>
+                <div className="impact-item"><span className="impact-number" style={{ color: '#00C896' }}>{resolutionPct}%</span><span className="impact-label">{t('Resolution Rate')}</span></div>
             </div>
 
             {/* KPI Grid */}
@@ -331,9 +333,9 @@ export default function AdminDashboard() {
                     color="#8B5CF6" trend={stats.trend?.inProgress} trendUp={true}
                 />
                 <KPICard
-                    label="Avg Resolution" value={`${stats.avgResponseTime}d`}
-                    sub="SLA Performance" icon={<MdTrendingUp style={{ fontSize: '1.4rem' }} />}
-                    color="#FF6B2C" trend="On Track" trendUp={true}
+                    label={t('Avg Resolution')} value={`${stats.avgResponseTime}d`}
+                    sub={t('SLA Performance')} icon={<MdTrendingUp style={{ fontSize: '1.4rem' }} />}
+                    color="#FF6B2C" trend={t('On Track')} trendUp={true}
                 />
             </div>
 
@@ -342,8 +344,8 @@ export default function AdminDashboard() {
                 {/* Monthly Trend */}
                 <div className="chart-box chart-large">
                     <div className="chart-header">
-                        <h3>Monthly Grievance Trend</h3>
-                        <span className="chart-sub">Filed vs Resolved (last 7 months)</span>
+                        <h3>{t('Monthly Grievance Trend')}</h3>
+                        <span className="chart-sub">{t('Filed vs Resolved (last 7 months)')}</span>
                     </div>
                     <div style={{ height: 220, position: 'relative', width: '100%' }}>
                         {isResizing ? (
@@ -368,8 +370,8 @@ export default function AdminDashboard() {
                                     <YAxis tick={{ fill: '#B8C5D6', fontSize: 12 }} axisLine={false} tickLine={false} />
                                     <Tooltip content={<CustomTooltip />} />
                                     <Legend wrapperStyle={{ color: '#B8C5D6', fontSize: 12 }} />
-                                    <Area type="monotone" dataKey="filed" name="Filed" stroke="#3B82F6" strokeWidth={2} fill="url(#gradFiled)" />
-                                    <Area type="monotone" dataKey="resolved" name="Resolved" stroke="#00C896" strokeWidth={2} fill="url(#gradResolved)" />
+                                    <Area type="monotone" dataKey="filed" name={t("Filed")} stroke="#3B82F6" strokeWidth={2} fill="url(#gradFiled)" />
+                                    <Area type="monotone" dataKey="resolved" name={t("Resolved")} stroke="#00C896" strokeWidth={2} fill="url(#gradResolved)" />
                                 </AreaChart>
                             </ResponsiveContainer>
                         )}
@@ -379,8 +381,8 @@ export default function AdminDashboard() {
                 {/* Category Pie */}
                 <div className="chart-box chart-small">
                     <div className="chart-header">
-                        <h3>By Category</h3>
-                        <span className="chart-sub">Volume breakdown</span>
+                        <h3>{t('By Category')}</h3>
+                        <span className="chart-sub">{t('Volume breakdown')}</span>
                     </div>
                     <div style={{ height: 160, position: 'relative', width: '100%' }}>
                         {isResizing ? (
@@ -420,9 +422,9 @@ export default function AdminDashboard() {
                     <div className="chart-header">
                         <h3>
                             <MdNotificationsActive style={{ color: '#FF6B2C', marginRight: 8, verticalAlign: 'middle' }} />
-                            Live Activity Feed
+                            {t('Live Activity Feed')}
                         </h3>
-                        <span className="live-badge">● LIVE</span>
+                        <span className="live-badge">● {t('LIVE')}</span>
                     </div>
                     <div className="activity-list">
                         {feed.map(item => <ActivityItem key={item.id} item={item} />)}
@@ -432,7 +434,7 @@ export default function AdminDashboard() {
                 {/* Resolution Progress */}
                 <div className="resolution-box">
                     <div className="chart-header">
-                        <h3>Resolution Overview</h3>
+                        <h3>{t('Resolution Overview')}</h3>
                     </div>
                     <div className="resolution-ring-wrap">
                         <svg viewBox="0 0 120 120" className="resolution-ring">
@@ -446,36 +448,36 @@ export default function AdminDashboard() {
                         </svg>
                         <div className="ring-center">
                             <span className="ring-pct">{resolutionPct}%</span>
-                            <span className="ring-label">Resolved</span>
+                            <span className="ring-label">{t('Resolved')}</span>
                         </div>
                     </div>
 
                     <div className="resolution-stats">
                         <div className="res-stat">
                             <div className="res-dot" style={{ background: '#00C896' }} />
-                            <span>Resolved</span>
+                            <span>{t('Resolved')}</span>
                             <strong>{stats.resolved.toLocaleString()}</strong>
                         </div>
                         <div className="res-stat">
                             <div className="res-dot" style={{ background: '#F59E0B' }} />
-                            <span>Pending</span>
+                            <span>{t('Pending')}</span>
                             <strong>{stats.pending.toLocaleString()}</strong>
                         </div>
                         <div className="res-stat">
                             <div className="res-dot" style={{ background: '#EF4444' }} />
-                            <span>Critical</span>
+                            <span>{t('Critical')}</span>
                             <strong>{stats.critical.toLocaleString()}</strong>
                         </div>
                         <div className="res-stat">
                             <div className="res-dot" style={{ background: '#8B5CF6' }} />
-                            <span>In Progress</span>
+                            <span>{t('In Progress')}</span>
                             <strong>{stats.inProgress.toLocaleString()}</strong>
                         </div>
                     </div>
 
                     {/* Top States */}
                     <div className="top-states">
-                        <h4>Top States by Volume</h4>
+                        <h4>{t('Top States by Volume')}</h4>
                         {topStates.map(s => (
                             <div key={s.state} className="state-bar-item">
                                 <span className="state-name" style={{ fontSize: '0.78rem' }}>{s.state}</span>

@@ -22,6 +22,8 @@ const errorHandler = (err, req, res, next) => {
  * Mount this BEFORE errorHandler.
  */
 const notFound = (req, res, next) => {
+    // Browsers auto-request favicon.ico — silently ignore it
+    if (req.originalUrl === '/favicon.ico') return res.status(204).end();
     const err = new Error(`Route not found: ${req.method} ${req.originalUrl}`);
     err.statusCode = 404;
     next(err);

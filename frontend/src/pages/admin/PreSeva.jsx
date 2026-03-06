@@ -82,6 +82,10 @@ export default function PreSeva() {
     const [mcFilter, setMcFilter] = useState('all');
     const [runLoading, setRunLoading] = useState(false);
     const [runResult, setRunResult] = useState(null);
+    const [sagePredictions, setSagePredictions] = useState([]);
+    const [sageMakerActive, setSageMakerActive] = useState(false);
+    const [smModelType, setSmModelType] = useState('');
+    const [smAccuracy, setSmAccuracy] = useState('');
 
     const loadData = () => {
         Promise.all([apiGetPreSevaAlerts(), apiGetPreSevaStats()]).then(([a, s]) => {
@@ -89,6 +93,18 @@ export default function PreSeva() {
             setStats(s.data || null);
             setLoading(false);
         });
+        // Load live SageMaker predictions
+        apiFetch('/preseva/predictions').then(res => {
+            if (res.success && Array.isArray(res.data)) {
+                setSagePredictions(res.data);
+                const isSM = res.poweredBy === 'Amazon SageMaker';
+                setSageMakerActive(isSM);
+                if (res.data[0]) {
+                    setSmModelType(res.data[0].modelType || '');
+                    setSmAccuracy(res.data[0].accuracy || '');
+                }
+            }
+        }).catch(() => { });
     };
 
     useEffect(() => {
@@ -193,6 +209,29 @@ export default function PreSeva() {
                 </div>
             </div>
 
+            {/* SageMaker Active Banner */}
+            {sageMakerActive && (
+                <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.05))',
+                    border: '1px solid rgba(245,158,11,0.35)', borderLeft: '4px solid #F59E0B',
+                    borderRadius: 10, padding: '12px 18px', animation: 'fadeInUp 0.4s ease'
+                }}>
+                    <span style={{ fontSize: '1.3rem' }}>⚡</span>
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '0.72rem', fontFamily: 'JetBrains Mono', color: '#F59E0B', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            Amazon SageMaker Active
+                        </div>
+                        <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                            {smModelType || 'Random Forest Classifier'} &nbsp;·&nbsp; {smAccuracy || '95%'} Accuracy
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.4)', borderRadius: 20, padding: '3px 10px' }}>LIVE</span>
+                    </div>
+                </div>
+            )}
+
             {/* Tab Switcher */}
             <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 4 }}>
                 {[{ key: 'predictions', icon: '🎯', label: 'AI Predictions' }, { key: 'missionControl', icon: '🚀', label: 'Mission Control' }].map(t => (
@@ -229,12 +268,26 @@ export default function PreSeva() {
                         ))}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
-                        {missions.filter(m => mcFilter === 'all' || m.status === mcFilter).map(mission => (
-                            <MissionCard key={mission.id} mission={mission}
-                                onDispatch={m => { setDispatchModal(m); setDispatchForm({ officers: m.officersDeployed || 3, budget: m.budgetAllocated || 100000, eta: '24', note: '' }); }}
-                                onResolve={id => setMissions(ms => ms.map(m => m.id === id ? { ...m, status: 'resolved' } : m))}
-                            />
-                        ))}
+                        {missions.filter(m => mcFilter === 'all' || m.status === mcFilter).map(mission => {
+                            // Merge with SageMaker data if available
+                            const smPred = sagePredictions.find(p => p.state === mission.state && p.category?.includes(mission.icon === '💧' ? 'Water' : mission.icon === '🏥' ? 'Health' : ''));
+                            const smMission = smPred ? {
+                                ...mission,
+                                confidence: Math.round(smPred.probability * 100),
+                                citizensAtRisk: smPred.citizensAtRisk || mission.citizensAtRisk
+                            } : mission;
+                            return (
+                                <div key={smMission.id} style={{ position: 'relative' }}>
+                                    {sageMakerActive && (
+                                        <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 1, fontSize: '0.6rem', fontWeight: 800, background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.35)', borderRadius: 4, padding: '2px 6px' }}>⚡ AMAZON SAGEMAKER</div>
+                                    )}
+                                    <MissionCard key={smMission.id} mission={smMission}
+                                        onDispatch={m => { setDispatchModal(m); setDispatchForm({ officers: m.officersDeployed || 3, budget: m.budgetAllocated || 100000, eta: '24', note: '' }); }}
+                                        onResolve={id => setMissions(ms => ms.map(m => m.id === id ? { ...m, status: 'resolved' } : m))}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -297,14 +350,22 @@ export default function PreSeva() {
 
                 {/* Prediction Cards */}
                 <div>
-                    <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 14 }}>🔮 Active Predictions</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                        {alerts.map((alert, i) => {
+                    {/* Active Section */}
+                    <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', display: 'inline-block', boxShadow: '0 0 8px #EF4444' }} />
+                        Active Predictions
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
+                        {alerts.filter(a => !a.prevented).length === 0 ? (
+                            <div style={{ padding: 40, textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border)', borderRadius: 12, color: 'var(--text-muted)' }}>
+                                No active failure threats detected. All systems nominal.
+                            </div>
+                        ) : alerts.filter(a => !a.prevented).map((alert, i) => {
                             const urg = URGENCY[alert.urgency] || URGENCY.medium;
                             const sb = STATUS_BADGE[alert.status] || { cls: 'badge-pending', icon: '⏳' };
                             const isExpanded = expanded === alert.id;
                             return (
-                                <div key={alert.id} style={{ background: alert.prevented ? 'rgba(0,200,150,0.04)' : urg.bg, border: `1px solid ${alert.prevented ? 'rgba(0,200,150,0.25)' : urg.border}`, borderRadius: 'var(--radius)', overflow: 'hidden', animation: `fadeInUp 0.3s ease ${i * 0.08}s both` }}>
+                                <div key={alert.id} style={{ background: urg.bg, border: `1px solid ${urg.border}`, borderRadius: 'var(--radius)', overflow: 'hidden', animation: `fadeInUp 0.3s ease ${i * 0.08}s both` }}>
                                     <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', flexWrap: 'wrap' }} onClick={() => setExpanded(isExpanded ? null : alert.id)}>
                                         <div style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0, background: `conic-gradient(${urg.color} ${alert.probability}%, rgba(255,255,255,0.12) 0%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk', fontSize: '0.78rem', fontWeight: 800, color: urg.color }}>{alert.probability}%</div>
@@ -314,21 +375,18 @@ export default function PreSeva() {
                                                 <span style={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'var(--saffron)' }}>{alert.id}</span>
                                                 <span style={{ fontSize: '0.78rem', fontWeight: 700, color: urg.color, background: urg.bg, border: `1px solid ${urg.border}`, padding: '2px 8px', borderRadius: 100 }}>{urg.label}</span>
                                                 <span className={`badge ${sb.cls}`}>{sb.icon} {alert.status}</span>
-                                                {alert.prevented && <span className="badge badge-resolved">🛡️ PREVENTED</span>}
                                             </div>
                                             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: 4 }}>{alert.title}</h3>
                                             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>📍 {alert.district}, {alert.state} &nbsp;·&nbsp; 📅 {alert.predictedDate} &nbsp;·&nbsp; ⏱️ {alert.daysUntil} days</p>
                                         </div>
-                                        {!alert.prevented && (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
-                                                <button onClick={e => { e.stopPropagation(); setAllocateModal(alert); setAllocateForm({ officers: '2', budget: '50000', note: '' }); }} style={{ background: 'rgba(255,107,44,0.12)', border: '1px solid rgba(255,107,44,0.3)', color: 'var(--saffron)', borderRadius: 8, padding: '7px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    <MdPeople /> Allocate Resources
-                                                </button>
-                                                <button onClick={e => { e.stopPropagation(); markPrevented(alert.id); }} style={{ background: 'rgba(0,200,150,0.12)', border: '1px solid rgba(0,200,150,0.3)', color: '#00C896', borderRadius: 8, padding: '7px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    <MdCheckCircle /> Mark Prevented
-                                                </button>
-                                            </div>
-                                        )}
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                                            <button onClick={e => { e.stopPropagation(); setAllocateModal(alert); setAllocateForm({ officers: '2', budget: '50000', note: '' }); }} style={{ background: 'rgba(255,107,44,0.12)', border: '1px solid rgba(255,107,44,0.3)', color: 'var(--saffron)', borderRadius: 8, padding: '7px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <MdPeople /> Allocate Resources
+                                            </button>
+                                            <button onClick={e => { e.stopPropagation(); markPrevented(alert.id); }} style={{ background: 'rgba(0,200,150,0.12)', border: '1px solid rgba(0,200,150,0.3)', color: '#00C896', borderRadius: 8, padding: '7px 12px', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                <MdCheckCircle /> Mark Prevented
+                                            </button>
+                                        </div>
                                     </div>
                                     {isExpanded && (
                                         <div style={{ padding: '0 20px 20px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
@@ -349,6 +407,63 @@ export default function PreSeva() {
                             );
                         })}
                     </div>
+
+                    {/* Solved Section */}
+                    {alerts.some(a => a.prevented) && (
+                        <>
+                            <h2 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8, marginTop: 40 }}>
+                                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', display: 'inline-block', boxShadow: '0 0 10px rgba(16, 185, 129, 0.4)' }} />
+                                Successfully Mitigated (Solved Archive)
+                            </h2>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                                {alerts.filter(a => a.prevented).map((alert, i) => {
+                                    const isExpanded = expanded === alert.id;
+                                    return (
+                                        <div key={alert.id} style={{
+                                            background: 'rgba(16, 185, 129, 0.06)',
+                                            border: '1px solid rgba(16, 185, 129, 0.25)',
+                                            borderLeft: '4px solid #10B981',
+                                            borderRadius: 'var(--radius)',
+                                            overflow: 'hidden',
+                                            transition: 'transform 0.2s ease'
+                                        }}>
+                                            <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 18, cursor: 'pointer' }} onClick={() => setExpanded(isExpanded ? null : alert.id)}>
+                                                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10B981', flexShrink: 0, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                                                    <MdCheckCircle style={{ fontSize: '1.6rem' }} />
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 3 }}>
+                                                        <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.05)', padding: '1px 6px', borderRadius: 4 }}>{alert.id}</span>
+                                                        <span className="badge" style={{ background: '#10B981', color: '#fff', fontSize: '0.65rem', padding: '1px 8px', borderRadius: 100, fontWeight: 800 }}>🛡️ THREAT NEUTRALISED</span>
+                                                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>📍 {alert.district}, {alert.state}</span>
+                                                    </div>
+                                                    <h3 style={{ fontSize: '0.98rem', fontWeight: 700, color: 'var(--text-white)' }}>{alert.title}</h3>
+                                                </div>
+                                                <div style={{ textAlign: 'right', fontSize: '0.78rem', color: 'var(--text-muted)', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 20 }}>
+                                                    <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Mitigated On</div>
+                                                    <div style={{ fontWeight: 800, color: '#10B981', fontSize: '0.85rem' }}>{new Date(alert.updatedAt || alert.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                                                </div>
+                                            </div>
+                                            {isExpanded && (
+                                                <div style={{ padding: '20px', fontSize: '0.88rem', color: 'var(--text-secondary)', borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.1)' }}>
+                                                    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                                                        <div style={{ flex: 1, minWidth: 200 }}>
+                                                            <h5 style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>Mitigation Summary</h5>
+                                                            <p style={{ lineHeight: 1.6 }}>PreSeva AI successfully predicted this <strong>{alert.category}</strong> failure with <strong>{alert.probability}%</strong> confidence. Proactive resource allocation prevented service disruption for an estimated <strong>{alert.basisGrievances || 'thousands of'}</strong> citizens.</p>
+                                                        </div>
+                                                        <div style={{ width: 220, borderLeft: '1px solid rgba(255,255,255,0.05)', paddingLeft: 20 }}>
+                                                            <h5 style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>Intelligence Source</h5>
+                                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-white)' }}>{alert.historicalPattern || 'Pattern-based predictive modeling.'}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Resource Allocation Modal */}

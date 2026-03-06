@@ -24,10 +24,28 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('p77_user', JSON.stringify(userData));
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('p77_user');
-        localStorage.removeItem('token');
+    const logout = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const accessToken = localStorage.getItem('access_token');
+            if (token) {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-Access-Token': accessToken || '',
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Logout API call failed:', err);
+        } finally {
+            setUser(null);
+            localStorage.removeItem('p77_user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('access_token');
+        }
     };
 
     return (

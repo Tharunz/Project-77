@@ -384,6 +384,16 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-05T16:58:05.720Z"
+    },
+    {
+      "id": "USR-62C216B5",
+      "name": "Aquila01",
+      "email": "xbot60523@gmail.com",
+      "role": "citizen",
+      "state": "Tamil Nadu",
+      "janShaktiScore": 50,
+      "cognitoSub": "0488f418-6031-70b2-1f29-4bbbf325f846",
+      "createdAt": "2026-03-06T17:34:07.785Z"
     }
   ],
   "grievances": [
@@ -396,7 +406,7 @@
       "category": "Roads & Infrastructure",
       "state": "Andhra Pradesh",
       "district": "Unknown",
-      "status": "Pending",
+      "status": "Resolved",
       "sentiment": "Neutral",
       "sentimentScore": 0.5,
       "sentimentData": {
@@ -426,8 +436,10 @@
       "fraudScore": 0.05,
       "adminNote": null,
       "createdAt": "2026-03-05T19:50:11.185Z",
-      "updatedAt": "2026-03-05T19:50:11.185Z",
-      "resolvedAt": null
+      "updatedAt": "2026-03-06T13:15:30.910Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen verified resolution and uploaded photo proof.",
+      "verifiedAt": "2026-03-06T13:15:30.910Z"
     },
     {
       "id": "GRV-456244E7",
@@ -2458,92 +2470,42 @@
   "officers": [],
   "preSevaAlerts": [
     {
-      "id": "PRESEVA-001",
-      "type": "spike_predicted",
-      "state": "Bihar",
-      "district": "Patna",
-      "category": "Flooding",
-      "title": "Predicted Flood Grievance Spike",
-      "probability": 87,
-      "daysUntil": 4,
+      "id": "PRESEVA-TN-8821",
+      "state": "Tamil Nadu",
+      "category": "Water Supply",
+      "title": "THREAT MITIGATED: Predicted Water Shortage",
+      "district": "Chennai",
       "predictedDate": "2026-03-05",
+      "daysUntil": 0,
       "urgency": "critical",
-      "historicalPattern": "Pattern detected in 2024 and 2025 during similar pre-monsoon showers.",
-      "basisGrievances": 1240,
-      "suggestedAction": "Clear drainages in Ward 4, 7, and 12 immediately.",
-      "departmentAlerted": "Water & Sanitation",
-      "alertSentAt": "2026-02-28 10:00 AM",
-      "description": "AI model predicts 85%+ probability of flood-related grievance surge in next 14 days based on IMD data and historical patterns.",
       "status": "Action Taken",
       "prevented": true,
-      "createdAt": "2026-02-20T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:51:55.342Z"
+      "probability": 92,
+      "basisGrievances": 4200,
+      "departmentAlerted": "Chennai Metrowater",
+      "suggestedAction": "Increase desalination output by 20% and redirect supply.",
+      "historicalPattern": "Drought pattern match from Summer 2021 detected 72h prior.",
+      "createdAt": "2026-03-05T18:16:57.024Z",
+      "updatedAt": "2026-03-06T06:16:57.024Z"
     },
     {
-      "id": "PRESEVA-002",
-      "type": "crop_distress",
-      "state": "Rajasthan",
-      "district": "Jaisalmer",
-      "category": "Agriculture",
-      "title": "Drought Pattern Detected",
-      "probability": 79,
-      "daysUntil": 12,
-      "predictedDate": "2026-03-15",
-      "urgency": "high",
-      "historicalPattern": "300% grievance increase in this corridor during similar weather conditions.",
-      "basisGrievances": 850,
-      "suggestedAction": "Release canal water for agricultural use and notify farmers.",
-      "departmentAlerted": "Agriculture",
-      "alertSentAt": "2026-02-28 11:30 AM",
-      "description": "Unusual drought pattern detected. Historical data shows 300% grievance increase in this corridor during similar weather conditions.",
-      "status": "Action Taken",
-      "prevented": true,
-      "createdAt": "2026-02-22T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:51:57.255Z"
-    },
-    {
-      "id": "PRESEVA-003",
-      "type": "health_outbreak",
-      "state": "West Bengal",
-      "district": "Kolkata",
+      "id": "PRESEVA-KL-4412",
+      "state": "Kerala",
       "category": "Healthcare",
-      "title": "Potential Dengue Outbreak",
-      "probability": 72,
-      "daysUntil": 7,
-      "predictedDate": "2026-03-08",
+      "title": "THREAT MITIGATED: Medical Supply Anomaly",
+      "district": "Wayanad",
+      "predictedDate": "2026-03-04",
+      "daysUntil": 0,
       "urgency": "high",
-      "historicalPattern": "Vector disease pattern detected from health complaints.",
-      "basisGrievances": 2100,
-      "suggestedAction": "Start intensive fogging and cleaning of stagnant water.",
-      "departmentAlerted": "Healthcare",
-      "alertSentAt": "2026-02-28 09:15 AM",
-      "description": "Vector disease pattern detected from health complaints. Dengue or malaria outbreak probability high in next 7-10 days.",
       "status": "Action Taken",
       "prevented": true,
-      "createdAt": "2026-02-24T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:55:45.626Z"
-    },
-    {
-      "id": "PRESEVA-004",
-      "type": "infrastructure_failure",
-      "state": "Uttar Pradesh",
-      "district": "Kanpur",
-      "category": "Infrastructure",
-      "title": "Road Surface Deterioration",
-      "probability": 68,
-      "daysUntil": 2,
-      "predictedDate": "2026-03-03",
-      "urgency": "medium",
-      "historicalPattern": "Multiple bridge and road complaints in same corridor.",
-      "basisGrievances": 450,
-      "suggestedAction": "Emergency road patching in the industrial zone.",
-      "departmentAlerted": "Infrastructure",
-      "alertSentAt": "2026-02-28 02:45 PM",
-      "description": "Multiple bridge and road complaints in same corridor. Systemic infrastructure failure predicted without intervention.",
-      "status": "Action Taken",
-      "prevented": true,
-      "createdAt": "2026-02-25T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:55:47.262Z"
+      "probability": 88,
+      "basisGrievances": 1560,
+      "departmentAlerted": "Kerala Health Services",
+      "suggestedAction": "Deploy emergency buffer stock of anti-viral medications.",
+      "historicalPattern": "Seasonal escalation pattern matching monsoon surge detected.",
+      "createdAt": "2026-03-04T18:16:57.024Z",
+      "updatedAt": "2026-03-05T18:16:57.024Z"
     }
   ],
   "notifications": [
@@ -2854,6 +2816,15 @@
       "type": "success",
       "isRead": false,
       "sentAt": "2026-03-05T19:50:11.187Z"
+    },
+    {
+      "id": "NOTIF-B5645AC9",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "grievanceId": "GRV-5C651668",
+      "message": "Your grievance GRV-5C651668 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-06T13:13:55.612Z"
     }
   ],
   "communityPosts": [
@@ -2864,16 +2835,20 @@
       "content": "Summer is coming and water supply is already unreliable. Sign this petition to demand daily 6-hour supply.",
       "category": "Water Supply",
       "state": "Uttar Pradesh",
-      "votes": 1248,
+      "votes": 1250,
       "isPetition": true,
-      "petitionCount": 4822,
+      "petitionCount": 4824,
       "responses": [],
       "createdAt": "2026-02-15T00:00:00.000Z",
       "signers": [
-        "a4c8a448-40d1-70a6-1845-3113c82f9834"
+        "a4c8a448-40d1-70a6-1845-3113c82f9834",
+        "6438c408-10f1-7029-42ac-3e794871ef66",
+        "347814c8-4041-7035-251d-3deb55a40609"
       ],
       "voters": [
-        "a4c8a448-40d1-70a6-1845-3113c82f9834"
+        "a4c8a448-40d1-70a6-1845-3113c82f9834",
+        "6438c408-10f1-7029-42ac-3e794871ef66",
+        "347814c8-4041-7035-251d-3deb55a40609"
       ],
       "status": "target_reached"
     },

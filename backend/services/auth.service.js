@@ -81,31 +81,25 @@ const registerUserCognito = async (email, password, name, state, role = 'citizen
     const { v4: uuidv4 } = require('uuid');
     const db = require('./db.service');
 
-    // Step 1: Sign up in Cognito
+    // Step 1: Sign up in Cognito — sends email OTP
     const signUpCmd = new SignUpCommand({
         ClientId: process.env.COGNITO_CLIENT_ID,
         Username: email,
         Password: password,
         UserAttributes: [
             { Name: 'email', Value: email },
-            { Name: 'name', Value: name }
+            { Name: 'name', Value: name }  // ← name stored in Cognito attributes
         ]
     });
     const signUpResult = await client.send(signUpCmd);
 
-    // Step 2: Auto-confirm the user (skip email verification for internal use)
-    const confirmCmd = new AdminConfirmSignUpCommand({
-        UserPoolId: process.env.COGNITO_USER_POOL_ID,
-        Username: email
-    });
-    await client.send(confirmCmd);
-
-    // Step 3: Store additional profile data in DynamoDB ncie-users
+    // Step 2: Store profile in DynamoDB (idempotent — upsert by email)
     const userId = `USR-${uuidv4().slice(0, 8).toUpperCase()}`;
     const userItem = {
-        userId,
+        id: userId,          // matches the id field used in auth.routes.js
+        userId,              // also keep for backwards compat
         email: email.toLowerCase(),
-        name,
+        name,                // ← critical: name must be in the stored record
         state: state || null,
         role,
         janShaktiScore: 50,
@@ -114,6 +108,23 @@ const registerUserCognito = async (email, password, name, state, role = 'citizen
     };
 
     if (process.env.ENABLE_DYNAMO === 'true') {
+        // Clean up any stale record with the same email before inserting
+        try {
+            const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+            const { DynamoDBDocumentClient, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
+            const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
+            const stale = await dynamo.send(new ScanCommand({
+                TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
+                FilterExpression: 'email = :email',
+                ExpressionAttributeValues: { ':email': email.toLowerCase() }
+            }));
+            await Promise.all((stale.Items || []).map(item =>
+                dynamo.send(new DeleteCommand({
+                    TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
+                    Key: { id: item.id }
+                }))
+            ));
+        } catch (_) { /* ignore stale cleanup failure */ }
         await db.put(process.env.DYNAMO_USERS_TABLE || 'ncie-users', userItem);
     }
 

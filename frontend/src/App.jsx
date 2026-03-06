@@ -9,6 +9,13 @@ import './App.css';
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const CitizenLayout = lazy(() => import('./layouts/CitizenLayout'));
 
+// Emergency reset on any navigation (failsafe for stuck loading states)
+window.addEventListener('popstate', () => {
+  // Clear any stuck loading states from the DOM
+  document.querySelectorAll('[data-loading]').forEach(el => el.removeAttribute('data-loading'));
+  document.querySelectorAll('button:disabled').forEach(el => el.disabled = false);
+});
+
 // Admin Pages — all lazy
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const GrievanceManagement = lazy(() => import('./pages/admin/GrievanceManagement'));
@@ -71,50 +78,50 @@ const ProtectedCitizenRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Suspense fallback={<Loader />}>
-    <Routes>
-      {/* Public */}
-      <Route path="/" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-      {/* Admin Routes */}
-      <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
-        <Route index element={<AdminDashboard />} />
-        <Route path="grievances" element={<GrievanceManagement />} />
-        <Route path="sentiment" element={<SentimentPanel />} />
-        <Route path="heatmap" element={<IndiaHeatmap />} />
-        <Route path="schemes" element={<SchemeManagement />} />
-        <Route path="notifications" element={<NotificationsPanel />} />
-        <Route path="fraud" element={<FraudDetection />} />
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="distress" element={<DistressIndex />} />
-        <Route path="sla" element={<SLATracker />} />
-        <Route path="preseva" element={<PreSeva />} />
-        <Route path="escrow" element={<EscrowManagement />} />
-        <Route path="audits" element={<GhostAudits />} />
-      </Route>
+        {/* Admin Routes */}
+        <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="grievances" element={<GrievanceManagement />} />
+          <Route path="sentiment" element={<SentimentPanel />} />
+          <Route path="heatmap" element={<IndiaHeatmap />} />
+          <Route path="schemes" element={<SchemeManagement />} />
+          <Route path="notifications" element={<NotificationsPanel />} />
+          <Route path="fraud" element={<FraudDetection />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="distress" element={<DistressIndex />} />
+          <Route path="sla" element={<SLATracker />} />
+          <Route path="preseva" element={<PreSeva />} />
+          <Route path="escrow" element={<EscrowManagement />} />
+          <Route path="audits" element={<GhostAudits />} />
+        </Route>
 
-      {/* Citizen Routes */}
-      <Route path="/citizen" element={<ProtectedCitizenRoute><CitizenLayout /></ProtectedCitizenRoute>}>
-        <Route index element={<CitizenDashboard />} />
-        <Route path="schemes" element={<SchemeDiscovery />} />
-        <Route path="file-grievance" element={<GrievanceFiling />} />
-        <Route path="track" element={<GrievanceTracking />} />
-        <Route path="chatbot" element={<AIChatbot />} />
-        <Route path="profile" element={<ProfilePage />} />
-        <Route path="roadmap" element={<BenefitRoadmap />} />
-        <Route path="community" element={<Community />} />
-        <Route path="news" element={<SevaNews />} />
-        <Route path="engagement" element={<EngagementDashboard />} />
-        <Route path="schemes/applications" element={<MySchemeApplications />} />
-      </Route>
+        {/* Citizen Routes */}
+        <Route path="/citizen" element={<ProtectedCitizenRoute><CitizenLayout /></ProtectedCitizenRoute>}>
+          <Route index element={<CitizenDashboard />} />
+          <Route path="schemes" element={<SchemeDiscovery />} />
+          <Route path="file-grievance" element={<GrievanceFiling />} />
+          <Route path="track" element={<GrievanceTracking />} />
+          <Route path="chatbot" element={<AIChatbot />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="roadmap" element={<BenefitRoadmap />} />
+          <Route path="community" element={<Community />} />
+          <Route path="news" element={<SevaNews />} />
+          <Route path="engagement" element={<EngagementDashboard />} />
+          <Route path="schemes/applications" element={<MySchemeApplications />} />
+        </Route>
 
-      {/* Onboarding — after registration */}
-      <Route path="/onboarding" element={<ProtectedCitizenRoute><OnboardingPage /></ProtectedCitizenRoute>} />
+        {/* Onboarding — after registration */}
+        <Route path="/onboarding" element={<ProtectedCitizenRoute><OnboardingPage /></ProtectedCitizenRoute>} />
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Suspense>
   );
 }

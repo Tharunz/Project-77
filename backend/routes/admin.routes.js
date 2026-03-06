@@ -69,7 +69,7 @@ router.get('/analytics', (req, res, next) => {
             avgResponseTime: stats.avgResolutionDays || 4.2,
             resolutionRate: stats.resolutionRate || 0,
             schemesAvailable: stats.activeSchemes || 12,
-            statesCovered: 28,
+            statesCovered: 36,
             languagesSupported: 22,
             trend: {
                 total: "+12%",

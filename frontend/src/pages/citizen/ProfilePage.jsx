@@ -82,44 +82,54 @@ export default function ProfilePage() {
             return;
         }
         setSaving(true);
-        const res = await apiUpdateProfile({ name: form.name, email: form.email, state: form.state, age: form.age, income: form.income });
-        setSaving(false);
-        if (res.success && res.data) {
-            login({ ...user, ...res.data });
-        } else {
-            login({ ...user, ...form });
-        }
-        // Re-fetch full profile to sync stats and ensure DB state is reflected
-        apiGetProfile().then(r => {
-            if (r.success && r.data) {
-                login({ ...user, ...r.data });
-                if (r.data.stats) {
-                    const s = r.data.stats;
-                    setProfileStats([
-                        { label: 'Grievances Filed', value: s.totalGrievances ?? 0, color: '#3B82F6' },
-                        { label: 'Resolved', value: s.resolvedGrievances ?? 0, color: '#00C896' },
-                        { label: 'Pending', value: s.pendingGrievances ?? 0, color: '#F59E0B' },
-                        { label: 'Schemes Matched', value: s.schemesMatched ?? 0, color: '#8B5CF6' },
-                    ]);
-                }
+        try {
+            const res = await apiUpdateProfile({ name: form.name, email: form.email, state: form.state, age: form.age, income: form.income });
+            if (res.success && res.data) {
+                login({ ...user, ...res.data });
+            } else {
+                login({ ...user, ...form });
             }
-        });
-        setEditMode(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+            // Re-fetch full profile to sync stats and ensure DB state is reflected
+            apiGetProfile().then(r => {
+                if (r.success && r.data) {
+                    login({ ...user, ...r.data });
+                    if (r.data.stats) {
+                        const s = r.data.stats;
+                        setProfileStats([
+                            { label: 'Grievances Filed', value: s.totalGrievances ?? 0, color: '#3B82F6' },
+                            { label: 'Resolved', value: s.resolvedGrievances ?? 0, color: '#00C896' },
+                            { label: 'Pending', value: s.pendingGrievances ?? 0, color: '#F59E0B' },
+                            { label: 'Schemes Matched', value: s.schemesMatched ?? 0, color: '#8B5CF6' },
+                        ]);
+                    }
+                }
+            });
+            setEditMode(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+            console.error('[Profile] Save error:', err);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleEmailOtpConfirm = async () => {
         if (emailOtp !== '123456') { setEmailOtpMsg({ type: 'error', text: 'Invalid OTP. Demo: use 123456' }); return; }
         setEmailOtpLoading(true);
-        const res = await apiUpdateProfile({ name: form.name, email: emailOtpModal.pendingEmail, state: form.state, age: form.age, income: form.income });
-        setEmailOtpLoading(false);
-        if (res.success && res.data) login({ ...user, ...res.data, email: emailOtpModal.pendingEmail });
-        else login({ ...user, ...form, email: emailOtpModal.pendingEmail });
-        setEmailOtpModal(null);
-        setEditMode(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        try {
+            const res = await apiUpdateProfile({ name: form.name, email: emailOtpModal.pendingEmail, state: form.state, age: form.age, income: form.income });
+            if (res.success && res.data) login({ ...user, ...res.data, email: emailOtpModal.pendingEmail });
+            else login({ ...user, ...form, email: emailOtpModal.pendingEmail });
+            setEmailOtpModal(null);
+            setEditMode(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+            setEmailOtpMsg({ type: 'error', text: 'Failed to verify email. Try again.' });
+        } finally {
+            setEmailOtpLoading(false);
+        }
     };
 
     const handleExport = async () => {
@@ -135,9 +145,14 @@ export default function ProfilePage() {
     const handleDelete = async () => {
         if (deleteConfirm !== 'DELETE') return;
         setDeleting(true);
-        const res = await apiDeleteAccount();
-        setDeleting(false);
-        if (res.success) logout();
+        try {
+            const res = await apiDeleteAccount();
+            if (res.success) logout();
+        } catch (err) {
+            console.error('[Profile] Delete account error:', err);
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const handlePasswordChange = async () => {
@@ -146,34 +161,54 @@ export default function ProfilePage() {
             if (pwForm.newPw !== pwForm.confirm) { setPwMsg({ type: 'error', text: 'New passwords do not match.' }); return; }
             if (pwForm.newPw.length < 6) { setPwMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
             setPwSaving(true);
-            await apiSendOTP(user?.email);
-            setPwSaving(false);
-            setPwOtpStep(true);
-            setPwMsg({ type: 'success', text: 'OTP sent to your registered email. (Demo: use 123456)' });
+            try {
+                await apiSendOTP(user?.email);
+                setPwOtpStep(true);
+                setPwMsg({ type: 'success', text: 'OTP sent to your registered email. (Demo: use 123456)' });
+            } catch (err) {
+                setPwMsg({ type: 'error', text: 'Failed to send OTP. Try again.' });
+            } finally {
+                setPwSaving(false);
+            }
             return;
         }
         if (pwOtp !== '123456') { setPwMsg({ type: 'error', text: 'Invalid OTP. Demo: use 123456' }); return; }
         setPwSaving(true);
-        const res = await apiChangePassword(pwForm.current, pwForm.newPw);
-        setPwSaving(false);
-        if (res.success) { setPwMsg({ type: 'success', text: 'Password changed successfully!' }); setPwForm({ current: '', newPw: '', confirm: '' }); setPwOtpStep(false); setPwOtp(''); }
-        else setPwMsg({ type: 'error', text: res.message || 'Failed to change password.' });
+        try {
+            const res = await apiChangePassword(pwForm.current, pwForm.newPw);
+            if (res.success) { setPwMsg({ type: 'success', text: 'Password changed successfully!' }); setPwForm({ current: '', newPw: '', confirm: '' }); setPwOtpStep(false); setPwOtp(''); }
+            else setPwMsg({ type: 'error', text: res.message || 'Failed to change password.' });
+        } catch (err) {
+            setPwMsg({ type: 'error', text: 'Failed to change password. Try again.' });
+        } finally {
+            setPwSaving(false);
+        }
     };
 
     const handleSendOTP = async () => {
         setKycLoading(true); setKycMsg(null);
-        const res = await apiSendOTP(phone);
-        setKycLoading(false);
-        if (res.success) { setOtpSent(true); setKycMsg({ type: 'success', text: 'OTP sent! (Demo: use 1234)' }); }
-        else setKycMsg({ type: 'error', text: res.message || 'Failed to send OTP.' });
+        try {
+            const res = await apiSendOTP(phone);
+            if (res.success) { setOtpSent(true); setKycMsg({ type: 'success', text: 'OTP sent! (Demo: use 1234)' }); }
+            else setKycMsg({ type: 'error', text: res.message || 'Failed to send OTP.' });
+        } catch (err) {
+            setKycMsg({ type: 'error', text: 'Failed to send OTP. Try again.' });
+        } finally {
+            setKycLoading(false);
+        }
     };
 
     const handleVerifyOTP = async () => {
         setKycLoading(true); setKycMsg(null);
-        const res = await apiVerifyOTP(otp);
-        setKycLoading(false);
-        if (res.success) { setMobileVerified(true); setKycMsg({ type: 'success', text: 'Mobile verified successfully! ✓' }); login({ ...user, mobileVerified: true, phone }); }
-        else setKycMsg({ type: 'error', text: res.message || 'Invalid OTP.' });
+        try {
+            const res = await apiVerifyOTP(otp);
+            if (res.success) { setMobileVerified(true); setKycMsg({ type: 'success', text: 'Mobile verified successfully! ✓' }); login({ ...user, mobileVerified: true, phone }); }
+            else setKycMsg({ type: 'error', text: res.message || 'Invalid OTP.' });
+        } catch (err) {
+            setKycMsg({ type: 'error', text: 'Failed to verify OTP. Try again.' });
+        } finally {
+            setKycLoading(false);
+        }
     };
 
     const handleUnbookmark = async (id) => {
