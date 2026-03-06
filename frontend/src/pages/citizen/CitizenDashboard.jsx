@@ -146,9 +146,7 @@ export default function CitizenDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                     <div style={{ flex: 1 }}>
                         <h1 style={{ fontSize: '1.4rem', marginBottom: 6 }}>
-                            {t('Namaste')}, <span style={{ color: 'var(--saffron)' }}>
-                                {(user?.name || user?.fullName || user?.attributes?.name || user?.email?.split('@')[0] || 'Citizen').split(' ')[0]}
-                            </span> 🙏
+                            {t('Namaste')}, <span style={{ color: 'var(--saffron)' }}>{user?.name?.split(' ')[0] || t('Citizen')}</span> 🙏
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                             {t('Your personal PRESEVA-aware governance dashboard — AI features active.')}

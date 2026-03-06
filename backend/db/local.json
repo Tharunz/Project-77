@@ -394,6 +394,16 @@
       "janShaktiScore": 50,
       "cognitoSub": "0488f418-6031-70b2-1f29-4bbbf325f846",
       "createdAt": "2026-03-06T17:34:07.785Z"
+    },
+    {
+      "id": "USR-C4DEEA91",
+      "name": "TestUser",
+      "email": "user@gmail.com",
+      "role": "citizen",
+      "state": "Tamil Nadu",
+      "janShaktiScore": 50,
+      "cognitoSub": "c4383458-0041-7003-650f-35da244d6693",
+      "createdAt": "2026-03-06T18:21:06.308Z"
     }
   ],
   "grievances": [
@@ -2485,8 +2495,8 @@
       "departmentAlerted": "Chennai Metrowater",
       "suggestedAction": "Increase desalination output by 20% and redirect supply.",
       "historicalPattern": "Drought pattern match from Summer 2021 detected 72h prior.",
-      "createdAt": "2026-03-05T18:16:57.024Z",
-      "updatedAt": "2026-03-06T06:16:57.024Z"
+      "createdAt": "2026-03-05T18:45:30.994Z",
+      "updatedAt": "2026-03-06T06:45:30.994Z"
     },
     {
       "id": "PRESEVA-KL-4412",
@@ -2504,8 +2514,8 @@
       "departmentAlerted": "Kerala Health Services",
       "suggestedAction": "Deploy emergency buffer stock of anti-viral medications.",
       "historicalPattern": "Seasonal escalation pattern matching monsoon surge detected.",
-      "createdAt": "2026-03-04T18:16:57.024Z",
-      "updatedAt": "2026-03-05T18:16:57.024Z"
+      "createdAt": "2026-03-04T18:45:30.994Z",
+      "updatedAt": "2026-03-05T18:45:30.994Z"
     }
   ],
   "notifications": [

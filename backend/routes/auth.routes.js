@@ -39,12 +39,6 @@ router.post('/register', async (req, res, next) => {
             });
         }
 
-        // ── DEBUG ─────────────────────────────────────────────────────────────
-        const _dbInst = db.getDb();
-        console.log('[Register DEBUG] Email:', email);
-        console.log('[Register DEBUG] Local DB has user:', JSON.stringify(_dbInst.get('users').find({ email: email.toLowerCase() }).value()));
-        console.log('[Register DEBUG] isCognito:', isCognito(), '| ENABLE_DYNAMO:', process.env.ENABLE_DYNAMO);
-        // ─────────────────────────────────────────────────────────────────────
         if (password.length < 6) {
             return res.status(400).json({
                 success: false, data: null,
@@ -57,26 +51,10 @@ router.post('/register', async (req, res, next) => {
         if (isCognito()) {
             try {
                 const result = await registerUserCognito(email, password, name, state);
-
-                // Idempotent local DB insert — wipe stale record first
-                const db_instance = db.getDb();
-                db_instance.get('users').remove({ email: email.toLowerCase() }).write();
-                db_instance.get('users').push({
-                    id: result.userId,
-                    name: name.trim(),       // ← name always stored
-                    email: email.toLowerCase(),
-                    role: 'citizen',
-                    state: state || null,
-                    janShaktiScore: 50,
-                    cognitoSub: result.cognitoSub,
-                    createdAt: new Date().toISOString()
-                }).write();
-
-                // Token carries name so dashboard works without a profile fetch
-                const token = generateToken({ id: result.userId, email, role: 'citizen', name: name.trim() });
+                const token = generateToken({ id: result.userId, email, role: 'citizen', name });
                 return res.status(201).json({
                     success: true,
-                    data: { token, user: { id: result.userId, email, name: name.trim(), state, role: 'citizen' } },
+                    data: { token, user: { id: result.userId, email, name, state, role: 'citizen' } },
                     message: 'Account created successfully. Welcome to Project NCIE!',
                     timestamp: new Date().toISOString()
                 });
@@ -91,7 +69,6 @@ router.post('/register', async (req, res, next) => {
                             Username: email
                         }));
                         if (userInfo.UserStatus === 'CONFIRMED') {
-                            console.log('[Register DEBUG] Returning 409 because: UsernameExistsException + Cognito status CONFIRMED');
                             return res.status(409).json({ success: false, data: null, message: 'Account already exists. Please log in.', timestamp: new Date().toISOString() });
                         } else {
                             // UNCONFIRMED — resend OTP so they can complete verification
@@ -105,7 +82,6 @@ router.post('/register', async (req, res, next) => {
                         }
                     } catch (lookupErr) {
                         // Fallback if AdminGetUser fails
-                        console.log('[Register DEBUG] Returning 409 because: UsernameExistsException + AdminGetUser failed:', lookupErr.message);
                         return res.status(409).json({ success: false, data: null, message: 'An account with this email already exists.', timestamp: new Date().toISOString() });
                     }
                 }
@@ -113,11 +89,11 @@ router.post('/register', async (req, res, next) => {
             }
         }
 
-        // ── Local JWT path + DynamoDB stale-check ────────────────────────────────
+        // ── Local JWT path ────────────────────────────────────────────────────
         const db_instance = db.getDb();
         const existingLocal = db_instance.get('users').find({ email: email.toLowerCase() }).value();
         if (existingLocal) {
-            // Cross-check Cognito: if Cognito has no user, local record is stale
+            // Cross-check Cognito: if Cognito has no user, local record is stale (account was deleted)
             if (isCognito()) {
                 try {
                     const { AdminGetUserCommand } = require('@aws-sdk/client-cognito-identity-provider');
@@ -127,78 +103,21 @@ router.post('/register', async (req, res, next) => {
                         Username: email.toLowerCase()
                     }));
                     // Exists in Cognito — genuine duplicate
-                    console.log('[Register DEBUG] Returning 409 because: local DB record + confirmed in Cognito');
-                    return res.status(409).json({ success: false, data: null, message: 'Account already exists. Please log in.', timestamp: new Date().toISOString() });
+                    return res.status(409).json({ success: false, data: null, message: 'An account with this email already exists.', timestamp: new Date().toISOString() });
                 } catch (e) {
                     if (e.name === 'UserNotFoundException') {
-                        // Stale local record — clean up and allow re-register
+                        // Deleted from Cognito but stale in local DB — clean up and allow re-register
                         db_instance.get('users').remove({ email: email.toLowerCase() }).write();
-                        // Also clean from DynamoDB if enabled
-                        if (process.env.ENABLE_DYNAMO === 'true') {
-                            try {
-                                const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-                                const { DynamoDBDocumentClient, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
-                                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
-                                await dynamo.send(new DeleteCommand({
-                                    TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                                    Key: { id: existingLocal.id }
-                                }));
-                            } catch (_) { /* ignore dynamo cleanup failure */ }
-                        }
-                        console.log(`[Auth] Cleaned stale user ${email} from local+dynamo (not in Cognito)`);
+                        console.log(`[Auth] Cleaned stale local user ${email} (not found in Cognito)`);
                         // Falls through to registration below
                     } else {
-                        console.log('[Register DEBUG] Returning 409 because: local DB record + Cognito check error:', e.name);
+                        // Cognito error — safe fallback: block duplicate
                         return res.status(409).json({ success: false, data: null, message: 'An account with this email already exists.', timestamp: new Date().toISOString() });
                     }
                 }
             } else {
-                console.log('[Register DEBUG] Returning 409 because: local DB record found in local-only mode');
+                // Local-only mode — block duplicate
                 return res.status(409).json({ success: false, data: null, message: 'An account with this email already exists.', timestamp: new Date().toISOString() });
-            }
-        }
-
-        // Also check DynamoDB directly (user may exist there but not in local db)
-        if (isCognito() && process.env.ENABLE_DYNAMO === 'true') {
-            try {
-                const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-                const { DynamoDBDocumentClient, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
-                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
-                console.log('[Register DEBUG] DynamoDB scan starting...');
-                const scanResult = await dynamo.send(new ScanCommand({
-                    TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                    FilterExpression: 'email = :email',
-                    ExpressionAttributeValues: { ':email': email.toLowerCase() }
-                }));
-                console.log('[Register DEBUG] DynamoDB found:', JSON.stringify(scanResult.Items));
-                if (scanResult.Items?.length > 0) {
-                    // Found in DynamoDB — verify Cognito
-                    try {
-                        const { AdminGetUserCommand } = require('@aws-sdk/client-cognito-identity-provider');
-                        const { cognitoClient } = require('../config/aws.config');
-                        await cognitoClient.send(new AdminGetUserCommand({
-                            UserPoolId: process.env.COGNITO_USER_POOL_ID,
-                            Username: email.toLowerCase()
-                        }));
-                        // In both DynamoDB + Cognito — real duplicate
-                        console.log('[Register DEBUG] Returning 409 because: DynamoDB record + confirmed in Cognito');
-                        return res.status(409).json({ success: false, data: null, message: 'Account already exists. Please log in.', timestamp: new Date().toISOString() });
-                    } catch (cogErr) {
-                        if (cogErr.name === 'UserNotFoundException') {
-                            // Stale DynamoDB record — delete all matching records and allow re-register
-                            for (const item of scanResult.Items) {
-                                const pkField = Object.keys(item)[0];
-                                await dynamo.send(new DeleteCommand({
-                                    TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                                    Key: { [pkField]: item[pkField] }
-                                }));
-                            }
-                            console.log(`[Auth] Cleaned stale DynamoDB user records for: ${email}`);
-                        }
-                    }
-                }
-            } catch (scanErr) {
-                console.log(`[Auth] DynamoDB scan skipped: ${scanErr.message}`);
             }
         }
 
@@ -509,8 +428,6 @@ router.put('/profile', protect, async (req, res, next) => {
             ...(parsedAge !== undefined && !isNaN(parsedAge) && { age: parsedAge }),
             ...(parsedIncome !== undefined && !isNaN(parsedIncome) && { income: parsedIncome }),
             ...(gender && { gender }),
-            ...(req.body.kycVerified !== undefined && { kycVerified: req.body.kycVerified }),
-            ...(req.body.kycCompletedAt && { kycCompletedAt: req.body.kycCompletedAt }),
             updatedAt: new Date().toISOString()
         };
 
@@ -577,7 +494,6 @@ router.delete('/account', protect, async (req, res, next) => {
         const userId = req.user.id || req.user.userId;
         const userEmail = req.user.email;
         const db_instance = db.getDb();
-        console.log(`\n[Delete] Starting full account purge for: ${userEmail}`);
 
         // 1. Delete from Cognito
         if (process.env.ENABLE_COGNITO === 'true') {
@@ -588,76 +504,18 @@ router.delete('/account', protect, async (req, res, next) => {
                     UserPoolId: process.env.COGNITO_USER_POOL_ID,
                     Username: userEmail
                 }));
-                console.log(`[Delete] Cognito: ${userEmail} ✅`);
+                console.log(`[Auth] Deleted from Cognito: ${userEmail}`);
             } catch (cogErr) {
-                console.warn(`[Delete] Cognito: delete failed (may already be deleted): ${cogErr.message}`);
+                console.warn(`[Auth] Cognito delete failed (may already be deleted): ${cogErr.message}`);
             }
         }
 
-        // 2. Delete from DynamoDB ncie-users + related grievances
-        if (process.env.ENABLE_DYNAMO === 'true') {
-            try {
-                const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-                const { DynamoDBDocumentClient, DeleteCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
-                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
-
-                // Method 1: Delete by known key
-                try {
-                    await dynamo.send(new DeleteCommand({
-                        TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                        Key: { id: userId }
-                    }));
-                    console.log(`[Auth] DynamoDB key-delete: id=${userId} ✅`);
-                } catch (e) {
-                    console.log(`[Auth] DynamoDB key-delete failed for id=${userId}:`, e.message);
-
-                    // Method 2: Fallback scan-and-delete
-                    try {
-                        const scan = await dynamo.send(new ScanCommand({
-                            TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                            FilterExpression: 'email = :email',
-                            ExpressionAttributeValues: { ':email': userEmail.toLowerCase() }
-                        }));
-
-                        for (const item of scan.Items || []) {
-                            const keyName = Object.keys(item)[0];
-                            await dynamo.send(new DeleteCommand({
-                                TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                                Key: { [keyName]: item[keyName] }
-                            }));
-                            console.log(`[Auth] DynamoDB scan-delete: ${keyName}=${item[keyName]} ✅`);
-                        }
-                    } catch (scanErr) {
-                        console.log(`[Auth] DynamoDB scan-delete failed for email=${userEmail}:`, scanErr.message);
-                    }
-                }
-
-                // Scan + delete related grievances by userId
-                const gScan = await dynamo.send(new ScanCommand({
-                    TableName: process.env.DYNAMO_GRIEVANCES_TABLE || 'ncie-grievances',
-                    FilterExpression: 'userId = :uid OR citizenId = :uid',
-                    ExpressionAttributeValues: { ':uid': userId }
-                }));
-                await Promise.all((gScan.Items || []).map(item =>
-                    dynamo.send(new DeleteCommand({
-                        TableName: process.env.DYNAMO_GRIEVANCES_TABLE || 'ncie-grievances',
-                        Key: { grievanceId: item.grievanceId }
-                    }))
-                ));
-                console.log(`[Auth] Deleted ${(gScan.Items || []).length} grievances from DynamoDB for: ${userEmail}`);
-            } catch (dynErr) {
-                console.warn(`[Auth] DynamoDB delete failed: ${dynErr.message}`);
-            }
-        }
-
-        // 3. Delete from local lowdb — match by both id AND email
+        // 2. Delete from local DB — match by both id AND email to be thorough
         db_instance.get('grievances').remove(g => g.userId === userId || g.userId === userEmail).write();
         db_instance.get('notifications').remove(n => n.userId === userId || n.userId === userEmail).write();
         db_instance.get('bookmarks').remove(b => b.userId === userId || b.userId === userEmail).write();
         db_instance.get('users').remove(u => u.id === userId || u.email === userEmail).write();
-        console.log(`[Delete] Local DB: ${userEmail} and associated data ✅`);
-
-        console.log(`[Delete] Full Account Purge Complete ✅: ${userEmail}`);
+        console.log(`[Auth] Deleted all local data for: ${userEmail}`);
 
         return res.status(200).json({
             success: true,
@@ -671,7 +529,7 @@ router.delete('/account', protect, async (req, res, next) => {
 });
 
 // ─── DELETE /api/auth/cleanup/:email (DEV ONLY) ────────────────────────────
-// Force-wipe a user from Cognito + local DB + DynamoDB — dev/testing only
+// Force-wipe a user from both Cognito and local DB — useful for dev/testing
 router.delete('/cleanup/:email', async (req, res, next) => {
     if (process.env.NODE_ENV !== 'development') {
         return res.status(403).json({ success: false, error: 'This endpoint is available in development mode only.' });
@@ -680,12 +538,11 @@ router.delete('/cleanup/:email', async (req, res, next) => {
         const { email } = req.params;
         const db_instance = db.getDb();
 
-        // 1. Remove from local DB
-        const localUser = db_instance.get('users').find({ email }).value();
+        // Remove from local DB
         db_instance.get('users').remove({ email }).write();
         console.log(`[Cleanup] Removed ${email} from local DB`);
 
-        // 2. Remove from Cognito
+        // Remove from Cognito
         if (isCognito()) {
             try {
                 const { AdminDeleteUserCommand } = require('@aws-sdk/client-cognito-identity-provider');
@@ -700,44 +557,11 @@ router.delete('/cleanup/:email', async (req, res, next) => {
             }
         }
 
-        // 3. Remove from DynamoDB
-        if (process.env.ENABLE_DYNAMO === 'true') {
-            try {
-                const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-                const { DynamoDBDocumentClient, DeleteCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
-                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
-                // Delete by known id if we had the local record
-                if (localUser?.id) {
-                    await dynamo.send(new DeleteCommand({
-                        TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                        Key: { id: localUser.id }
-                    }));
-                } else {
-                    // Scan by email as fallback
-                    const scan = await dynamo.send(new ScanCommand({
-                        TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                        FilterExpression: 'email = :email',
-                        ExpressionAttributeValues: { ':email': email }
-                    }));
-                    await Promise.all((scan.Items || []).map(item =>
-                        dynamo.send(new DeleteCommand({
-                            TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
-                            Key: { id: item.id }
-                        }))
-                    ));
-                }
-                console.log(`[Cleanup] Removed ${email} from DynamoDB`);
-            } catch (e) {
-                console.log(`[Cleanup] DynamoDB delete skipped for ${email}: ${e.message}`);
-            }
-        }
-
         return res.status(200).json({ success: true, message: `Cleaned up ${email} from all systems.` });
     } catch (err) {
         next(err);
     }
 });
-
 
 // ─── PUT /api/auth/change-password ────────────────────────────────────────────
 // → AWS swap: Cognito forgotPassword / changePassword

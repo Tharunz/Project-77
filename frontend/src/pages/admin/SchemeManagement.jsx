@@ -26,14 +26,9 @@ export default function SchemeManagement() {
 
     const load = async () => {
         setLoading(true);
-        try {
-            const res = await apiGetSchemes({ search, category: filterCat });
-            setSchemes(Array.isArray(res.data) ? res.data : []);
-        } catch (err) {
-            console.error('[Schemes] Load error:', err);
-        } finally {
-            setLoading(false);
-        }
+        const res = await apiGetSchemes({ search, category: filterCat });
+        setSchemes(Array.isArray(res.data) ? res.data : []);
+        setLoading(false);
     };
 
     const openAdd = () => { setForm(emptyScheme); setEditMode(false); setEditId(null); setModal(true); };
@@ -44,18 +39,13 @@ export default function SchemeManagement() {
         const { id, name } = deleteModal;
         setDeleteModal(null);
         setDeleting(id);
-        try {
-            await apiDeleteScheme(id);
-            setSchemes(ss => ss.filter(s => s.id !== id));
-            // Start undo timer (6 seconds)
-            if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-            setUndoToast({ id, name, progress: 100 });
-            undoTimerRef.current = setTimeout(() => setUndoToast(null), 6000);
-        } catch (err) {
-            console.error('[Schemes] Delete error:', err);
-        } finally {
-            setDeleting(null);
-        }
+        await apiDeleteScheme(id);
+        setSchemes(ss => ss.filter(s => s.id !== id));
+        setDeleting(null);
+        // Start undo timer (6 seconds)
+        if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+        setUndoToast({ id, name, progress: 100 });
+        undoTimerRef.current = setTimeout(() => setUndoToast(null), 6000);
     };
 
     const handleUndo = async () => {

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { apiRegister, apiLogin } from '../../services/api.service';
+import { apiRegister } from '../../services/api.service';
 import { MdPerson, MdEmail, MdLock, MdLocationOn, MdCake, MdAttachMoney, MdShield, MdVerified, MdUpload, MdCheckCircle } from 'react-icons/md';
 import { INDIAN_STATES } from '../../mock/mockData';
 import { PROJECT_NAME } from '../../config/constants';
@@ -46,22 +46,18 @@ export default function RegisterPage() {
         try {
             // Trigger OTP send via Cognito (registration happens on backend)
             // We kick off the registration which causes Cognito to send the OTP
-            const res = await apiRegister(form);
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form)
+            }).then(r => r.json());
 
             // Even if user already exists (409), allow them to re-verify
-            if (!res.success && !res.error?.includes('already exists') && !res.error?.includes('exists')) {
-                setError(res.error || 'Registration failed. Please try again.');
+            if (!res.success && !res.message?.includes('already exists')) {
+                setError(res.message || 'Registration failed. Please try again.');
                 setOtpSending(false);
                 return;
             }
-
-            // Immediately store auth if successful so subsequent requests (like KYC Profile PUT) work
-            // and so we are logged in by the time we hit the Welcome screen
-            if (res.success && res.user) {
-                setRegisteredUser(res.user);
-                login(res.user);
-            }
-
         } catch (err) {
             // Network error — allow OTP step anyway since Cognito may have sent it
             console.error('[Register] Step 1 error:', err);
@@ -137,60 +133,26 @@ export default function RegisterPage() {
         await new Promise(r => setTimeout(r, 1800));
         setKycVerifying(false);
         setKycDone(true);
-
-        // Background profile update (optional/non-blocking)
-        try {
-            const token = registeredUser?.token || localStorage.getItem('ncie_token');
-            if (token) {
-                await fetch('/api/auth/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ kycVerified: true, kycCompletedAt: new Date().toISOString() })
-                });
-            }
-        } catch (e) {
-            console.log('[KYC] Profile update skipped:', e.message);
-        }
-
-        // Show success briefly, then advance to Welcome
-        setTimeout(() => {
-            setStep(4);
-        }, 1500);
+        await new Promise(r => setTimeout(r, 600));
+        // Now actually register
+        const res = await apiRegister(form);
+        if (res.success) { setRegisteredUser(res.user); setStep(4); }
+        else { setError(res.error || 'Registration failed.'); setStep(1); }
     };
 
-    // Welcome screen navigation is now manual via button click
-    const handleEnterNCIE = async () => {
-        let user = registeredUser || JSON.parse(localStorage.getItem('p77_user') || 'null');
-
-        // If they re-verified an existing account (409 on step 1), they won't have a token.
-        // Auto-login them now using the password they provided in Step 1.
-        if (!user && form.email && form.password) {
-            try {
-                const loginRes = await apiLogin(form.email, form.password);
-                if (loginRes.success && loginRes.user) {
-                    user = loginRes.user;
-                    login(loginRes.user);
-                }
-            } catch (err) {
-                console.log('[Welcome] Auto-login fallback failed:', err.message);
-            }
+    useEffect(() => {
+        if (step === 4 && registeredUser) {
+            const t = setTimeout(() => {
+                login(registeredUser);
+                // Check if already done onboarding for this specific user
+                const done = localStorage.getItem(`ncie_onboarding_done_${registeredUser.id}`);
+                navigate(done ? '/citizen' : '/onboarding');
+            }, 2800);
+            return () => clearTimeout(t);
         }
-
-        // Final fallback if login failed
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-
-        const done = localStorage.getItem(`ncie_onboarding_done_${user.id}`);
-        navigate(done ? '/citizen' : '/onboarding');
-    };
+    }, [step, registeredUser]);
 
     const progressPct = ((step - 1) / 3) * 100;
-
-    // Attempt to get name for step 4
-    const localUser = registeredUser || JSON.parse(localStorage.getItem('p77_user') || '{}');
-    const welcomeName = (localUser?.name || form.name || 'Citizen').split(' ')[0];
 
     return (
         <div className="auth-bg">
@@ -372,8 +334,8 @@ export default function RegisterPage() {
                         <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,rgba(0,200,150,0.2),rgba(19,136,8,0.2))', border: '3px solid #00C896', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', animation: 'fadeIn 0.6s ease' }}>🎉</div>
                             <div>
-                                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, background: 'linear-gradient(135deg,#00C896,#138808)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Welcome to NCIE, {welcomeName}!</h2>
-                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6 }}>Your account has been created and verified successfully.</p>
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, background: 'linear-gradient(135deg,#00C896,#138808)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Welcome, {form.name.split(' ')[0]}!</h2>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6 }}>Your account has been created and KYC verified.<br />Redirecting to your dashboard...</p>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                                 {['✓ Account Created', '✓ Email Verified', '✓ KYC Approved'].map((item, i) => (
@@ -382,12 +344,10 @@ export default function RegisterPage() {
                                     </div>
                                 ))}
                             </div>
-
-                            <button className="btn-teal" style={{ width: '100%', justifyContent: 'center', marginTop: 12, fontSize: '1.05rem', padding: '14px', animation: 'fadeIn 0.5s ease 1s both' }} onClick={handleEnterNCIE}>
-                                Enter NCIE →
-                            </button>
-
-                            <style>{`@keyframes progressFill { from { width:0% } to { width:100% } } @keyframes spin { to { transform:rotate(360deg) } } @keyframes fadeInUp { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } } @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }`}</style>
+                            <div style={{ height: 3, width: '100%', background: 'rgba(255,255,255,0.07)', borderRadius: 4, overflow: 'hidden', marginTop: 8 }}>
+                                <div style={{ height: '100%', background: 'linear-gradient(90deg,#00C896,#138808)', borderRadius: 4, animation: 'progressFill 2.8s linear forwards' }} />
+                            </div>
+                            <style>{`@keyframes progressFill { from { width:0% } to { width:100% } } @keyframes spin { to { transform:rotate(360deg) } }`}</style>
                         </div>
                     )}
                 </div>

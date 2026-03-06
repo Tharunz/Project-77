@@ -29,13 +29,10 @@ const getAuthHeaders = () => {
 };
 
 // Helper: Generic Fetch Wrapper to process JSON and catch server errors
-export const apiFetch = async (endpoint, options = {}, ms = 10000) => {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), ms);
+export const apiFetch = async (endpoint, options = {}) => {
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
-            signal: controller.signal,
             headers: {
                 ...getAuthHeaders(),
                 ...options.headers
@@ -52,14 +49,8 @@ export const apiFetch = async (endpoint, options = {}, ms = 10000) => {
             return { success: false, error: `Server error (${res.status}). Backend may be unreachable.` };
         }
     } catch (err) {
-        if (err.name === 'AbortError' || err.message?.includes('aborted')) {
-            console.error(`API Timeout at ${endpoint}: Request took longer than ${ms}ms`);
-            return { success: false, error: 'Request timed out. Please try again.' };
-        }
         console.error(`API Error at ${endpoint}:`, err);
         return { success: false, error: 'Cannot connect to backend. Please ensure the server is running on port 5000.' };
-    } finally {
-        clearTimeout(timeout);
     }
 };
 

@@ -9,13 +9,6 @@ import './App.css';
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
 const CitizenLayout = lazy(() => import('./layouts/CitizenLayout'));
 
-// Emergency reset on any navigation (failsafe for stuck loading states)
-window.addEventListener('popstate', () => {
-  // Clear any stuck loading states from the DOM
-  document.querySelectorAll('[data-loading]').forEach(el => el.removeAttribute('data-loading'));
-  document.querySelectorAll('button:disabled').forEach(el => el.disabled = false);
-});
-
 // Admin Pages — all lazy
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const GrievanceManagement = lazy(() => import('./pages/admin/GrievanceManagement'));
