@@ -138,7 +138,7 @@ router.post('/register', async (req, res, next) => {
                             try {
                                 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
                                 const { DynamoDBDocumentClient, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
-                                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
+                                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION, credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, sessionToken: process.env.AWS_SESSION_TOKEN } }));
                                 await dynamo.send(new DeleteCommand({
                                     TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
                                     Key: { id: existingLocal.id }
@@ -163,7 +163,7 @@ router.post('/register', async (req, res, next) => {
             try {
                 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
                 const { DynamoDBDocumentClient, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
-                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
+                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION, credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, sessionToken: process.env.AWS_SESSION_TOKEN } }));
                 console.log('[Register DEBUG] DynamoDB scan starting...');
                 const scanResult = await dynamo.send(new ScanCommand({
                     TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
@@ -255,85 +255,54 @@ router.post('/login', async (req, res, next) => {
             });
         }
 
-        // ── Cognito path ──────────────────────────────────────────────────────
-        if (isCognito()) {
-            try {
-                const tokens = await loginUserCognito(email, password);
+        const { loginUser } = require('../services/auth.service');
 
-                // Determine role based on email (must match auth.middleware.js logic)
-                const role = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : 'citizen';
+        // 10 second timeout on entire login process
+        const loginPromise = loginUser(email, password);
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => {
+                const err = new Error('Login timeout');
+                err.code = 'LOGIN_TIMEOUT';
+                reject(err);
+            }, 10000)
+        );
 
-                // CRITICAL: Store IdToken as `token` — middleware verifies IdToken (RS256)
-                // IdToken contains: sub, email, name, cognito:groups, custom:role
-                return res.status(200).json({
-                    success: true,
-                    data: {
-                        token: tokens.idToken,         // ← IdToken for middleware verification
-                        accessToken: tokens.accessToken,
-                        refreshToken: tokens.refreshToken,
-                        user: { email, role, name: email.split('@')[0] }
-                    },
-                    message: `Welcome back!`,
-                    timestamp: new Date().toISOString()
-                });
-            } catch (cogErr) {
-                if (cogErr.name === 'NotAuthorizedException' || cogErr.name === 'UserNotFoundException') {
-                    return res.status(401).json({ success: false, data: null, message: 'Invalid email or password.', timestamp: new Date().toISOString() });
-                }
-                throw cogErr;
-            }
-        }
-
-        // ── Local JWT path ────────────────────────────────────────────────────
-        const db_instance = db.getDb();
-        const user = db_instance.get('users').find({ email: email.toLowerCase() }).value();
-
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                data: null,
-                message: 'Invalid email or password.',
-                timestamp: new Date().toISOString()
-            });
-        }
-
-        const isMatch = await comparePassword(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({
-                success: false,
-                data: null,
-                message: 'Invalid email or password.',
-                timestamp: new Date().toISOString()
-            });
-        }
-
-        const token = generateToken({
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            name: user.name
-        });
-
-        const { password: _, ...userWithoutPassword } = user;
+        const result = await Promise.race([loginPromise, timeoutPromise]);
 
         return res.status(200).json({
             success: true,
-            data: { token, user: userWithoutPassword },
-            message: `Welcome back, ${user.name}!`,
+            data: { token: result.token, user: result.user },
+            message: `Welcome back, ${result.user.name.split(' ')[0]}!`,
             timestamp: new Date().toISOString()
         });
+
     } catch (err) {
-        next(err);
+        console.error('[Auth] Login error:', err.message);
+
+        let message = 'Login failed. Please try again.';
+        if (err.message === 'USER_NOT_FOUND' || err.message === 'INVALID_PASSWORD') {
+            message = 'Invalid email or password.';
+        } else if (err.code === 'LOGIN_TIMEOUT' || err.message === 'Login timeout') {
+            message = 'Login timed out. Please try again.';
+        }
+
+        return res.status(401).json({
+            success: false,
+            data: null,
+            message,
+            timestamp: new Date().toISOString()
+        });
     }
 });
 
 // ─── POST /api/auth/logout ────────────────────────────────────────────────────
-router.post('/logout', protect, async (req, res, next) => {
+// Removed `protect` middleware — logout should never fail due to an expired token.
+router.post('/logout', async (req, res, next) => {
     try {
         const db_instance = db.getDb();
 
         // Seed with fresh "Solved" alerts on logout for a rich demo state on next login
-        console.log(`[AUTH] User ${req.user.email} logged out. Seeding default solved predictions...`);
+        console.log(`[AUTH] User logged out. Seeding default solved predictions...`);
         const solvedAlerts = [
             {
                 id: `PRESEVA-TN-8821`,
@@ -376,15 +345,13 @@ router.post('/logout', protect, async (req, res, next) => {
         ];
         db_instance.set('preSevaAlerts', solvedAlerts).write();
 
+        // Background Cognito global signout (do not await, to prevent hangs)
         if (isCognito()) {
-            try {
-                // Prioritize X-Access-Token if provided by frontend
-                const accessToken = req.headers['x-access-token'] || req.headers.authorization?.split(' ')[1];
-                if (accessToken) {
-                    await logoutUserCognito(accessToken);
-                }
-            } catch (cogErr) {
-                console.warn('[AUTH] Cognito global sign out failed, but local session is cleared:', cogErr.message);
+            const accessToken = req.headers['x-access-token'] || req.headers.authorization?.split(' ')[1];
+            if (accessToken) {
+                logoutUserCognito(accessToken).catch(cogErr => {
+                    console.warn('[AUTH] Cognito signout background error:', cogErr.message);
+                });
             }
         }
 
@@ -599,7 +566,7 @@ router.delete('/account', protect, async (req, res, next) => {
             try {
                 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
                 const { DynamoDBDocumentClient, DeleteCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
-                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
+                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION, credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, sessionToken: process.env.AWS_SESSION_TOKEN } }));
 
                 // Method 1: Delete by known key
                 try {
@@ -705,7 +672,7 @@ router.delete('/cleanup/:email', async (req, res, next) => {
             try {
                 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
                 const { DynamoDBDocumentClient, DeleteCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
-                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
+                const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION, credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, sessionToken: process.env.AWS_SESSION_TOKEN } }));
                 // Delete by known id if we had the local record
                 if (localUser?.id) {
                     await dynamo.send(new DeleteCommand({

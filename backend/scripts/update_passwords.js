@@ -7,8 +7,8 @@ const fs = require('fs');
 const DB_PATH = path.join(__dirname, '../db/local.json');
 
 async function main() {
-    const citizenHash = await bcrypt.hash('Ramesh@12345', 10);
-    const adminHash = await bcrypt.hash('Admin@12345', 10);
+    const citizenHash = await bcrypt.hash('Ramesh@123456', 10);
+    const adminHash = await bcrypt.hash('Admin@123456', 10);
 
     const raw = fs.readFileSync(DB_PATH, 'utf8');
     const data = JSON.parse(raw);
@@ -17,17 +17,18 @@ async function main() {
     let adminUpdated = false;
 
     (data.users || []).forEach(u => {
-        if (u.email === 'ramesh@gmail.com') {
+        if (u.email === 'ramesh@citizen.in' || u.email === 'ramesh@gmail.com') {
+            u.email = 'ramesh@citizen.in';
             u.password = citizenHash;
             u.role = 'citizen';
             citizenUpdated = true;
-            console.log('[UPDATE] ramesh@gmail.com → Ramesh@12345 ✅');
+            console.log('[UPDATE] ramesh@citizen.in → Ramesh@123456 ✅');
         }
         if (u.email === 'admin@gov.in') {
             u.password = adminHash;
             u.role = 'admin';
             adminUpdated = true;
-            console.log('[UPDATE] admin@gov.in → Admin@12345 ✅');
+            console.log('[UPDATE] admin@gov.in → Admin@123456 ✅');
         }
     });
 

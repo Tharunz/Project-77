@@ -20,7 +20,8 @@ const client = DynamoDBDocumentClient.from(
         region: process.env.AWS_REGION || 'us-east-1',
         credentials: {
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            sessionToken: process.env.AWS_SESSION_TOKEN  // Required for Learner Labs
         }
     }),
     {
@@ -130,15 +131,15 @@ const schemes = [
 ];
 
 async function buildData() {
-    const adminHash = await bcrypt.hash('Admin@12345', SALT_ROUNDS);
-    const rameshHash = await bcrypt.hash('Ramesh@12345', SALT_ROUNDS);
+    const adminHash = await bcrypt.hash('Admin@123456', SALT_ROUNDS);
+    const rameshHash = await bcrypt.hash('Ramesh@123456', SALT_ROUNDS);
     const citizenHash = await bcrypt.hash('Citizen@12345', SALT_ROUNDS);
     const officerHash = await bcrypt.hash('Officer@12345', SALT_ROUNDS);
 
     // ── Users (ncie-users PK: userId) ─────────────────────────────────────────
     const users = [
-        { userId: 'USR-ADMIN-001', id: 'USR-ADMIN-001', name: 'Rajiv Sharma', email: 'admin@gov.in', password: adminHash, state: 'Delhi', district: 'New Delhi', age: 45, income: 0, role: 'admin', janShaktiScore: 100, createdAt: '2026-01-01T00:00:00.000Z' },
-        { userId: 'USR-CIT-001', id: 'USR-CIT-001', name: 'Ramesh Kumar', email: 'ramesh@gmail.com', password: rameshHash, state: 'Uttar Pradesh', district: 'Lucknow', age: 38, income: 150000, role: 'citizen', janShaktiScore: 72, createdAt: '2026-01-15T08:30:00.000Z' },
+        { userId: 'USR-ADMIN-001', id: 'USR-ADMIN-001', name: 'Rajesh Kumar', email: 'admin@gov.in', password: adminHash, state: 'Delhi', district: 'New Delhi', age: 45, income: 0, role: 'admin', janShaktiScore: 95, createdAt: new Date().toISOString() },
+        { userId: 'USR-CIT-001', id: 'USR-CIT-001', name: 'Ramesh Kumar', email: 'ramesh@citizen.in', password: rameshHash, state: 'Uttar Pradesh', district: 'Lucknow', age: 42, income: 180000, role: 'citizen', janShaktiScore: 62, phone: '+919876543210', createdAt: new Date().toISOString() },
         { userId: 'USR-CIT-002', id: 'USR-CIT-002', name: 'Priya Nair', email: 'priya@gmail.com', password: citizenHash, state: 'Kerala', district: 'Thiruvananthapuram', age: 29, income: 280000, role: 'citizen', janShaktiScore: 85, createdAt: '2026-01-20T10:00:00.000Z' },
         { userId: 'USR-CIT-003', id: 'USR-CIT-003', name: 'Suresh Patel', email: 'suresh@gmail.com', password: citizenHash, state: 'Gujarat', district: 'Ahmadabad', age: 52, income: 120000, role: 'citizen', janShaktiScore: 61, createdAt: '2026-01-25T09:15:00.000Z' },
         { userId: 'USR-CIT-004', id: 'USR-CIT-004', name: 'Ananya Sharma', email: 'ananya@gmail.com', password: citizenHash, state: 'Maharashtra', district: 'Mumbai', age: 34, income: 350000, role: 'citizen', janShaktiScore: 78, createdAt: '2026-01-28T11:00:00.000Z' }
@@ -214,21 +215,21 @@ async function buildData() {
 
     // ── Notifications (ncie-notifications PK: notificationId, SK: userId) ────
     const notifications = [
-        { notificationId: 'NOTIF-001', userId: 'USR-CIT-001', message: 'Your grievance GRV-001 has been filed. Tracking ID: GRV-001', type: 'success', grievanceId: 'GRV-001', isRead: false, createdAt: '2026-01-01T08:00:00.000Z' },
-        { notificationId: 'NOTIF-002', userId: 'USR-CIT-001', message: 'Your grievance GRV-001 status updated to: In Progress', type: 'info', grievanceId: 'GRV-001', isRead: true, createdAt: '2026-01-03T10:00:00.000Z' },
-        { notificationId: 'NOTIF-003', userId: 'USR-CIT-001', message: 'Your grievance GRV-001 has been resolved.', type: 'success', grievanceId: 'GRV-001', isRead: false, createdAt: '2026-01-06T14:00:00.000Z' },
-        { notificationId: 'NOTIF-004', userId: 'USR-CIT-002', message: 'Your grievance GRV-002 has been filed. Tracking ID: GRV-002', type: 'success', grievanceId: 'GRV-002', isRead: false, createdAt: '2026-01-02T09:00:00.000Z' },
-        { notificationId: 'NOTIF-005', userId: 'USR-CIT-002', message: 'New scheme PM Kisan Enhanced is available for you.', type: 'info', grievanceId: null, isRead: false, createdAt: '2026-02-25T12:00:00.000Z' },
-        { notificationId: 'NOTIF-006', userId: 'USR-CIT-003', message: 'Your grievance GRV-003 has been filed. Tracking ID: GRV-003', type: 'success', grievanceId: 'GRV-003', isRead: true, createdAt: '2026-01-03T10:00:00.000Z' },
-        { notificationId: 'NOTIF-007', userId: 'USR-CIT-001', message: 'Officer assigned to your grievance GRV-005.', type: 'info', grievanceId: 'GRV-005', isRead: false, createdAt: '2026-01-10T11:00:00.000Z' },
-        { notificationId: 'NOTIF-008', userId: 'USR-CIT-001', message: 'Your Ayushman Bharat application is under review.', type: 'info', grievanceId: null, isRead: false, createdAt: '2026-02-01T09:00:00.000Z' },
-        { notificationId: 'NOTIF-009', userId: 'USR-ADMIN-001', message: 'System alert: 5 grievances pending SLA breach.', type: 'warning', grievanceId: null, isRead: false, createdAt: '2026-03-01T08:00:00.000Z' },
-        { notificationId: 'NOTIF-010', userId: 'USR-CIT-002', message: 'Community post PET-002 has reached 8000 signatures!', type: 'success', grievanceId: null, isRead: false, createdAt: '2026-02-28T16:00:00.000Z' },
-        { notificationId: 'NOTIF-011', userId: 'USR-CIT-003', message: 'GRV-003 status: Resolved. Please verify the resolution.', type: 'success', grievanceId: 'GRV-003', isRead: false, createdAt: '2026-01-15T14:00:00.000Z' },
-        { notificationId: 'NOTIF-012', userId: 'USR-CIT-001', message: 'New government scheme Skill India is now open for applications.', type: 'info', grievanceId: null, isRead: true, createdAt: '2026-02-10T10:00:00.000Z' },
-        { notificationId: 'NOTIF-013', userId: 'USR-CIT-002', message: 'Your GRV-006 has been escalated to senior officer.', type: 'warning', grievanceId: 'GRV-006', isRead: false, createdAt: '2026-01-20T15:00:00.000Z' },
-        { notificationId: 'NOTIF-014', userId: 'USR-CIT-004', message: 'Welcome to Project NCIE! Your account is ready.', type: 'success', grievanceId: null, isRead: false, createdAt: '2026-01-28T11:00:00.000Z' },
-        { notificationId: 'NOTIF-015', userId: 'USR-ADMIN-001', message: 'PreSeva Alert: Flood spike predicted in Bihar. Action required.', type: 'warning', grievanceId: null, isRead: false, createdAt: '2026-02-28T10:00:00.000Z' }
+        { id: 'NOTIF-001', notificationId: 'NOTIF-001', userId: 'USR-CIT-001', message: 'Your grievance GRV-001 has been filed. Tracking ID: GRV-001', type: 'success', grievanceId: 'GRV-001', isRead: false, createdAt: '2026-01-01T08:00:00.000Z' },
+        { id: 'NOTIF-002', notificationId: 'NOTIF-002', userId: 'USR-CIT-001', message: 'Your grievance GRV-001 status updated to: In Progress', type: 'info', grievanceId: 'GRV-001', isRead: true, createdAt: '2026-01-03T10:00:00.000Z' },
+        { id: 'NOTIF-003', notificationId: 'NOTIF-003', userId: 'USR-CIT-001', message: 'Your grievance GRV-001 has been resolved.', type: 'success', grievanceId: 'GRV-001', isRead: false, createdAt: '2026-01-06T14:00:00.000Z' },
+        { id: 'NOTIF-004', notificationId: 'NOTIF-004', userId: 'USR-CIT-002', message: 'Your grievance GRV-002 has been filed. Tracking ID: GRV-002', type: 'success', grievanceId: 'GRV-002', isRead: false, createdAt: '2026-01-02T09:00:00.000Z' },
+        { id: 'NOTIF-005', notificationId: 'NOTIF-005', userId: 'USR-CIT-002', message: 'New scheme PM Kisan Enhanced is available for you.', type: 'info', grievanceId: null, isRead: false, createdAt: '2026-02-25T12:00:00.000Z' },
+        { id: 'NOTIF-006', notificationId: 'NOTIF-006', userId: 'USR-CIT-003', message: 'Your grievance GRV-003 has been filed. Tracking ID: GRV-003', type: 'success', grievanceId: 'GRV-003', isRead: true, createdAt: '2026-01-03T10:00:00.000Z' },
+        { id: 'NOTIF-007', notificationId: 'NOTIF-007', userId: 'USR-CIT-001', message: 'Officer assigned to your grievance GRV-005.', type: 'info', grievanceId: 'GRV-005', isRead: false, createdAt: '2026-01-10T11:00:00.000Z' },
+        { id: 'NOTIF-008', notificationId: 'NOTIF-008', userId: 'USR-CIT-001', message: 'Your Ayushman Bharat application is under review.', type: 'info', grievanceId: null, isRead: false, createdAt: '2026-02-01T09:00:00.000Z' },
+        { id: 'NOTIF-009', notificationId: 'NOTIF-009', userId: 'USR-ADMIN-001', message: 'System alert: 5 grievances pending SLA breach.', type: 'warning', grievanceId: null, isRead: false, createdAt: '2026-03-01T08:00:00.000Z' },
+        { id: 'NOTIF-010', notificationId: 'NOTIF-010', userId: 'USR-CIT-002', message: 'Community post PET-002 has reached 8000 signatures!', type: 'success', grievanceId: null, isRead: false, createdAt: '2026-02-28T16:00:00.000Z' },
+        { id: 'NOTIF-011', notificationId: 'NOTIF-011', userId: 'USR-CIT-003', message: 'GRV-003 status: Resolved. Please verify the resolution.', type: 'success', grievanceId: 'GRV-003', isRead: false, createdAt: '2026-01-15T14:00:00.000Z' },
+        { id: 'NOTIF-012', notificationId: 'NOTIF-012', userId: 'USR-CIT-001', message: 'New government scheme Skill India is now open for applications.', type: 'info', grievanceId: null, isRead: true, createdAt: '2026-02-10T10:00:00.000Z' },
+        { id: 'NOTIF-013', notificationId: 'NOTIF-013', userId: 'USR-CIT-002', message: 'Your GRV-006 has been escalated to senior officer.', type: 'warning', grievanceId: 'GRV-006', isRead: false, createdAt: '2026-01-20T15:00:00.000Z' },
+        { id: 'NOTIF-014', notificationId: 'NOTIF-014', userId: 'USR-CIT-004', message: 'Welcome to Project NCIE! Your account is ready.', type: 'success', grievanceId: null, isRead: false, createdAt: '2026-01-28T11:00:00.000Z' },
+        { id: 'NOTIF-015', notificationId: 'NOTIF-015', userId: 'USR-ADMIN-001', message: 'PreSeva Alert: Flood spike predicted in Bihar. Action required.', type: 'warning', grievanceId: null, isRead: false, createdAt: '2026-02-28T10:00:00.000Z' }
     ];
 
     // ── Community Posts (ncie-community PK: postId, SK: createdAt) ────────────
@@ -291,7 +292,11 @@ async function seedDynamo() {
             results[name] = written;
             console.log(` ✅ ${written} items written`);
         } catch (err) {
-            console.log(`\n  ❌ Error: ${err.message}`);
+            if (err.name === 'ResourceNotFoundException') {
+                console.log(`\n  ⚠️  Table not found: ${name} — create it in AWS Console first, then re-run`);
+            } else {
+                console.log(`\n  ❌ Error: ${err.message}`);
+            }
             results[name] = 0;
         }
     }

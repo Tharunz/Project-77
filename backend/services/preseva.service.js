@@ -189,12 +189,18 @@ const getPredictions = async () => {
 
             console.log(`[PreSeva] Sending batch of ${inputs.length} to SageMaker...`);
 
-            const response = await client.send(new InvokeEndpointCommand({
-                EndpointName: process.env.SAGEMAKER_ENDPOINT_NAME || 'preseva-realtime-endpoint',
-                ContentType: 'application/json',
-                Accept: 'application/json',
-                Body: Buffer.from(JSON.stringify(inputs))
-            }));
+            const smTimeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('SageMaker timeout after 8s')), 8000)
+            );
+            const response = await Promise.race([
+                client.send(new InvokeEndpointCommand({
+                    EndpointName: process.env.SAGEMAKER_ENDPOINT_NAME || 'preseva-realtime-endpoint',
+                    ContentType: 'application/json',
+                    Accept: 'application/json',
+                    Body: Buffer.from(JSON.stringify(inputs))
+                })),
+                smTimeoutPromise
+            ]);
 
             const resultText = Buffer.from(response.Body).toString('utf-8');
             const smResults = JSON.parse(resultText);

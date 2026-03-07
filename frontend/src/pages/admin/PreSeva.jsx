@@ -196,10 +196,10 @@ export default function PreSeva() {
                 </p>
                 <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
                     {[
-                        { val: stats?.prevented, label: 'Problems Prevented', color: '#00C896' },
+                        { val: stats?.prevented ?? '—', label: 'Problems Prevented', color: '#00C896' },
                         { val: (stats?.totalGrievancesAvoided || 0).toLocaleString(), label: 'Complaints Avoided', color: '#A78BFA' },
-                        { val: `${stats?.topPredictionAccuracy}%`, label: 'Peak Accuracy', color: 'var(--saffron)' },
-                        { val: stats?.citySaved, label: 'Public Funds Saved', color: '#00C896' },
+                        { val: `${stats?.topPredictionAccuracy ?? 'N/A'}%`, label: 'Peak Accuracy', color: 'var(--saffron)' },
+                        { val: stats?.citySaved ?? '—', label: 'Public Funds Saved', color: '#00C896' },
                     ].map(s => (
                         <div key={s.label} style={{ background: `${s.color}18`, border: `1px solid ${s.color}40`, borderRadius: 8, padding: '8px 16px', textAlign: 'center' }}>
                             <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.4rem', fontWeight: 800, color: s.color }}>{s.val}</div>
@@ -335,10 +335,10 @@ export default function PreSeva() {
                 {/* Stats Bar */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12 }}>
                     {[
-                        { label: 'Active Predictions', value: stats?.activePredictions, color: '#F59E0B', icon: '⚡' },
-                        { label: 'Total Analyzed', value: stats?.totalPredictions, color: '#8B5CF6', icon: '🤖' },
-                        { label: 'Prevention Rate', value: `${stats?.preventionRate}%`, color: '#00C896', icon: '🛡️' },
-                        { label: 'Dept Alerts Sent', value: stats?.totalPredictions, color: '#3B82F6', icon: '📡' },
+                        { label: 'Active Predictions', value: stats?.activePredictions ?? '—', color: '#F59E0B', icon: '⚡' },
+                        { label: 'Total Analyzed', value: stats?.totalPredictions ?? '—', color: '#8B5CF6', icon: '🤖' },
+                        { label: 'Prevention Rate', value: `${stats?.preventionRate ?? '—'}%`, color: '#00C896', icon: '🛡️' },
+                        { label: 'Dept Alerts Sent', value: stats?.totalPredictions ?? '—', color: '#3B82F6', icon: '📡' },
                     ].map(s => (
                         <div key={s.label} className="metric-card" style={{ '--accent-color': s.color, textAlign: 'center' }}>
                             <span style={{ fontSize: '1.3rem' }}>{s.icon}</span>

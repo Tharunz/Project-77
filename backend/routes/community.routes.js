@@ -20,9 +20,10 @@ const { v4: uuidv4 } = require('uuid');
 const { protect } = require('../middleware/auth.middleware');
 const db = require('../db/database');
 
-// ─── GET /api/community/posts ─────────────────────────────────────────────────
+// ─── GET /api/community/posts ───────────────────────────────────────────────────────
 // List community posts with optional filters. Public endpoint.
 router.get('/posts', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /community/posts`);
     try {
         const db_instance = db.getDb();
         const { state, category, search, page = 1, limit = 20 } = req.query;

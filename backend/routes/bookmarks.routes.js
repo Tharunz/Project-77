@@ -9,50 +9,52 @@ const BOOKMARKS_TABLE = process.env.DYNAMO_BOOKMARKS_TABLE || 'ncie-bookmarks';
 
 // GET /api/bookmarks/my — Get bookmarked schemes for logged-in user
 router.get('/my', protect, async (req, res) => {
+    console.log(`[ROUTE HIT] GET /bookmarks/my - user: ${req.user?.userId || req.user?.id || 'none'}`);
+    const timeout = setTimeout(() => {
+        if (!res.headersSent) {
+            console.warn('[Bookmarks] Timeout — returning empty fallback');
+            res.json({ success: true, data: [] });
+        }
+    }, 1500);
+
     try {
         const userId = req.user.userId || req.user.id;
         let bookmarks = [];
 
         if (dbService.isDynamo()) {
-            // Try GSI query with userId-index first, fall back to scan
+            // Scan directly — GSI indexes may not exist in Learner Labs
             try {
-                bookmarks = await dbService.query(
-                    BOOKMARKS_TABLE,
-                    {
-                        expression: 'userId = :uid',
-                        names: {},
-                        values: { ':uid': userId }
-                    },
-                    { indexName: 'userId-index' }
-                ) || [];
-            } catch (gsiErr) {
-                console.warn('[Bookmarks] GSI query failed, falling back to scan:', gsiErr.message);
+                const all = await dbService.scan(BOOKMARKS_TABLE) || [];
+                bookmarks = all.filter(b => b.userId === userId);
+            } catch (scanErr) {
+                console.warn('[Bookmarks] DynamoDB scan failed, using lowdb:', scanErr.message);
                 try {
-                    const all = await dbService.scan(BOOKMARKS_TABLE) || [];
-                    bookmarks = all.filter(b => b.userId === userId);
-                } catch (scanErr) {
-                    console.error('[Bookmarks] Scan also failed:', scanErr.message);
-                    bookmarks = [];
-                }
+                    const db_instance = db.getDb();
+                    bookmarks = db_instance.get('bookmarks').filter({ userId }).value() || [];
+                } catch (_) { bookmarks = []; }
             }
         } else {
-            // Fallback: lowdb
             try {
                 const db_instance = db.getDb();
                 bookmarks = db_instance.get('bookmarks').filter({ userId }).value() || [];
             } catch (_) { bookmarks = []; }
         }
 
-        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-        res.json({ success: true, data: bookmarks });
+        clearTimeout(timeout);
+        if (!res.headersSent) {
+            res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            res.json({ success: true, data: bookmarks });
+        }
     } catch (err) {
+        clearTimeout(timeout);
         console.error('[Bookmarks] GET error:', err);
-        res.status(500).json({ success: false, message: 'Failed to fetch bookmarks' });
+        if (!res.headersSent) res.json({ success: true, data: [] });
     }
 });
 
 // POST /api/bookmarks/add — Add a bookmark
 router.post('/add', protect, async (req, res) => {
+    console.log(`[ROUTE HIT] POST /bookmarks/add - user: ${req.user?.userId || req.user?.id || 'none'}`);
     try {
         const userId = req.user.userId || req.user.id;
         const { schemeId, name, category, state, description, benefit } = req.body;
@@ -99,6 +101,7 @@ router.post('/add', protect, async (req, res) => {
 
 // DELETE /api/bookmarks/:schemeId — Remove a bookmark
 router.delete('/:schemeId', protect, async (req, res) => {
+    console.log(`[ROUTE HIT] DELETE /bookmarks/${req.params.schemeId} - user: ${req.user?.userId || req.user?.id || 'none'}`);
     try {
         const userId = req.user.userId || req.user.id;
         const { schemeId } = req.params;

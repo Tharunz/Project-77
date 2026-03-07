@@ -102,18 +102,26 @@ const translateTextAWS = async (text, targetLang) => {
         return { translatedText: text, detectedLang: 'en', targetLang: 'en' };
     }
 
-    const response = await client.send(new TranslateTextCommand({
-        Text: text,
-        SourceLanguageCode: 'auto',
-        TargetLanguageCode: targetCode
-    }));
+    try {
+        const response = await client.send(new TranslateTextCommand({
+            Text: text,
+            SourceLanguageCode: 'auto',
+            TargetLanguageCode: targetCode
+        }));
 
-    return {
-        translatedText: response.TranslatedText,
-        detectedLang: response.AppliedTerminologies?.[0] || 'en',
-        sourceLang: response.SourceLanguageCode,
-        targetLang: targetCode
-    };
+        return {
+            translatedText: response.TranslatedText,
+            detectedLang: response.AppliedTerminologies?.[0] || 'en',
+            sourceLang: response.SourceLanguageCode,
+            targetLang: targetCode
+        };
+    } catch (err) {
+        if (err.name === 'AccessDeniedException' || err.name === 'UnrecognizedClientException' || err.name === 'InvalidClientTokenId') {
+            console.log('[Translate] AWS blocked in Learner Labs — returning original text');
+            return { translatedText: text, detectedLang: 'en', targetLang: targetCode };
+        }
+        throw err;
+    }
 };
 
 /**

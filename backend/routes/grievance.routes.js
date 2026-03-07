@@ -29,6 +29,7 @@ const GRIEVANCES_TABLE = process.env.DYNAMO_GRIEVANCES_TABLE || 'ncie-grievances
 
 // ─── POST /api/grievance/file ─────────────────────────────────────────────────
 router.post('/file', protect, upload.array('documents', 5), async (req, res, next) => {
+    console.log(`[ROUTE HIT] POST /grievance/file - user: ${req.user?.id || req.user?.userId || 'none'}`);
     try {
         const { title, description, category, state, district, priority } = req.body;
 
@@ -168,6 +169,7 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
 
 // ─── GET /api/grievance/track/:id ─────────────────────────────────────────────
 router.get('/track/:id', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/track/${req.params.id}`);
     try {
         const db_instance = db.getDb();
         const grievance = db_instance.get('grievances')
@@ -269,6 +271,14 @@ router.get('/track/:id', (req, res, next) => {
 
 // ─── GET /api/grievance/my-grievances ─────────────────────────────────────────
 router.get('/my-grievances', protect, async (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/my-grievances - user: ${req.user?.id || req.user?.userId || 'none'}`);
+    const timeout = setTimeout(() => {
+        if (!res.headersSent) {
+            console.warn('[Grievance] my-grievances timeout — returning empty fallback');
+            res.json({ success: true, data: [], meta: { total: 0, page: 1, limit: 10, pages: 0 }, message: 'Found 0 grievance(s).', timestamp: new Date().toISOString() });
+        }
+    }, 2000);
+
     try {
         const userId = req.user.id || req.user.userId;
         const { page = 1, limit = 10, status, category, sortBy = 'createdAt', order = 'desc' } = req.query;
@@ -276,32 +286,17 @@ router.get('/my-grievances', protect, async (req, res, next) => {
         let grievances = [];
 
         if (dbService.isDynamo()) {
-            // ── Try GSI citizenId-index first ──────────────────────────────────
+            // Scan directly — GSI indexes may not exist in Learner Labs
             try {
-                grievances = await dbService.query(
-                    GRIEVANCES_TABLE,
-                    {
-                        expression: '#cid = :cid',
-                        names: { '#cid': 'citizenId' },
-                        values: { ':cid': userId }
-                    },
-                    { indexName: 'citizenId-index' }
-                ) || [];
-            } catch (dErr) {
-                console.warn('[DYNAMO] my-grievances GSI failed, scanning:', dErr.message);
-                // GSI not ready yet — fall back to full table scan with client-side filter
-                try {
-                    const all = await dbService.scan(GRIEVANCES_TABLE) || [];
-                    grievances = all.filter(g => g.citizenId === userId || g.userId === userId);
-                } catch (scanErr) {
-                    console.error('[DYNAMO] scan failed:', scanErr.message);
-                    // Last resort: local lowdb
-                    const db_instance = db.getDb();
-                    grievances = db_instance.get('grievances').filter(g => g.userId === userId || g.userId === req.user.email).value();
-                }
+                const all = await dbService.scan(GRIEVANCES_TABLE) || [];
+                grievances = all.filter(g => g.citizenId === userId || g.userId === userId);
+            } catch (scanErr) {
+                console.warn('[DYNAMO] scan failed, using lowdb:', scanErr.message);
+                const db_instance = db.getDb();
+                grievances = db_instance.get('grievances').filter(g => g.userId === userId || g.userId === req.user.email).value();
             }
         } else {
-            // ── Local lowdb ──────────────────────────────────────────────────
+            // ── Local lowdb ────────────────────────────────────────────────
             const db_instance = db.getDb();
             grievances = db_instance.get('grievances')
                 .filter(g => g.userId === userId || g.userId === req.user.email)
@@ -322,20 +317,25 @@ router.get('/my-grievances', protect, async (req, res, next) => {
         const start = (parseInt(page) - 1) * parseInt(limit);
         const data = grievances.slice(start, start + parseInt(limit));
 
-        return res.status(200).json({
-            success: true,
-            data,
-            meta: { total, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total / parseInt(limit)) },
-            message: `Found ${total} grievance(s).`,
-            timestamp: new Date().toISOString()
-        });
+        clearTimeout(timeout);
+        if (!res.headersSent) {
+            return res.status(200).json({
+                success: true,
+                data,
+                meta: { total, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total / parseInt(limit)) },
+                message: `Found ${total} grievance(s).`,
+                timestamp: new Date().toISOString()
+            });
+        }
     } catch (err) {
-        next(err);
+        clearTimeout(timeout);
+        if (!res.headersSent) next(err);
     }
 });
 
 // ─── GET /api/grievance/critical ──────────────────────────────────────────────
 router.get('/critical', protect, adminOnly, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/critical - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
         const grievances = db_instance.get('grievances').value();
@@ -392,6 +392,7 @@ router.post('/:id/verify', protect, async (req, res, next) => {
 
 // ─── GET /api/grievance/search ────────────────────────────────────────────────
 router.get('/search', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/search - q: ${req.query.q || 'none'}`);
     try {
         const { q, state, category, status, priority, page = 1, limit = 20 } = req.query;
         const db_instance = db.getDb();
@@ -432,6 +433,7 @@ router.get('/search', (req, res, next) => {
 
 // ─── GET /api/grievance/all (admin only) ──────────────────────────────────────
 router.get('/all', protect, adminOnly, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/all - user: ${req.user?.id || 'none'}`);
     try {
         const { page = 1, limit = 20, status, category, state, priority, sentiment } = req.query;
         const db_instance = db.getDb();
@@ -464,6 +466,7 @@ router.get('/all', protect, adminOnly, (req, res, next) => {
 
 // ─── PATCH /api/grievance/update/:id (admin only) ─────────────────────────────
 router.patch('/update/:id', protect, adminOnly, async (req, res, next) => {
+    console.log(`[ROUTE HIT] PATCH /grievance/update/${req.params.id} - user: ${req.user?.id || 'none'}`);
     try {
         const { status, assignedOfficer, adminNote, priority } = req.body;
         const db_instance = db.getDb();

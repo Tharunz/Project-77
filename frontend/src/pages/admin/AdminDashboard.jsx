@@ -82,9 +82,15 @@ export default function AdminDashboard() {
     const wsClientRef = useRef(null);
 
     const loadData = async () => {
+        const withTimeout = (promise, ms = 10000, fallback = {}) =>
+            Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
+
         setLoading(true);
         try {
-            const [res, pa] = await Promise.all([apiGetAdminAnalytics(), apiGetPreSevaAlerts()]);
+            const [res, pa] = await Promise.all([
+                withTimeout(apiGetAdminAnalytics(), 10000, { success: false, data: null }),
+                withTimeout(apiGetPreSevaAlerts(),  10000, { success: false, data: [] })
+            ]);
             if (res.success && res.data) {
                 const { kpis, monthlyTrend, categoryBreakdown, activityFeed, topStates: ts } = res.data;
                 setStats(kpis);

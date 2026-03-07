@@ -30,6 +30,9 @@ const getAuthHeaders = () => {
 
 // Helper: Generic Fetch Wrapper to process JSON and catch server errors
 export const apiFetch = async (endpoint, options = {}, ms = 10000) => {
+    const token = localStorage.getItem('token');
+    console.log(`[API →] ${options.method || 'GET'} ${endpoint}`, token ? '🔑' : '⚠️ NO TOKEN');
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), ms);
     try {
@@ -43,20 +46,27 @@ export const apiFetch = async (endpoint, options = {}, ms = 10000) => {
         });
         const text = await res.text();
         if (!text || !text.trim()) {
+            console.warn(`[API ←] ${endpoint} ${res.status} — empty response`);
             return { success: false, error: 'Server returned an empty response. Is the backend running?' };
         }
         try {
-            return JSON.parse(text);
+            const parsed = JSON.parse(text);
+            if (res.ok) {
+                console.log(`[API ←] ${endpoint} ${res.status} ✅`);
+            } else {
+                console.warn(`[API ←] ${endpoint} ${res.status} ❌`, parsed.message || parsed.error || '');
+            }
+            return parsed;
         } catch {
-            console.error(`Non-JSON response at ${endpoint}:`, text.slice(0, 120));
+            console.error(`[API ←] ${endpoint} ${res.status} — non-JSON:`, text.slice(0, 120));
             return { success: false, error: `Server error (${res.status}). Backend may be unreachable.` };
         }
     } catch (err) {
         if (err.name === 'AbortError' || err.message?.includes('aborted')) {
-            console.error(`API Timeout at ${endpoint}: Request took longer than ${ms}ms`);
+            console.error(`[API ←] ${endpoint} TIMEOUT after ${ms}ms`);
             return { success: false, error: 'Request timed out. Please try again.' };
         }
-        console.error(`API Error at ${endpoint}:`, err);
+        console.error(`[API ←] ${endpoint} ERROR:`, err.message);
         return { success: false, error: 'Cannot connect to backend. Please ensure the server is running on port 5000.' };
     } finally {
         clearTimeout(timeout);

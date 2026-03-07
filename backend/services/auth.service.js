@@ -50,26 +50,193 @@ const {
 // =============================================================================
 
 /**
- * loginUser — Authenticate via Cognito USER_PASSWORD_AUTH flow
- * Returns: { accessToken, refreshToken, idToken }
+ * loginUserCognito — Authenticate via Cognito USER_PASSWORD_AUTH flow.
+ * Handles NEW_PASSWORD_REQUIRED (FORCE_CHANGE_PASSWORD) automatically.
+ * Throws descriptive errors so the caller can choose to fall back to local auth.
  */
 const loginUserCognito = async (email, password) => {
+    const {
+        RespondToAuthChallengeCommand
+    } = require('@aws-sdk/client-cognito-identity-provider');
     const client = getCognitoClient();
-    const command = new InitiateAuthCommand({
+
+    const response = await client.send(new InitiateAuthCommand({
         AuthFlow: 'USER_PASSWORD_AUTH',
         ClientId: process.env.COGNITO_CLIENT_ID,
-        AuthParameters: {
-            USERNAME: email,
-            PASSWORD: password
+        AuthParameters: { USERNAME: email, PASSWORD: password }
+    }));
+
+    // ── Happy path ───────────────────────────────────────────────────────────
+    if (response.AuthenticationResult) {
+        const t = response.AuthenticationResult;
+        return { accessToken: t.AccessToken, idToken: t.IdToken, refreshToken: t.RefreshToken };
+    }
+
+    // ── Auto-resolve FORCE_CHANGE_PASSWORD / NEW_PASSWORD_REQUIRED ───────────
+    if (response.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+        console.log('[Auth] Cognito: NEW_PASSWORD_REQUIRED — responding automatically');
+        const challengeResp = await client.send(new RespondToAuthChallengeCommand({
+            ClientId: process.env.COGNITO_CLIENT_ID,
+            ChallengeName: 'NEW_PASSWORD_REQUIRED',
+            Session: response.Session,
+            ChallengeResponses: {
+                USERNAME: email,
+                NEW_PASSWORD: password,
+                'userAttributes.name': email.split('@')[0]
+            }
+        }));
+        if (challengeResp.AuthenticationResult) {
+            const t = challengeResp.AuthenticationResult;
+            return { accessToken: t.AccessToken, idToken: t.IdToken, refreshToken: t.RefreshToken };
         }
-    });
-    const response = await client.send(command);
-    const tokens = response.AuthenticationResult;
+        throw new Error('CHALLENGE_FAILED');
+    }
+
+    throw new Error(`COGNITO_CHALLENGE_${response.ChallengeName || 'UNKNOWN'}`);
+};
+
+/**
+ * loginUser — Unified login: tries Cognito first, falls back to local bcrypt.
+ * Returns { token, user } on success. Throws on failure.
+ */
+const loginUser = async (email, password) => {
+    const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+    const { DynamoDBDocumentClient, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+    const lowdb = require('../db/database');
+
+    // ── Step 1: Try Cognito (non-blocking — any failure falls through) ────────
+    let cognitoOk = false;
+    if (process.env.ENABLE_COGNITO === 'true') {
+        try {
+            await loginUserCognito(email, password);
+            cognitoOk = true;
+            console.log('[Auth] Cognito login success for:', email);
+        } catch (err) {
+            console.log('[Auth] Cognito failed, using local auth:', err.name || err.message);
+        }
+    }
+
+    // ── Step 2: Look up user — local DB first, then DynamoDB ─────────────────
+    let user = null;
+    const fs = require('fs');
+    const path = require('path');
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Try all possible local db paths
+    const possiblePaths = [
+        path.join(__dirname, '../db/local.json'),
+        path.join(__dirname, '../db/db.json'),
+        path.join(__dirname, '../db/database.json')
+    ];
+
+    for (const dbPath of possiblePaths) {
+        try {
+            if (fs.existsSync(dbPath)) {
+                const dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+                const found = (dbData.users || []).find(u => u.email?.toLowerCase().trim() === normalizedEmail);
+                if (found) {
+                    console.log('[Auth] User found in:', dbPath);
+                    user = found;
+                    break;
+                }
+            }
+        } catch (e) { }
+    }
+
+    // Try lowdb instance if not found above
+    if (!user) {
+        try {
+            const db_instance = lowdb.getDb();
+            user = db_instance.get('users').find(u => u.email?.toLowerCase().trim() === normalizedEmail).value();
+        } catch (_) { }
+    }
+
+    if (!user && process.env.ENABLE_DYNAMO === 'true') {
+        try {
+            const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({
+                region: process.env.AWS_REGION || 'us-west-2',
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                    sessionToken: process.env.AWS_SESSION_TOKEN
+                }
+            }));
+            const result = await dynamo.send(new ScanCommand({
+                TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
+                FilterExpression: 'email = :e',
+                ExpressionAttributeValues: { ':e': normalizedEmail }
+            }));
+            if (result.Items?.length > 0) {
+                console.log('[Auth] User found in DynamoDB:', normalizedEmail);
+                user = result.Items[0];
+            }
+        } catch (e) {
+            console.log('[Auth] DynamoDB user lookup failed:', e.message);
+        }
+    }
+
+    // ── Step 2.5: Auto-create local user if Cognito succeeded but missing in DB ──
+    if (cognitoOk && !user) {
+        console.log('[Auth] Cognito user not in local DB — auto-creating:', normalizedEmail);
+        const bcrypt = require('bcryptjs');
+        const newUser = {
+            id: `USR-${Date.now()}`,
+            name: email.split('@')[0],
+            email: normalizedEmail,
+            password: await bcrypt.hash(password, 10),
+            role: normalizedEmail === 'admin@gov.in' ? 'admin' : 'citizen',
+            state: 'Delhi',
+            janShaktiScore: 50,
+            isVerified: true,
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            const dbPath = path.join(__dirname, '../db/local.json');
+            let dbData = { users: [], grievances: [], schemes: [], officers: [] };
+            if (fs.existsSync(dbPath)) {
+                dbData = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+            }
+            dbData.users = dbData.users || [];
+            dbData.users.push(newUser);
+            fs.writeFileSync(dbPath, JSON.stringify(dbData, null, 2));
+            console.log('[Auth] Auto-created user in local DB:', normalizedEmail);
+        } catch (e) {
+            console.error('[Auth] Failed to auto-create user in local DB:', e.message);
+        }
+        user = newUser;
+    }
+
+    if (!user) throw new Error('USER_NOT_FOUND');
+
+
+    // ── Step 3: If Cognito failed, verify password locally ───────────────────
+    if (!cognitoOk) {
+        if (!user.password) throw new Error('INVALID_PASSWORD');
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) throw new Error('INVALID_PASSWORD');
+    }
+
+    // ── Step 4: Generate our own JWT (works for both Cognito and local users) ─
+    const ADMIN_EMAILS = ['admin@gov.in'];
+    const role = ADMIN_EMAILS.includes(email.toLowerCase()) ? 'admin' : (user.role || 'citizen');
+    const token = jwt.sign(
+        { id: user.id || user.userId, email: user.email, role, name: user.name },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+    );
+
     return {
-        accessToken: tokens.AccessToken,
-        refreshToken: tokens.RefreshToken,
-        idToken: tokens.IdToken,
-        expiresIn: tokens.ExpiresIn
+        token,
+        user: {
+            id: user.id || user.userId,
+            name: user.name,
+            email: user.email,
+            role,
+            state: user.state || null,
+            janShaktiScore: user.janShaktiScore || 50,
+            phone: user.phone || ''
+        }
     };
 };
 
@@ -112,7 +279,7 @@ const registerUserCognito = async (email, password, name, state, role = 'citizen
         try {
             const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
             const { DynamoDBDocumentClient, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
-            const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION }));
+            const dynamo = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION, credentials: { accessKeyId: process.env.AWS_ACCESS_KEY_ID, secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, sessionToken: process.env.AWS_SESSION_TOKEN } }));
             const stale = await dynamo.send(new ScanCommand({
                 TableName: process.env.DYNAMO_USERS_TABLE || 'ncie-users',
                 FilterExpression: 'email = :email',
@@ -209,6 +376,7 @@ module.exports = {
     verifyToken,
 
     // Cognito-specific methods (used when ENABLE_COGNITO=true)
+    loginUser,
     loginUserCognito,
     registerUserCognito,
     verifyTokenCognito,

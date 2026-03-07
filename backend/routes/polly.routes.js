@@ -42,6 +42,16 @@ router.post('/speak', async (req, res, next) => {
         res.send(audioBuffer);
 
     } catch (err) {
+        if (err.name === 'AccessDeniedException' || err.name === 'UnrecognizedClientException' || err.name === 'InvalidClientTokenId') {
+            console.log('[Polly] AWS blocked in Learner Labs — returning browser TTS fallback');
+            return res.status(200).json({
+                success: true,
+                fallback: true,
+                text: req.body.text,
+                message: 'Polly blocked. Use browser TTS.',
+                timestamp: new Date().toISOString()
+            });
+        }
         next(err);
     }
 });

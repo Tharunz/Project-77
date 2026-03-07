@@ -27,9 +27,20 @@ export default function LoginPage() {
         }
     };
 
-    const quickFill = (type) => {
-        if (type === 'admin') setForm({ email: 'admin@gov.in', password: 'Admin@12345' });
-        else setForm({ email: 'ramesh@gmail.com', password: 'Ramesh@12345' });
+    const handleDemoLogin = async (type) => {
+        const creds = type === 'admin'
+            ? { email: 'admin@gov.in', password: 'Admin@12345' }
+            : { email: 'ramesh@gmail.com', password: 'Ramesh@12345' };
+        setError('');
+        setLoading(true);
+        const res = await apiLogin(creds.email, creds.password);
+        setLoading(false);
+        if (res.success) {
+            login(res.user);
+            navigate(res.user.role === 'admin' ? '/admin' : '/citizen');
+        } else {
+            setError(res.error || 'Demo login failed. Please try again.');
+        }
     };
 
     return (
@@ -54,10 +65,10 @@ export default function LoginPage() {
 
                     {/* Quick Login Buttons */}
                     <div className="quick-login-row">
-                        <button className="quick-login-btn" onClick={() => quickFill('admin')}>
+                        <button className="quick-login-btn" onClick={() => handleDemoLogin('admin')} disabled={loading}>
                             <MdAdminPanelSettings /> Admin Demo
                         </button>
-                        <button className="quick-login-btn" onClick={() => quickFill('citizen')}>
+                        <button className="quick-login-btn" onClick={() => handleDemoLogin('citizen')} disabled={loading}>
                             <MdPerson /> Citizen Demo
                         </button>
                     </div>

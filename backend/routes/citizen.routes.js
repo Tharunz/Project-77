@@ -11,6 +11,7 @@ router.use(protect); // All citizen routes require login
 
 // ─── 31. CI Score (Civic Intelligence Score) calculation ──────────────────────
 router.get('/score', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /citizen/score - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
         const userId = req.user.id;
@@ -64,6 +65,7 @@ router.get('/score', (req, res, next) => {
 
 // Alias route so both /score and /ci-score work
 router.get('/ci-score', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /citizen/ci-score - user: ${req.user?.id || 'none'}`);
     const db_instance = db.getDb();
     const userId = req.user.id;
     let score = 50;

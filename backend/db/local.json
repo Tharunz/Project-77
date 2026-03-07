@@ -1,39 +1,6 @@
 {
   "users": [
     {
-      "id": "USR-ADMIN-001",
-      "name": "Rajiv Sharma",
-      "email": "admin@gov.in",
-      "password": "$2a$10$FV5BMgLP0dQATX6vgrhkHeCxBnojNvXKYrqpK2O9pAsSJHsluLBuG",
-      "state": "Delhi",
-      "district": "New Delhi",
-      "age": 45,
-      "income": 0,
-      "role": "admin",
-      "janShaktiScore": 100,
-      "createdAt": "2026-01-01T00:00:00.000Z"
-    },
-    {
-      "id": "USR-CIT-001",
-      "name": "Ramesh Kumar",
-      "email": "ramesh@gmail.com",
-      "password": "$2a$10$1GK2Erkso88V0mbXrv4eFuZu8d2oalhFFekJce.gyHOu67M.YOUXm",
-      "state": "Uttar Pradesh",
-      "district": "Lucknow",
-      "age": 38,
-      "income": 150000,
-      "role": "citizen",
-      "janShaktiScore": 72,
-      "createdAt": "2026-01-15T08:30:00.000Z",
-      "bookmarkedSchemes": [],
-      "pendingPhone": "1234123412",
-      "pendingOtp": "1234",
-      "otpExpiry": 1772693178299,
-      "phone": "1231231231",
-      "mobileVerified": true,
-      "updatedAt": "2026-03-05T06:40:59.349Z"
-    },
-    {
       "id": "USR-CIT-002",
       "name": "Priya Nair",
       "email": "priya@gmail.com",
@@ -404,6 +371,34 @@
       "janShaktiScore": 50,
       "cognitoSub": "f4d89458-20f1-70ac-d586-9d644a656b67",
       "createdAt": "2026-03-06T18:55:50.228Z"
+    },
+    {
+      "id": "USR-ADMIN-001",
+      "name": "Rajesh Kumar",
+      "email": "admin@gov.in",
+      "password": "$2a$10$YOYO1KBqbfJXoPMr76BDDOJolycjhCpSuLdF0uCRKXLhKjEhXBrAG",
+      "role": "admin",
+      "state": "Delhi",
+      "district": "New Delhi",
+      "department": "Ministry of Civil Services",
+      "janShaktiScore": 95,
+      "isVerified": true,
+      "createdAt": "2026-03-06T21:18:24.974Z"
+    },
+    {
+      "id": "USR-CIT-001",
+      "name": "Ramesh Kumar",
+      "email": "ramesh@gmail.com",
+      "password": "$2a$10$cuW6GF3s4CBsKERCtLrmqujRiTeoOcci3d1debt9GzQcFxk8ntuou",
+      "role": "citizen",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "age": 42,
+      "income": 180000,
+      "janShaktiScore": 62,
+      "phone": "+919876543210",
+      "isVerified": true,
+      "createdAt": "2026-03-06T21:18:24.974Z"
     }
   ],
   "grievances": [
@@ -2495,8 +2490,8 @@
       "departmentAlerted": "Chennai Metrowater",
       "suggestedAction": "Increase desalination output by 20% and redirect supply.",
       "historicalPattern": "Drought pattern match from Summer 2021 detected 72h prior.",
-      "createdAt": "2026-03-05T18:58:22.967Z",
-      "updatedAt": "2026-03-06T06:58:22.967Z"
+      "createdAt": "2026-03-06T13:48:10.788Z",
+      "updatedAt": "2026-03-07T01:48:10.788Z"
     },
     {
       "id": "PRESEVA-KL-4412",
@@ -2514,8 +2509,8 @@
       "departmentAlerted": "Kerala Health Services",
       "suggestedAction": "Deploy emergency buffer stock of anti-viral medications.",
       "historicalPattern": "Seasonal escalation pattern matching monsoon surge detected.",
-      "createdAt": "2026-03-04T18:58:22.967Z",
-      "updatedAt": "2026-03-05T18:58:22.967Z"
+      "createdAt": "2026-03-05T13:48:10.788Z",
+      "updatedAt": "2026-03-06T13:48:10.788Z"
     }
   ],
   "notifications": [
@@ -2845,20 +2840,24 @@
       "content": "Summer is coming and water supply is already unreliable. Sign this petition to demand daily 6-hour supply.",
       "category": "Water Supply",
       "state": "Uttar Pradesh",
-      "votes": 1250,
+      "votes": 1252,
       "isPetition": true,
-      "petitionCount": 4824,
+      "petitionCount": 4826,
       "responses": [],
       "createdAt": "2026-02-15T00:00:00.000Z",
       "signers": [
         "a4c8a448-40d1-70a6-1845-3113c82f9834",
         "6438c408-10f1-7029-42ac-3e794871ef66",
-        "347814c8-4041-7035-251d-3deb55a40609"
+        "347814c8-4041-7035-251d-3deb55a40609",
+        "USR-CIT-001",
+        "USR-606E9802"
       ],
       "voters": [
         "a4c8a448-40d1-70a6-1845-3113c82f9834",
         "6438c408-10f1-7029-42ac-3e794871ef66",
-        "347814c8-4041-7035-251d-3deb55a40609"
+        "347814c8-4041-7035-251d-3deb55a40609",
+        "USR-CIT-001",
+        "USR-606E9802"
       ],
       "status": "target_reached"
     },

@@ -4,7 +4,7 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const stored = localStorage.getItem('p77_user');
@@ -25,26 +25,29 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const accessToken = localStorage.getItem('access_token');
-            if (token) {
-                await fetch('/api/auth/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'X-Access-Token': accessToken || '',
-                        'Content-Type': 'application/json'
-                    }
-                });
-            }
-        } catch (err) {
-            console.error('Logout API call failed:', err);
-        } finally {
-            setUser(null);
-            localStorage.removeItem('p77_user');
-            localStorage.removeItem('token');
-            localStorage.removeItem('access_token');
+        // 1. Immediately clear frontend state
+        setUser(null);
+        localStorage.removeItem('p77_user');
+
+        // Grab remaining tokens for the background API call
+        const token = localStorage.getItem('token');
+        const accessToken = localStorage.getItem('access_token');
+
+        localStorage.removeItem('token');
+        localStorage.removeItem('access_token');
+
+        // 2. Fire the logout API in the background (fire-and-forget)
+        if (token) {
+            fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'X-Access-Token': accessToken || '',
+                    'Content-Type': 'application/json'
+                }
+            }).catch(() => {
+                // Ignore background task failures completely
+            });
         }
     };
 

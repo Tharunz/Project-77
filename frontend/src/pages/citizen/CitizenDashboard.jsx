@@ -26,16 +26,18 @@ export default function CitizenDashboard() {
     const [statePreseva, setStatePreseva] = useState(null);
 
     useEffect(() => {
+        const withTimeout = (promise, ms = 8000, fallback = {}) =>
+            Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
+
         const load = async () => {
             setLoading(true);
             try {
-                // Load applications first so we can pass applied schemeIds to benefit gap
                 const [g, s, r, sa, bk] = await Promise.all([
-                    apiGetMyGrievances(),
-                    apiGetMatchedSchemes(),
-                    apiGetBenefitRoadmap(),
-                    apiGetMySchemeApplications(),
-                    apiGetBookmarkedSchemes()
+                    withTimeout(apiGetMyGrievances(),        8000, { success: true, data: [] }),
+                    withTimeout(apiGetMatchedSchemes(),       8000, { success: true, data: [] }),
+                    withTimeout(apiGetBenefitRoadmap(),       8000, { success: false, data: null }),
+                    withTimeout(apiGetMySchemeApplications(), 8000, { success: true, data: [] }),
+                    withTimeout(apiGetBookmarkedSchemes(),    8000, { success: true, data: [] })
                 ]);
                 setGrievances(g && Array.isArray(g.data) ? g.data : []);
                 setSchemes(s && Array.isArray(s.data) ? s.data : []);
@@ -46,16 +48,16 @@ export default function CitizenDashboard() {
 
                 // Fetch CI Score from dedicated endpoint
                 try {
-                    const scoreRes = await apiFetch('/citizen/score');
-                    if (scoreRes.success && scoreRes.data) {
-                        setCiScore(scoreRes.data.ciScore || scoreRes.data.janShaktiScore || scoreRes.data.score);
-                        setCiLevel(scoreRes.data.level);
+                    const scoreRes = await withTimeout(apiFetch('/citizen/score'), 5000, null);
+                    if (scoreRes?.success && scoreRes.data) {
+                        setCiScore(scoreRes.data?.ciScore ?? scoreRes.data?.janShaktiScore ?? scoreRes.data?.score ?? 0);
+                        setCiLevel(scoreRes.data.level || null);
                     }
                 } catch (_) { }
 
                 // Pass applied schemeIds so benefit gap reflects real claimed count
                 const claimedIds = appliedApps.map(a => a.schemeId).filter(Boolean);
-                const gp = await apiGetBenefitGap(claimedIds);
+                const gp = await withTimeout(apiGetBenefitGap(claimedIds), 5000, null);
                 setGap(gp && gp.data ? gp.data : null);
             } catch (err) {
                 console.error("Dashboard load error:", err);
@@ -63,27 +65,26 @@ export default function CitizenDashboard() {
                 setLoading(false);
             }
 
-            // Load PRESEVA predictions for user's state
+            // Load PRESEVA predictions for user's state (non-blocking)
             try {
-                const alerts = await apiGetPreSevaAlerts();
+                const alerts = await withTimeout(apiGetPreSevaAlerts(), 8000, null);
                 const userState = user?.state;
-                if (alerts.success && Array.isArray(alerts.data)) {
+                if (alerts?.success && Array.isArray(alerts.data)) {
                     const stateAlert = alerts.data.find(a => !a.prevented && a.urgency === 'critical' && (!userState || a.state === userState || userState === a.state));
                     if (stateAlert) setPresevaAlert(stateAlert);
                 }
             } catch (_) { }
 
-            // Load heatmap/distress data for user's state
+            // Load heatmap/distress data for user's state (non-blocking)
             if (user?.state) {
                 try {
-                    const hd = await apiGetHeatmapStateDetail(user.state);
-                    if (hd.success && hd.data) setDistressData(hd.data);
+                    const hd = await withTimeout(apiGetHeatmapStateDetail(user.state), 8000, null);
+                    if (hd?.success && hd.data) setDistressData(hd.data);
                 } catch (_) { }
 
-                // Load live SageMaker predictions for this state
                 try {
-                    const sp = await apiGetStatePreSeva(user.state);
-                    if (sp.success) setStatePreseva(sp);
+                    const sp = await withTimeout(apiGetStatePreSeva(user.state), 8000, null);
+                    if (sp?.success) setStatePreseva(sp);
                 } catch (_) { }
             }
         };
