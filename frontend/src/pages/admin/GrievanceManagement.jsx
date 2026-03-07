@@ -318,6 +318,23 @@ export default function GrievanceManagement() {
                                     </div>
                                 </div>
                             )}
+                            {/* Textract Analysis Viewer */}
+                            {selected.extractedTextBlocks && selected.extractedTextBlocks.length > 0 && (
+                                <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 8, padding: '12px 14px', marginBottom: 16 }}>
+                                    <p style={{ fontSize: '0.72rem', color: '#60A5FA', fontWeight: 700, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <MdBolt /> Amazon Textract Analysis
+                                    </p>
+                                    {(selected.extractedName || selected.extractedIncome) && (
+                                        <div style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
+                                            {selected.extractedName && <div style={{ background: 'rgba(59,130,246,0.1)', padding: '4px 8px', borderRadius: 4, fontSize: '0.7rem', color: '#93C5FD' }}><strong>Name:</strong> {selected.extractedName}</div>}
+                                            {selected.extractedIncome && <div style={{ background: 'rgba(59,130,246,0.1)', padding: '4px 8px', borderRadius: 4, fontSize: '0.7rem', color: '#93C5FD' }}><strong>Income:</strong> ₹{selected.extractedIncome.toLocaleString()}</div>}
+                                        </div>
+                                    )}
+                                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: 10, borderRadius: 6, maxHeight: 100, overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.7rem', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                                        {selected.extractedTextBlocks.join('\n')}
+                                    </div>
+                                </div>
+                            )}
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
                                 {selected.description}
                             </div>

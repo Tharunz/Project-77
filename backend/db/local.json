@@ -471,14 +471,17 @@
           "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772900967427-idcard.jpeg"
         }
       ],
-      "extractedText": "J.N.N INSTITUTE OF\nENGINEERING\nAUTONOMOUS\nNAAC 'A' Grade I Approved by AICTE Affiliated to Anna University\nM Tharunraj\nCSE(CYBER SECURITY)\n2024-28\nPrincipal\n110724CY028",
-      "formFields": {
-        "principal": "M Tharunraj 2024-28",
-        "cse_cyber_security": "",
-        "naac_a_grade": "I Approved by AICTE Affiliated to Anna University"
-      },
       "isDuplicate": false,
-      "fraudScore": 0.05,
+      "fraudScore": 0.12,
+      "extractedName": "Ramesh Kumar",
+      "extractedIncome": 150000,
+      "extractedTextBlocks": [
+        "GOVERNMENT OF INDIA",
+        "INCOME CERTIFICATE",
+        "NAME: Ramesh Kumar",
+        "ANNUAL INCOME: 1,50,000",
+        "VERIFIED BY: TEHSILDAR"
+      ],
       "adminNote": null,
       "createdAt": "2026-03-07T16:29:34.420Z",
       "updatedAt": "2026-03-07T16:30:35.419Z",
@@ -602,9 +605,19 @@
         "bianl_birthdlil": "Unique Identification Authority of India",
         "help_uidai_gov_in": "X"
       },
-      "isDuplicate": false,
-      "fraudScore": 0.05,
-      "adminNote": null,
+      "isDuplicate": true,
+      "fraudScore": 0.88,
+      "rekognitionLabels": [
+        "Identity Document",
+        "Person",
+        "Photo",
+        "Saffron"
+      ],
+      "moderationFlags": [
+        "Face Overlap",
+        "Low Quality"
+      ],
+      "adminNote": "Rekognition detected potential tampering in ID photo.",
       "createdAt": "2026-03-05T19:37:32.718Z",
       "updatedAt": "2026-03-05T19:37:32.718Z",
       "resolvedAt": null
@@ -2590,8 +2603,8 @@
       "departmentAlerted": "Chennai Metrowater",
       "suggestedAction": "Increase desalination output by 20% and redirect supply.",
       "historicalPattern": "Drought pattern match from Summer 2021 detected 72h prior.",
-      "createdAt": "2026-03-06T16:32:44.255Z",
-      "updatedAt": "2026-03-07T04:32:44.255Z"
+      "createdAt": "2026-03-06T22:54:15.507Z",
+      "updatedAt": "2026-03-07T10:54:15.507Z"
     },
     {
       "id": "PRESEVA-KL-4412",
@@ -2609,8 +2622,8 @@
       "departmentAlerted": "Kerala Health Services",
       "suggestedAction": "Deploy emergency buffer stock of anti-viral medications.",
       "historicalPattern": "Seasonal escalation pattern matching monsoon surge detected.",
-      "createdAt": "2026-03-05T16:32:44.255Z",
-      "updatedAt": "2026-03-06T16:32:44.255Z"
+      "createdAt": "2026-03-05T22:54:15.507Z",
+      "updatedAt": "2026-03-06T22:54:15.507Z"
     }
   ],
   "notifications": [

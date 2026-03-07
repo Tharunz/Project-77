@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose, MdBookmark, MdBookmarkBorder, MdShare, MdSend, MdTrackChanges } from 'react-icons/md';
+import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose, MdBookmark, MdBookmarkBorder, MdShare, MdSend, MdTrackChanges, MdBolt } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine, apiBookmarkScheme, apiUnbookmarkScheme, apiGetBookmarkedSchemes, apiApplyScheme, apiGetMySchemeApplications } from '../../services/api.service';
+import { apiGetGrievances, apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine, apiBookmarkScheme, apiUnbookmarkScheme, apiGetBookmarkedSchemes, apiApplyScheme, apiGetMySchemeApplications } from '../../services/api.service';
 import { INDIAN_STATES } from '../../mock/mockData';
 
 const CATEGORIES = ['Agriculture', 'Healthcare', 'Housing', 'Education', 'Labour & Employment', 'Pension & Social Security', 'Women & Child'];
@@ -34,6 +34,22 @@ export default function SchemeDiscovery() {
     const [timeMachineYear, setTimeMachineYear] = useState(2026);
     const [eligibilityModal, setEligibilityModal] = useState(false);
     const [eliForm, setEliForm] = useState({ age: 18, income: 100000, state: 'Delhi', gender: 'male' });
+    const [textractIncomeDetails, setTextractIncomeDetails] = useState(null);
+
+    useEffect(() => {
+        if (eligibilityModal && !textractIncomeDetails) {
+            apiGetGrievances().then(res => {
+                const grievances = res.data?.grievances || res.data || [];
+                if (Array.isArray(grievances)) {
+                    const recentWithIncome = grievances.find(g => g.extractedIncome > 0);
+                    if (recentWithIncome) {
+                        setTextractIncomeDetails({ income: recentWithIncome.extractedIncome, docId: recentWithIncome.id || recentWithIncome.trackingId });
+                        setEliForm(f => ({ ...f, income: recentWithIncome.extractedIncome }));
+                    }
+                }
+            }).catch(() => { });
+        }
+    }, [eligibilityModal, textractIncomeDetails]);
 
     useEffect(() => {
         const load = async () => {
@@ -331,8 +347,15 @@ export default function SchemeDiscovery() {
                                 <input type="number" className="form-input" value={eliForm.age} onChange={e => setEliForm({ ...eliForm, age: parseInt(e.target.value) })} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Monthly Income (₹)</label>
-                                <input type="number" className="form-input" value={eliForm.income} onChange={e => setEliForm({ ...eliForm, income: parseInt(e.target.value) })} />
+                                <label className="form-label">
+                                    Monthly Income (₹)
+                                    {textractIncomeDetails && (
+                                        <span style={{ marginLeft: 8, fontSize: '0.65rem', background: 'rgba(59,130,246,0.15)', color: '#60A5FA', padding: '2px 6px', borderRadius: 4, whiteSpace: 'nowrap' }}>
+                                            <MdBolt style={{ verticalAlign: 'text-bottom' }} /> Auto-filled by AWS Textract (from {textractIncomeDetails.docId})
+                                        </span>
+                                    )}
+                                </label>
+                                <input type="number" className="form-input" value={eliForm.income} onChange={e => setEliForm({ ...eliForm, income: parseInt(e.target.value) || 0 })} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">State</label>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MdSecurity, MdWarning, MdInfo, MdHistory, MdPerson, MdSearch, MdError, MdTrendingUp, MdVisibility, MdClose } from 'react-icons/md';
+import { MdSecurity, MdWarning, MdInfo, MdHistory, MdPerson, MdSearch, MdError, MdTrendingUp, MdVisibility, MdClose, MdCheck, MdFlag } from 'react-icons/md';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
-import { apiGetGhostAuditAlerts } from '../../services/api.service';
+import { apiGetGhostAuditAlerts, apiGetFraudDuplicates } from '../../services/api.service';
 import { PROJECT_NAME } from '../../config/constants';
 
 const TREND_DATA = [
@@ -16,14 +16,25 @@ const TREND_DATA = [
 
 export default function GhostAudits() {
     const [alerts, setAlerts] = useState([]);
+    const [fraudAlerts, setFraudAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [auditDetail, setAuditDetail] = useState(null);
+    const [expandedFraud, setExpandedFraud] = useState(null);
 
     useEffect(() => {
         const load = async () => {
-            const res = await apiGetGhostAuditAlerts();
-            setAlerts(res.data || []);
-            setLoading(false);
+            try {
+                const [resA, resF] = await Promise.all([
+                    apiGetGhostAuditAlerts(),
+                    apiGetFraudDuplicates()
+                ]);
+                setAlerts(resA.data || []);
+                setFraudAlerts(resF.data || []);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
         };
         load();
     }, []);
@@ -150,6 +161,86 @@ export default function GhostAudits() {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            <h2 style={{ fontSize: '1.1rem', marginBottom: 16, marginTop: 32, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <MdSearch style={{ color: 'var(--red)' }} /> Document & Identity Fraud Scans (Amazon Rekognition)
+            </h2>
+
+            {/* Rekognition Fraud Alerts */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {fraudAlerts.map(alert => (
+                    <div key={alert.id} className="glass-card stagger-item" style={{ padding: 20, position: 'relative', overflow: 'hidden', borderLeft: alert.fraudScore > 0.7 ? '4px solid #EF4444' : '4px solid #F59E0B' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                {alert.fraudScore > 0.7 && (
+                                    <div style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', borderRadius: 4, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}>
+                                        SUSPICIOUS
+                                    </div>
+                                )}
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{alert.createdAt || new Date().toISOString().split('T')[0]}</span>
+                            </div>
+                            <span style={{ fontSize: '0.8rem', fontFamily: 'monospace', color: 'var(--saffron)' }}>{alert.id}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: 280 }}>
+                                <h3 style={{ fontSize: '1.1rem', marginBottom: 6 }}>{alert.title}</h3>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
+                                    <strong>Flag Reason:</strong> {alert.flagReason || 'Rekognition detected anomalies'}
+                                </p>
+
+                                <div style={{ marginBottom: 16 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginBottom: 4 }}>
+                                        <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase' }}>Fraud Probability Score</span>
+                                        <span style={{ fontWeight: 700, color: alert.fraudScore > 0.7 ? '#EF4444' : '#F59E0B' }}>{Math.round((alert.fraudScore || 0) * 100)}%</span>
+                                    </div>
+                                    <div style={{ height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+                                        <div style={{ width: `${Math.round((alert.fraudScore || 0) * 100)}%`, height: '100%', background: alert.fraudScore > 0.7 ? '#EF4444' : '#F59E0B', borderRadius: 3, transition: 'width 1s ease' }} />
+                                    </div>
+                                </div>
+
+                                <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={() => setExpandedFraud(expandedFraud === alert.id ? null : alert.id)}>
+                                    <MdVisibility style={{ marginRight: 4 }} /> {expandedFraud === alert.id ? 'Hide Details' : 'View Rekognition Details'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Expandable Section for Rekognition Labels */}
+                        {expandedFraud === alert.id && (
+                            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)', animation: 'fadeIn 0.3s ease' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: 12, borderRadius: 8 }}>
+                                        <h5 style={{ fontSize: '0.75rem', color: 'var(--teal)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}><MdCheck /> Detected Labels</h5>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                            {alert.rekognitionLabels && alert.rekognitionLabels.length > 0 ? alert.rekognitionLabels.map((lbl, idx) => (
+                                                <span key={idx} style={{ background: 'rgba(0, 200, 150, 0.1)', color: 'var(--teal)', padding: '2px 8px', borderRadius: 12, fontSize: '0.7rem' }}>{lbl}</span>
+                                            )) : (
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No notable labels detected.</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: 12, borderRadius: 8, border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                                        <h5 style={{ fontSize: '0.75rem', color: 'var(--red)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}><MdFlag /> Moderation Flags</h5>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                                            {alert.moderationFlags && alert.moderationFlags.length > 0 ? alert.moderationFlags.map((flag, idx) => (
+                                                <span key={idx} style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--red)', padding: '2px 8px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 600 }}>{flag}</span>
+                                            )) : (
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clean document. No risky content.</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+
+                {fraudAlerts.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', borderRadius: 12 }}>
+                        No suspicious documents detected recently.
+                    </div>
+                )}
             </div>
 
             {/* Audit Detail Modal */}

@@ -20,6 +20,12 @@ const { createNotification, sendGrievanceFiledEmail, sendStatusUpdateEmail } = r
 const { publishEvent } = require('../services/events.service');
 const { notifyNewGrievance } = require('../services/realtime.service');
 const { logGrievanceFiled } = require('../services/logger.service');
+const { invokeLambda } = require('../services/lambda.service');
+const { analyzeDocument } = require('../services/rekognition.service');
+const { extractDocumentText } = require('../services/textract.service');
+const { publishAlert } = require('../services/sns.service');
+const { enqueueGrievance } = require('../services/sqs.service');
+const { publishToStream } = require('../services/kinesis.service');
 const db = require('../db/database');
 const dbService = require('../services/db.service');
 
@@ -83,6 +89,31 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             }
         }
 
+        // Rekognition integration
+        let rekognitionLabels = [];
+        let rekognitionModerationFlags = [];
+        let documentFraudScore = 0.05;
+        let isSuspiciousDocument = false;
+        let documentTextAnalysis = { textBlocks: [], extractedIncome: null, extractedName: null };
+
+        if (documents && documents.length > 0) {
+            const firstDoc = documents[0];
+            // Get S3 Key or use filename
+            const uploadedFileKey = firstDoc.filename || firstDoc.originalName;
+            const bucketName = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME || 'ncie-documents-tharun';
+
+            // Rekognition Auth
+            const fraudAnalysis = await analyzeDocument(bucketName, uploadedFileKey);
+            documentFraudScore = fraudAnalysis.fraudScore;
+            isSuspiciousDocument = fraudAnalysis.isSuspicious;
+            rekognitionLabels = fraudAnalysis.labels || [];
+            rekognitionModerationFlags = fraudAnalysis.moderationFlags || [];
+
+            // Textract Auth
+            documentTextAnalysis = await extractDocumentText(bucketName, uploadedFileKey);
+        }
+
+
         const db_instance = db.getDb();
 
         // Basic duplicate detection (same userId + same title + similar category within 30 days)
@@ -118,8 +149,14 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             extractedText,
             formFields,
             isDuplicate,
-            fraudScore: isDuplicate ? 0.65 : 0.05,
+            fraudScore: Math.max(isDuplicate ? 0.65 : 0.05, documentFraudScore),
+            isSuspicious: isDuplicate || isSuspiciousDocument,
+            documentLabels: rekognitionLabels,
+            moderationFlags: rekognitionModerationFlags,
             adminNote: null,
+            extractedTextBlocks: documentTextAnalysis.textBlocks || [],
+            extractedIncome: documentTextAnalysis.extractedIncome || null,
+            extractedName: documentTextAnalysis.extractedName || null,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             resolvedAt: null
@@ -168,6 +205,33 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
 
         // Log to CloudWatch (non-blocking)
         logGrievanceFiled({ grievanceId: grievance.id, state: grievance.state, category: grievance.category, sentiment: grievance.sentiment, priority: grievance.priority }).catch(() => { });
+
+        // Push to Kinesis (non-blocking)
+        publishToStream('GRIEVANCE_FILED', {
+            grievanceId: grievance.id,
+            citizenId: req.user.id,
+            category: grievance.category,
+            state: grievance.state,
+            priority: grievance.priority
+        }).catch(() => { });
+
+        // Publish to SNS
+        if (process.env.SNS_TOPIC_ARN) {
+            publishAlert(
+                process.env.SNS_TOPIC_ARN,
+                `New Grievance [${grievance.id}] filed by ${req.user.name} in ${grievance.state}. Category: ${grievance.category}. Priority: ${grievance.priority}.`,
+                `[NCIE] New ${grievance.priority === 'Critical' ? 'CRITICAL ' : ''}Grievance`
+            ).catch(() => { });
+        }
+
+        // Enqueue to SQS (non-blocking)
+        enqueueGrievance(grievance).catch(() => { });
+
+        // Invoke Lambda
+        invokeLambda(
+            process.env.LAMBDA_GRIEVANCE_PROCESSOR,
+            { grievanceId: grievance.id, category, state, priority }
+        ).then(() => console.log('[Grievance] Lambda processor triggered ✅')).catch(() => { });
 
         return res.status(201).json({
             success: true,

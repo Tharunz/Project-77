@@ -12,6 +12,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth.middleware');
 const { getPredictions, getAlerts, getThreatCorridors, fileReport, runPreSevaAnalysis, isPresevaLambda, isSageMaker } = require('../services/preseva.service');
+const { publishToStream } = require('../services/kinesis.service');
 const db = require('../db/database');
 
 // ─── GET /api/preseva/public-predictions (no auth — homepage map) ─────────────
@@ -282,6 +283,16 @@ router.patch('/alerts/:id/mark-prevented', protect, adminOnly, (req, res, next) 
             .assign({ status: 'prevented', prevented: true, resolvedAt: new Date().toISOString() })
             .write();
 
+        const updated = db_instance.get('preSevaAlerts').find({ id: req.params.id }).value();
+
+        // Push to Kinesis (non-blocking)
+        publishToStream('PRESEVA_PREVENTED', {
+            alertId: updated.id,
+            state: updated.state,
+            category: updated.category,
+            adminId: req.user.id
+        }).catch(() => { });
+
         return res.status(200).json({
             success: true,
             data: db_instance.get('preSevaAlerts').find({ id: req.params.id }).value(),
@@ -298,11 +309,48 @@ router.get('/run', protect, adminOnly, async (req, res, next) => {
     try {
         console.log('[PreSeva] Manual analysis triggered via API...');
         const alerts = await runPreSevaAnalysis();
+
+        // Push to Kinesis (non-blocking)
+        publishToStream('PRESEVA_ANALYSIS_RUN', {
+            alertCount: alerts.length,
+            criticalCount: alerts.filter(a => a.riskLevel === 'CRITICAL' || a.urgency === 'critical').length,
+            adminId: req.user.id
+        }).catch(() => { });
+
+        // Publish to SNS if critical alerts exist
+        const criticalAlerts = alerts.filter(a => a.riskLevel === 'CRITICAL' || a.urgency === 'critical');
+        if (process.env.SNS_TOPIC_ARN && criticalAlerts.length > 0) {
+            const { publishAlert } = require('../services/sns.service');
+            publishAlert(
+                process.env.SNS_TOPIC_ARN,
+                `PreSeva predicted ${criticalAlerts.length} CRITICAL anomalies across India. Immediate preventive action required in: ${criticalAlerts.map(a => a.state).join(', ')}.`,
+                `[NCIE] PreSeva CRITICAL Alert`
+            ).catch(() => { });
+        }
+
         return res.status(200).json({
             success: true,
             data: alerts,
             message: `PreSeva analysis complete. ${alerts.length} alert(s) generated from ${isPresevaLambda() ? 'AWS Lambda' : isSageMaker() ? 'Amazon SageMaker' : 'local engine'}.`,
             source: isPresevaLambda() ? 'AWS_LAMBDA' : isSageMaker() ? 'AMAZON_SAGEMAKER' : 'LOCAL',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── POST /api/preseva/trigger ────────────────────────────────────────────────
+router.post('/trigger', protect, adminOnly, async (req, res, next) => {
+    try {
+        const { invokeLambda } = require('../services/lambda.service');
+        await invokeLambda(
+            process.env.LAMBDA_PRESEVA_TRIGGER,
+            { states: 36, timestamp: new Date().toISOString() }
+        );
+        return res.status(200).json({
+            success: true,
+            message: 'PreSeva Lambda processor triggered ✅',
             timestamp: new Date().toISOString()
         });
     } catch (err) {

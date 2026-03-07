@@ -158,6 +158,56 @@ export default function HomePage() {
         if (poweredBy === 'Amazon SageMaker') setSageMakerActive(true);
     }, []);
 
+    // Handle real-time map pulse events for ticker
+    const handleMapPulse = useCallback((msg) => {
+        setTickerQueue(prev => {
+            if (prev[0] === msg) return prev;
+            return [msg, ...prev].slice(0, 15);
+        });
+    }, []);
+
+    // Live Kinesis Feed via SSE
+    useEffect(() => {
+        const eventSource = new EventSource('/api/live-feed');
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                let msg = '';
+
+                switch (data.type) {
+                    case 'GRIEVANCE_FILED':
+                        msg = `📊 Grievance Filed · ${data.category} · ${data.state} · Priority: ${data.priority}`;
+                        break;
+                    case 'FRAUD_REVIEW':
+                        msg = `🛡️ Fraud Review · ${data.grievanceId} · Result: ${data.finalStatus}`;
+                        break;
+                    case 'USER_LOGIN':
+                        msg = `👤 Access Portal · Citizen Login from ${data.state || 'India'}`;
+                        break;
+                    case 'PRESEVA_ANALYSIS_RUN':
+                        msg = `🔮 PreSeva Active · Predicted ${data.criticalCount} Critical Anomalies`;
+                        break;
+                    case 'PRESEVA_PREVENTED':
+                        msg = `✅ Threat Mitigated · ${data.category} · ${data.state} · Prevention Confirmed`;
+                        break;
+                    default:
+                        msg = `⚡ Project NCIE · Real-time Operational Pulse detected`;
+                }
+
+                handleMapPulse(msg);
+            } catch (err) {
+                console.error('[SSE] Parse error:', err);
+            }
+        };
+
+        eventSource.onerror = () => {
+            console.warn('[SSE] Connection lost. Attempting reconnect...');
+        };
+
+        return () => eventSource.close();
+    }, [handleMapPulse]);
+
     useEffect(() => {
         const t1 = setInterval(() => {
             setTimeSinceUpdate(p => {
@@ -167,13 +217,6 @@ export default function HomePage() {
         }, 1000);
         const t2 = setInterval(() => setLiveGrievanceCount(p => p + 1), 9000);
         return () => { clearInterval(t1); clearInterval(t2); }
-    }, []);
-
-    const handleMapPulse = useCallback((msg) => {
-        setTickerQueue(prev => {
-            if (prev[0] === msg) return prev;
-            return [msg, ...prev].slice(0, 15);
-        });
     }, []);
 
     const mapLegend = [

@@ -44,7 +44,17 @@ export const apiFetch = async (endpoint, options = {}, ms = 10000) => {
                 ...options.headers
             }
         });
-        const text = await res.text();
+        // Clone response before consuming to prevent cloning errors
+        let responseClone;
+        try {
+            responseClone = res.clone();
+        } catch (cloneErr) {
+            // If cloning fails, the response might already be consumed
+            console.warn(`[API] Response clone failed for ${endpoint}:`, cloneErr.message);
+            responseClone = res; // Use original as fallback
+        }
+
+        const text = await responseClone.text();
         if (!text || !text.trim()) {
             console.warn(`[API ←] ${endpoint} ${res.status} — empty response`);
             return { success: false, error: 'Server returned an empty response. Is the backend running?' };
@@ -497,6 +507,15 @@ export const apiGetAdminAnalytics = async () => {
     return await apiFetch('/admin/analytics');
 };
 
+// AWS Lambda Admin Functions
+export const apiGetLambdaStatus = async () => {
+    return await apiFetch('/admin/lambda-status');
+};
+
+export const apiTriggerSlaCheck = async () => {
+    return await apiFetch('/admin/run-sla-check');
+};
+
 // Admin Notifications (Shared for Citizen & Admin)
 export const apiGetNotifications = async () => {
     const res = await apiFetch('/notification');
@@ -588,6 +607,30 @@ export const apiGetPreSevaAlerts = async () => {
 };
 export const apiGetPreSevaStats = async () => {
     return await apiFetch('/preseva/stats');
+};
+
+export const apiGetSnsStatus = async () => {
+    return await apiFetch('/admin/sns-status');
+};
+
+export const apiGetQueueStats = async () => {
+    return await apiFetch('/admin/queue-stats');
+};
+
+export const apiGetSecretsStatus = async () => {
+    return await apiFetch('/admin/secrets-status');
+};
+
+export const apiGetStreamStatus = async () => {
+    return await apiFetch('/admin/stream-status');
+};
+
+export const apiGetConfig = async () => {
+    return await apiFetch('/admin/config');
+};
+
+export const apiGetAwsServicesStatus = async () => {
+    return await apiFetch('/admin/aws-services-status');
 };
 export const apiMarkPrevented = async (id) => {
     return await apiFetch(`/preseva/alerts/${id}/resolve`, { method: 'PUT' });

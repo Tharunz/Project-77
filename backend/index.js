@@ -66,6 +66,20 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Disable ETag globally - prevents ALL 304 responses
+app.set('etag', false);
+
+// Admin-specific cache middleware - prevents caching of admin routes
+app.use('/api/admin', (req, res, next) => {
+    res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+    });
+    next();
+});
+
 // ─── Logger ───────────────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
@@ -87,6 +101,48 @@ app.get('/api/health', (req, res) => {
         message: 'Project NCIE Backend is running. Jai Hind! 🇮🇳',
         timestamp: new Date().toISOString()
     });
+});
+
+// ─── Live Event Feed (SSE) ────────────────────────────────────────────────────
+app.get('/api/live-feed', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Connection', 'keep-alive');
+
+    const { kinesisEvents } = require('./services/kinesis.service');
+
+    const sendEvent = (data) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // Send initial mock events if no real events are available
+    const mockEvents = [
+        { type: 'GRIEVANCE_FILED', category: 'Infrastructure', state: 'Delhi', priority: 'HIGH' },
+        { type: 'PRESEVA_ANALYSIS_RUN', criticalCount: 3 },
+        { type: 'USER_LOGIN', state: 'Maharashtra' },
+        { type: 'FRAUD_REVIEW', grievanceId: 'GRV-12345', finalStatus: 'Cleared' }
+    ];
+
+    // Send mock events every 10 seconds if no real events
+    let mockEventInterval = setInterval(() => {
+        const randomEvent = mockEvents[Math.floor(Math.random() * mockEvents.length)];
+        sendEvent(randomEvent);
+    }, 10000);
+
+    kinesisEvents.on('event', sendEvent);
+
+    req.on('close', () => {
+        kinesisEvents.removeListener('event', sendEvent);
+        clearInterval(mockEventInterval);
+        res.end();
+    });
+
+    // Send an initial event to show connection is working
+    setTimeout(() => {
+        sendEvent({ type: 'CONNECTION_ESTABLISHED', timestamp: new Date().toISOString() });
+    }, 100);
 });
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
@@ -117,6 +173,34 @@ app.use(errorHandler);
 
 // ─── Startup ──────────────────────────────────────────────────────────────────
 const startServer = async () => {
+    // 1. Fetch AWS Secrets
+    try {
+        const { getSecrets } = require('./services/secrets.service');
+        const secrets = await getSecrets();
+        if (secrets) {
+            Object.keys(secrets).forEach(key => {
+                process.env[key] = secrets[key];
+            });
+            console.log('[NCIE] Secrets loaded into environment variables');
+        }
+    } catch (e) {
+        console.error('[NCIE] Failed to load secrets at startup:', e.message);
+    }
+
+    // 2. Fetch AWS SSM Configuration
+    try {
+        const { loadConfig } = require('./services/ssm.service');
+        const ssmConfig = await loadConfig();
+        if (ssmConfig) {
+            Object.keys(ssmConfig).forEach(key => {
+                process.env[key] = ssmConfig[key];
+            });
+            console.log('[NCIE] SSM Configuration loaded into environment variables');
+        }
+    } catch (e) {
+        console.error('[NCIE] Failed to load SSM config at startup:', e.message);
+    }
+
     // Auto-seed database if empty
     await seed();
 

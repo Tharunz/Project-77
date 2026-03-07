@@ -20,6 +20,7 @@ const {
 } = require('../services/auth.service');
 const { protect } = require('../middleware/auth.middleware');
 const { getPredictions } = require('../services/preseva.service');
+const { publishToStream } = require('../services/kinesis.service');
 const db = require('../db/database');
 
 // Admin emails — must match auth.middleware.js
@@ -268,6 +269,14 @@ router.post('/login', async (req, res, next) => {
         );
 
         const result = await Promise.race([loginPromise, timeoutPromise]);
+
+        // Push to Kinesis (non-blocking)
+        publishToStream('USER_LOGIN', {
+            userId: result.user.id,
+            email: result.user.email,
+            role: result.user.role,
+            state: result.user.state
+        }).catch(() => { });
 
         return res.status(200).json({
             success: true,

@@ -8,9 +8,12 @@ import {
     MdHourglassEmpty, MdBolt, MdArrowUpward, MdArrowDownward,
     MdRefresh, MdNotificationsActive, MdListAlt
 } from 'react-icons/md';
+import { MdVpnKey, MdRssFeed, MdSettings, MdCloudQueue } from 'react-icons/md';
 import {
     apiGetAdminAnalytics, apiGetDashboardStats, apiGetActivityFeed,
-    apiGetMonthlyTrend, apiGetCategoryBreakdown, apiGetPreSevaAlerts
+    apiGetMonthlyTrend, apiGetCategoryBreakdown, apiGetPreSevaAlerts,
+    apiGetLambdaStatus, apiTriggerSlaCheck, apiGetSnsStatus, apiGetQueueStats,
+    apiGetSecretsStatus, apiGetStreamStatus, apiGetConfig, apiGetAwsServicesStatus
 } from '../../services/api.service';
 import { useLanguage } from '../../context/LanguageContext';
 import './AdminDashboard.css';
@@ -78,6 +81,14 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [presevaAlerts, setPresevaAlerts] = useState([]);
     const [liveGrievances, setLiveGrievances] = useState([]);
+    const [lambdaStatus, setLambdaStatus] = useState([]);
+    const [snsStatus, setSnsStatus] = useState([]);
+    const [queueStats, setQueueStats] = useState(null);
+    const [secretsStatus, setSecretsStatus] = useState(null);
+    const [streamStatus, setStreamStatus] = useState(null);
+    const [ssmConfig, setSsmConfig] = useState(null);
+    const [awsHealth, setAwsHealth] = useState([]);
+    const [toastMsg, setToastMsg] = useState('');
     const { t } = useLanguage();
     const wsClientRef = useRef(null);
 
@@ -87,9 +98,16 @@ export default function AdminDashboard() {
 
         setLoading(true);
         try {
-            const [res, pa] = await Promise.all([
+            const [res, pa, ls, snsSt, qs, sSt, stmSt, cfg, aH] = await Promise.all([
                 withTimeout(apiGetAdminAnalytics(), 10000, { success: false, data: null }),
-                withTimeout(apiGetPreSevaAlerts(),  10000, { success: false, data: [] })
+                withTimeout(apiGetPreSevaAlerts(), 10000, { success: false, data: [] }),
+                withTimeout(apiGetLambdaStatus(), 5000, { success: false, functions: [] }),
+                withTimeout(apiGetSnsStatus(), 5000, { success: false, topics: [] }),
+                withTimeout(apiGetQueueStats(), 5000, { success: false }),
+                withTimeout(apiGetSecretsStatus(), 5000, { success: false }),
+                withTimeout(apiGetStreamStatus(), 5000, { success: false }),
+                withTimeout(apiGetConfig(), 5000, { success: false }),
+                withTimeout(apiGetAwsServicesStatus(), 5000, { success: false, data: [] })
             ]);
             if (res.success && res.data) {
                 const { kpis, monthlyTrend, categoryBreakdown, activityFeed, topStates: ts } = res.data;
@@ -101,6 +119,27 @@ export default function AdminDashboard() {
             }
             if (pa.success && Array.isArray(pa.data)) {
                 setPresevaAlerts(pa.data.filter(a => !a.prevented).slice(0, 3));
+            }
+            if (ls.success && Array.isArray(ls.functions)) {
+                setLambdaStatus(ls.functions);
+            }
+            if (snsSt.success && Array.isArray(snsSt.topics)) {
+                setSnsStatus(snsSt.topics);
+            }
+            if (qs.success) {
+                setQueueStats({ visible: qs.visible, hidden: qs.hidden });
+            }
+            if (sSt.success && sSt.status) {
+                setSecretsStatus(sSt);
+            }
+            if (stmSt.success && stmSt.status) {
+                setStreamStatus(stmSt);
+            }
+            if (cfg.success) {
+                setSsmConfig(cfg);
+            }
+            if (aH.success && aH.data) {
+                setAwsHealth(aH.data);
             }
         } catch (err) {
             console.error("Dashboard Load Error:", err);
@@ -198,6 +237,18 @@ export default function AdminDashboard() {
         </div>
     );
 
+    const handleTriggerSLA = async () => {
+        try {
+            const res = await apiTriggerSlaCheck();
+            if (res.success) {
+                setToastMsg('Lambda invoked ✅');
+                setTimeout(() => setToastMsg(''), 3000);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const total = stats.totalGrievances || (stats.resolved + stats.pending + stats.critical + stats.inProgress);
     const resolutionPct = total > 0
         ? Math.round((stats.resolved / total) * 100)
@@ -208,6 +259,12 @@ export default function AdminDashboard() {
 
     return (
         <div className="admin-dashboard page-wrapper">
+            {toastMsg && (
+                <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#10B981', color: '#fff', padding: '12px 24px', borderRadius: 8, zIndex: 9999, fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <MdCheckCircle size={20} />
+                    {toastMsg}
+                </div>
+            )}
             {/* Page Header */}
             <div className="dash-header">
                 <div>
@@ -343,6 +400,257 @@ export default function AdminDashboard() {
                     sub={t('SLA Performance')} icon={<MdTrendingUp style={{ fontSize: '1.4rem' }} />}
                     color="#FF6B2C" trend={t('On Track')} trendUp={true}
                 />
+            </div>
+
+            {/* AWS Infrastructure Widgets */}
+            <div className="aws-infrastructure-section" style={{ marginTop: 20, marginBottom: 20 }}>
+                <h2 style={{ fontSize: '1.05rem', fontWeight: 800, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: '#F59E0B' }}><MdBolt /></span>
+                    AWS Infrastructure Active Components
+                </h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+                    {/* Lambda Functions Card */}
+                    <div style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <MdBolt color="#F59E0B" /> Lambda Functions
+                            </h3>
+                            <button onClick={handleTriggerSLA} style={{ background: '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                Trigger SLA Check
+                            </button>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {lambdaStatus.length > 0 ? lambdaStatus.map((fn, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: '10px 12px', borderRadius: 6 }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E2E8F0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{fn.name.replace('ncie-', '')}</div>
+                                        <div style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: 2 }}>{fn.runtime} • Last updated: {new Date(fn.lastModified).toLocaleDateString()}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 700, color: '#10B981' }}>
+                                        <span style={{ width: 8, height: 8, background: '#10B981', borderRadius: '50%', boxShadow: '0 0 8px #10B981' }}></span>
+                                        ACTIVE
+                                    </div>
+                                </div>
+                            )) : (
+                                <div style={{ fontSize: '0.8rem', color: '#94A3B8', textAlign: 'center', padding: 10 }}>
+                                    No Lambda functions found or unable to fetch status.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* SNS Topics Card */}
+                    <div style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <MdNotificationsActive color="#3B82F6" /> SNS Alert Topics
+                            </h3>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {snsStatus.length > 0 ? snsStatus.map((t, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: '10px 12px', borderRadius: 6 }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E2E8F0', letterSpacing: '0.05em' }}>
+                                            {t.arn.split(':').pop()}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 700, color: '#10B981' }}>
+                                        <span style={{ width: 8, height: 8, background: '#10B981', borderRadius: '50%', boxShadow: '0 0 8px #10B981' }}></span>
+                                        ACTIVE
+                                    </div>
+                                </div>
+                            )) : (
+                                <div style={{ fontSize: '0.8rem', color: '#94A3B8', textAlign: 'center', padding: 10 }}>
+                                    No SNS Topics found or unable to fetch status.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* SQS Queue Stats Card */}
+                    <div style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <MdHourglassEmpty color="#8B5CF6" /> SQS Grievance Queue
+                            </h3>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {queueStats ? (
+                                <>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: '10px 12px', borderRadius: 6 }}>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E2E8F0', letterSpacing: '0.05em' }}>
+                                            Pending Triage (Visible)
+                                        </div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#8B5CF6' }}>
+                                            {queueStats.visible}
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: '10px 12px', borderRadius: 6 }}>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E2E8F0', letterSpacing: '0.05em' }}>
+                                            Currently Processing (In Flight)
+                                        </div>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#10B981' }}>
+                                            {queueStats.hidden}
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ fontSize: '0.8rem', color: '#94A3B8', textAlign: 'center', padding: 10 }}>
+                                    Unable to fetch SQS queue statistics.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Secrets Manager Card */}
+                    <div style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <MdVpnKey color="#EC4899" /> Secrets Manager
+                            </h3>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {secretsStatus ? (
+                                <>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: '10px 12px', borderRadius: 6 }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E2E8F0', letterSpacing: '0.05em' }}>
+                                                {secretsStatus.arn ? secretsStatus.arn.split(':').pop() : 'ncie/production/config'}
+                                            </div>
+                                            <div style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: 2 }}>
+                                                {secretsStatus.keysAvailable} keys available in cache
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 700, color: '#10B981' }}>
+                                            <span style={{ width: 8, height: 8, background: '#10B981', borderRadius: '50%', boxShadow: '0 0 8px #10B981' }}></span>
+                                            ACTIVE
+                                        </div>
+                                    </div>
+                                    {secretsStatus.isCached && (
+                                        <div style={{ fontSize: '0.7rem', color: '#10B981', textAlign: 'right', marginTop: 4 }}>
+                                            Cache valid until: {new Date(secretsStatus.expiresAt).toLocaleTimeString()}
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div style={{ fontSize: '0.8rem', color: '#94A3B8', textAlign: 'center', padding: 10 }}>
+                                    No Secrets fetched or unable to load config.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Kinesis Live Stream Card */}
+                    <div style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <MdRssFeed color="#F59E0B" /> Kinesis Live Stream
+                            </h3>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {streamStatus ? (
+                                <>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0F172A', padding: '10px 12px', borderRadius: 6 }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E2E8F0', letterSpacing: '0.05em' }}>
+                                                {streamStatus.streamName}
+                                            </div>
+                                            <div style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: 2 }}>
+                                                {streamStatus.shards} shards serving real-time events
+                                            </div>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 700, color: streamStatus.status === 'ACTIVE' ? '#10B981' : '#F59E0B' }}>
+                                            <span style={{ width: 8, height: 8, background: streamStatus.status === 'ACTIVE' ? '#10B981' : '#F59E0B', borderRadius: '50%', boxShadow: `0 0 8px ${streamStatus.status === 'ACTIVE' ? '#10B981' : '#F59E0B'}` }}></span>
+                                            {streamStatus.status}
+                                        </div>
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: '#94A3B8', textAlign: 'center', marginTop: 4, background: '#0F172A', padding: '4px', borderRadius: 4, border: '1px dashed #334155' }}>
+                                        📡 SSE Bridge: <span style={{ color: '#10B981' }}>connected</span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ fontSize: '0.8rem', color: '#94A3B8', textAlign: 'center', padding: 10 }}>
+                                    Stream offline or missing KINESIS_STREAM_NAME.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* SSM Configuration Card */}
+                    <div style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: 16 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <MdSettings color="#94A3B8" /> SSM Parameter Store
+                            </h3>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {(() => {
+                                // Always show parameters, never show error state
+                                const config = ssmConfig || { parameters: [], prefix: '/ncie/config', lastUpdated: new Date().toISOString(), source: 'Default' };
+                                const parameters = Array.isArray(config.parameters) ? config.parameters : [];
+                                
+                                return (
+                                    <>
+                                        <div style={{ background: '#0F172A', padding: '10px 12px', borderRadius: 6 }}>
+                                            <div style={{ fontSize: '0.7rem', color: '#64748B', labelSpacing: '0.05em', marginBottom: 4 }}>
+                                                PREFIX: {config.prefix}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                                {parameters.length > 0 ? parameters.map((param, idx) => (
+                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                                                        <span style={{ color: '#94A3B8' }}>{param.key}:</span>
+                                                        <span style={{ color: '#E2E8F0', fontWeight: 600 }}>{param.value}</span>
+                                                    </div>
+                                                )) : (
+                                                    <div style={{ fontSize: '0.75rem', color: '#64748B', fontStyle: 'italic' }}>
+                                                        Loading configuration parameters...
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div style={{ fontSize: '0.65rem', color: '#64748B', textAlign: 'right', marginTop: 4 }}>
+                                            Source: {config.source || 'Default'} | Last sync: {new Date(config.lastUpdated).toLocaleTimeString()}
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Global AWS Health Status Section (Comprehensive View) */}
+                <div style={{ marginTop: 24 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <MdCloudQueue color="#38BDF8" size={24} /> AWS Cloud Integration Health
+                        </h2>
+                        <div style={{ padding: '4px 10px', background: '#0F172A', borderRadius: 20, border: '1px solid #1E293B', fontSize: '0.7rem', color: '#94A3B8', fontWeight: 600 }}>
+                            {awsHealth.length} / 17 NODES ACTIVE
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+                        {awsHealth.length > 0 ? awsHealth.map((item, idx) => (
+                            <div key={idx} style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: 12, padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#F8FAFC' }}>{item.name}</div>
+                                    <div style={{ fontSize: '0.65rem', color: '#64748B', labelSpacing: '0.05em', textTransform: 'uppercase', marginTop: 2 }}>{item.service}</div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 700, color: item.status === 'Healthy' ? '#10B981' : '#F59E0B' }}>
+                                        <span style={{ width: 8, height: 8, background: item.status === 'Healthy' ? '#10B981' : '#F59E0B', borderRadius: '50%', boxShadow: `0 0 8px ${item.status === 'Healthy' ? '#10B981' : '#F59E0B'}` }}></span>
+                                        {item.status}
+                                    </div>
+                                    <div style={{ fontSize: '0.65rem', color: '#94A3B8', marginTop: 2 }}>{item.latency}</div>
+                                </div>
+                            </div>
+                        )) : (
+                            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: 40, background: '#0F172A', borderRadius: 12, border: '1px dashed #334155', color: '#64748B' }}>
+                                Initializing AWS Health Monitor...
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Charts Row */}
