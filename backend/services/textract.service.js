@@ -1,8 +1,10 @@
 const { TextractClient, DetectDocumentTextCommand } = require('@aws-sdk/client-textract');
 
-let textractClient;
-try {
-    textractClient = new TextractClient({
+/**
+ * Gets a fresh Textract client with current credentials
+ */
+const getTextractClient = () => {
+    return new TextractClient({
         region: process.env.AWS_REGION || 'ap-south-1',
         credentials: {
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -10,9 +12,7 @@ try {
             sessionToken: process.env.AWS_SESSION_TOKEN
         }
     });
-} catch (error) {
-    console.error('[Textract] Failed to initialize client:', error.message);
-}
+};
 
 /**
  * Extracts text from a document in S3
@@ -21,8 +21,20 @@ try {
  * @returns {Promise<Object>} Extracted text blocks and parsed fields (income, name)
  */
 const extractDocumentText = async (bucketName, objectKey) => {
-    if (!textractClient || !bucketName || !objectKey) {
-        console.warn(`[Textract] Skipped analysis for ${objectKey} (Missing AWS config or args)`);
+    // Validate credentials before creating client
+    if (!process.env.AWS_ACCESS_KEY_ID || 
+        !process.env.AWS_SECRET_ACCESS_KEY ||
+        !process.env.AWS_SESSION_TOKEN) {
+        console.log('[Textract] Credentials not available, using mock analysis');
+        return {
+            textBlocks: ['MOCK_TEXT: INCOME 120000', 'NAME: Citizen'],
+            extractedIncome: 120000,
+            extractedName: 'Citizen'
+        };
+    }
+
+    if (!bucketName || !objectKey) {
+        console.warn(`[Textract] Skipped analysis for ${objectKey} (Missing args)`);
         // Fallback mock
         return {
             textBlocks: ['MOCK_TEXT: INCOME 120000', 'NAME: Citizen'],
@@ -34,6 +46,7 @@ const extractDocumentText = async (bucketName, objectKey) => {
     try {
         console.log(`[Textract] Analyzing document: ${objectKey}`);
 
+        const client = getTextractClient(); // Fresh client each time
         const command = new DetectDocumentTextCommand({
             Document: {
                 S3Object: {
@@ -43,7 +56,7 @@ const extractDocumentText = async (bucketName, objectKey) => {
             }
         });
 
-        const response = await textractClient.send(command);
+        const response = await client.send(command);
 
         const lines = response.Blocks
             .filter(block => block.BlockType === 'LINE')

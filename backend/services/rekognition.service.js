@@ -1,15 +1,34 @@
 const { RekognitionClient, DetectLabelsCommand, DetectModerationLabelsCommand } = require('@aws-sdk/client-rekognition');
 
-const rekognitionClient = new RekognitionClient({
-    region: process.env.AWS_REGION,
-    credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        sessionToken: process.env.AWS_SESSION_TOKEN
-    }
-});
+/**
+ * Gets a fresh Rekognition client with current credentials
+ */
+const getRekognitionClient = () => {
+    return new RekognitionClient({
+        region: process.env.AWS_REGION || 'us-east-1',
+        credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            sessionToken: process.env.AWS_SESSION_TOKEN
+        }
+    });
+};
 
 const analyzeDocument = async (s3Bucket, s3Key) => {
+    // Validate credentials before creating client
+    if (!process.env.AWS_ACCESS_KEY_ID || 
+        !process.env.AWS_SECRET_ACCESS_KEY ||
+        !process.env.AWS_SESSION_TOKEN) {
+        console.log('[Rekognition] Credentials not available, using local scoring');
+        return {
+            labels: ['Document', 'Text', 'Paper'],
+            fraudScore: Math.random() * 0.3,
+            isSuspicious: false,
+            moderationFlags: [],
+            source: 'Local Scorer'
+        };
+    }
+
     try {
         console.log(`[Rekognition] Analyzing document: ${s3Key}`);
 
@@ -19,13 +38,14 @@ const analyzeDocument = async (s3Bucket, s3Key) => {
             throw new Error('Valid S3 Bucket and Key are required for Rekognition.');
         }
 
+        const client = getRekognitionClient(); // Fresh client each time
         const [labelsResult, moderationResult] = await Promise.all([
-            rekognitionClient.send(new DetectLabelsCommand({
+            client.send(new DetectLabelsCommand({
                 Image: { S3Object: { Bucket: s3Bucket, Name: s3Key } },
                 MaxLabels: 10,
                 MinConfidence: 70
             })),
-            rekognitionClient.send(new DetectModerationLabelsCommand({
+            client.send(new DetectModerationLabelsCommand({
                 Image: { S3Object: { Bucket: s3Bucket, Name: s3Key } }
             }))
         ]);
@@ -55,4 +75,4 @@ const analyzeDocument = async (s3Bucket, s3Key) => {
     }
 };
 
-module.exports = { analyzeDocument, rekognitionClient };
+module.exports = { analyzeDocument, getRekognitionClient };

@@ -1,8 +1,10 @@
 const { SSMClient, GetParametersByPathCommand } = require('@aws-sdk/client-ssm');
 
-let ssmClient = null;
-try {
-    ssmClient = new SSMClient({
+/**
+ * Gets a fresh SSM client with current credentials
+ */
+const getSsmClient = () => {
+    return new SSMClient({
         region: process.env.AWS_REGION || 'us-east-1',
         credentials: {
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -10,9 +12,7 @@ try {
             sessionToken: process.env.AWS_SESSION_TOKEN
         }
     });
-} catch (error) {
-    console.error('[SSM] Failed to initialize client:', error.message);
-}
+};
 
 const SSM_PREFIX = process.env.SSM_PREFIX || '/ncie/config';
 let cachedConfig = {};
@@ -35,13 +35,21 @@ const loadConfig = async () => {
     ];
 
     try {
-        if (!ssmClient || !SSM_PREFIX) {
-            console.log('[SSM] Missing config or prefix, using defaults');
+        if (!SSM_PREFIX) {
+            console.log('[SSM] Missing prefix, using defaults');
+            return defaultConfig;
+        }
+
+        // Validate credentials before creating client
+        if (!process.env.AWS_ACCESS_KEY_ID || 
+            !process.env.AWS_SECRET_ACCESS_KEY ||
+            !process.env.AWS_SESSION_TOKEN) {
+            console.log('[SSM] Credentials not available, using defaults');
             return defaultConfig;
         }
 
         const result = await Promise.race([
-            ssmClient.send(new GetParametersByPathCommand({
+            getSsmClient().send(new GetParametersByPathCommand({
                 Path: SSM_PREFIX,
                 Recursive: true,
                 WithDecryption: true

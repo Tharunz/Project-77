@@ -1,8 +1,10 @@
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 
-let secretsClient = null;
-try {
-    secretsClient = new SecretsManagerClient({
+/**
+ * Gets a fresh Secrets Manager client with current credentials
+ */
+const getSecretsClient = () => {
+    return new SecretsManagerClient({
         region: process.env.AWS_REGION || 'us-east-1',
         credentials: {
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -10,9 +12,7 @@ try {
             sessionToken: process.env.AWS_SESSION_TOKEN
         }
     });
-} catch (error) {
-    console.error('[SecretsManager] Failed to initialize client:', error.message);
-}
+};
 
 // Simple in-memory cache
 const cache = {
@@ -25,23 +25,32 @@ const cache = {
  * Falls back to existing env vars if it fails.
  */
 const getSecrets = async () => {
-    if (!secretsClient || !process.env.SECRETS_MANAGER_ARN) {
-        console.warn('[SecretsManager] Skipped fetch (Missing config or ARN)');
+    // Validate credentials before creating client
+    if (!process.env.AWS_ACCESS_KEY_ID || 
+        !process.env.AWS_SECRET_ACCESS_KEY ||
+        !process.env.AWS_SESSION_TOKEN) {
+        console.log('[SecretsManager] Credentials not available, skipping fetch');
         return null;
     }
 
-    const now = Date.now();
-    // Return cached data if TTL is still valid (5 minutes = 300000 ms)
-    if (cache.data && cache.expiresAt > now) {
+    if (!process.env.SECRETS_MANAGER_ARN) {
+        console.warn('[SecretsManager] Skipped fetch (Missing ARN)');
+        return null;
+    }
+
+    // Check cache first
+    if (cache.data && cache.expiresAt > Date.now()) {
+        console.log('[SecretsManager] Using cached secrets');
         return cache.data;
     }
 
     try {
+        const client = getSecretsClient(); // Fresh client each time
         const command = new GetSecretValueCommand({
             SecretId: process.env.SECRETS_MANAGER_ARN
         });
 
-        const response = await secretsClient.send(command);
+        const response = await client.send(command);
         let secretData;
 
         if (response.SecretString) {
@@ -53,12 +62,12 @@ const getSecrets = async () => {
 
         // Update cache
         cache.data = secretData;
-        cache.expiresAt = now + 5 * 60 * 1000; // 5 mins
+        cache.expiresAt = Date.now() + (5 * 60 * 1000); // 5 minutes
 
-        console.log(`[SecretsManager] Fetched secrets successfully. Cached until ${new Date(cache.expiresAt).toLocaleTimeString()}`);
-        return cache.data;
+        console.log('[SecretsManager] Fetched and cached secrets ');
+        return secretData;
     } catch (error) {
-        console.error('[SecretsManager] Failed to fetch secrets:', error.message);
+        console.log('[SecretsManager] Fetch failed:', error.message);
         // Fall back to stale cache if requested? Let's just return null or stale cache.
         if (cache.data) {
             console.warn('[SecretsManager] Returning stale cache due to fetch error');
@@ -86,7 +95,7 @@ const getSecretsStatus = async () => {
         };
     }
 
-    if (!secretsClient || !process.env.SECRETS_MANAGER_ARN) {
+    if (!process.env.SECRETS_MANAGER_ARN) {
         console.log('[SecretsManager] Missing config, returning mock data');
         return {
             success: true,

@@ -1,8 +1,10 @@
 const { SQSClient, SendMessageCommand, GetQueueAttributesCommand } = require('@aws-sdk/client-sqs');
 
-let sqsClient = null;
-try {
-    sqsClient = new SQSClient({
+/**
+ * Gets a fresh SQS client with current credentials
+ */
+const getSqsClient = () => {
+    return new SQSClient({
         region: process.env.AWS_REGION || 'us-east-1',
         credentials: {
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -10,33 +12,43 @@ try {
             sessionToken: process.env.AWS_SESSION_TOKEN
         }
     });
-} catch (error) {
-    console.error('[SQS] Failed to initialize client:', error.message);
-}
+};
 
 /**
  * Enqueues a grievance object to SQS
  * @param {Object} grievance
  */
 const enqueueGrievance = async (grievance) => {
-    if (!sqsClient || !process.env.SQS_QUEUE_URL) {
-        console.warn('[SQS] Skipped enqueueing (Missing config or Queue URL)');
-        return { success: false, reason: 'missing config' };
+    // Validate credentials before creating client
+    if (!process.env.AWS_ACCESS_KEY_ID || 
+        !process.env.AWS_SECRET_ACCESS_KEY ||
+        !process.env.AWS_SESSION_TOKEN) {
+        console.log('[SQS] Credentials not available, skipping enqueue');
+        return { success: false, reason: 'no credentials' };
     }
 
-    // Use regular SQS parameters, remove unsupported FIFO params if it's not a FIFO queue.
-    // Assuming Standard queue based on implementation details:
+    if (!process.env.SQS_QUEUE_URL) {
+        console.warn('[SQS] Skipped enqueueing (Missing Queue URL)');
+        return { success: false, reason: 'missing queue url' };
+    }
+
     try {
+        const client = getSqsClient(); // Fresh client each time
         const command = new SendMessageCommand({
             QueueUrl: process.env.SQS_QUEUE_URL,
-            MessageBody: JSON.stringify(grievance)
+            MessageBody: JSON.stringify(grievance),
+            MessageAttributes: {
+                grievanceId: { DataType: 'String', StringValue: grievance.id },
+                priority: { DataType: 'String', StringValue: grievance.priority || 'Normal' },
+                category: { DataType: 'String', StringValue: grievance.category || 'General' }
+            }
         });
 
-        const response = await sqsClient.send(command);
-        console.log(`[SQS] Enqueued grievance ${grievance.id} ✅ MessageId: ${response.MessageId}`);
-        return { success: true, messageId: response.MessageId };
+        const result = await client.send(command);
+        console.log(`[SQS] Enqueued grievance ${grievance?.id} ✅ MessageId: ${result.MessageId}`);
+        return { success: true, messageId: result.MessageId };
     } catch (error) {
-        console.error(`[SQS] Enqueue failed for grievance ${grievance?.id}:`, error.message);
+        console.log(`[SQS] Enqueue failed for grievance ${grievance?.id}:`, error.message);
         return { success: false, error: error.message };
     }
 };
@@ -56,7 +68,7 @@ const getQueueStats = async () => {
         };
     }
 
-    if (!sqsClient || !process.env.SQS_QUEUE_URL) {
+    if (!process.env.SQS_QUEUE_URL) {
         console.log('[SQS] Missing SQS config, returning mock data');
         return {
             success: true,
@@ -67,12 +79,13 @@ const getQueueStats = async () => {
     }
 
     try {
+        const client = getSqsClient(); // Fresh client each time
         const command = new GetQueueAttributesCommand({
             QueueUrl: process.env.SQS_QUEUE_URL,
             AttributeNames: ['ApproximateNumberOfMessages', 'ApproximateNumberOfMessagesNotVisible']
         });
 
-        const response = await sqsClient.send(command);
+        const response = await client.send(command);
         return {
             success: true,
             visible: parseInt(response.Attributes?.ApproximateNumberOfMessages || '0', 10),

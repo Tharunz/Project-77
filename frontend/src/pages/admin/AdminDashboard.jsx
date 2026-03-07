@@ -89,6 +89,9 @@ export default function AdminDashboard() {
     const [ssmConfig, setSsmConfig] = useState(null);
     const [awsHealth, setAwsHealth] = useState([]);
     const [toastMsg, setToastMsg] = useState('');
+    const [slaLoading, setSlaLoading] = useState(false);
+    const [slaResults, setSlaResults] = useState(null);
+    const [showSlaModal, setShowSlaModal] = useState(false);
     const { t } = useLanguage();
     const wsClientRef = useRef(null);
 
@@ -238,14 +241,24 @@ export default function AdminDashboard() {
     );
 
     const handleTriggerSLA = async () => {
+        setSlaLoading(true);
         try {
             const res = await apiTriggerSlaCheck();
             if (res.success) {
-                setToastMsg('Lambda invoked ✅');
+                setSlaResults(res);
+                setShowSlaModal(true);
+                setToastMsg('SLA workflow completed ✅');
+                setTimeout(() => setToastMsg(''), 3000);
+            } else {
+                setToastMsg('SLA check failed');
                 setTimeout(() => setToastMsg(''), 3000);
             }
         } catch (err) {
             console.error(err);
+            setToastMsg('SLA check error');
+            setTimeout(() => setToastMsg(''), 3000);
+        } finally {
+            setSlaLoading(false);
         }
     };
 
@@ -258,13 +271,14 @@ export default function AdminDashboard() {
     const criticalAlerts = presevaAlerts.filter(a => a.urgency === 'critical');
 
     return (
-        <div className="admin-dashboard page-wrapper">
+        <>
             {toastMsg && (
                 <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#10B981', color: '#fff', padding: '12px 24px', borderRadius: 8, zIndex: 9999, fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <MdCheckCircle size={20} />
                     {toastMsg}
                 </div>
             )}
+            <div className="admin-dashboard page-wrapper">
             {/* Page Header */}
             <div className="dash-header">
                 <div>
@@ -415,8 +429,34 @@ export default function AdminDashboard() {
                             <h3 style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <MdBolt color="#F59E0B" /> Lambda Functions
                             </h3>
-                            <button onClick={handleTriggerSLA} style={{ background: '#3B82F6', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 12px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                                Trigger SLA Check
+                            <button 
+                                onClick={handleTriggerSLA} 
+                                disabled={slaLoading}
+                                style={{ 
+                                    background: slaLoading ? '#6B7280' : '#3B82F6', 
+                                    color: '#fff', 
+                                    border: 'none', 
+                                    borderRadius: 6, 
+                                    padding: '6px 12px', 
+                                    fontSize: '0.75rem', 
+                                    fontWeight: 600, 
+                                    cursor: slaLoading ? 'not-allowed' : 'pointer', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 4 
+                                }}
+                            >
+                                {slaLoading ? (
+                                    <>
+                                        <div className="spinner" style={{ width: '12px', height: '12px', border: '2px solid #fff', borderTop: '2px solid transparent' }}></div>
+                                        Running SLA Check...
+                                    </>
+                                ) : (
+                                    <>
+                                        <MdBolt size={14} />
+                                        Trigger SLA Check
+                                    </>
+                                )}
                             </button>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -805,5 +845,199 @@ export default function AdminDashboard() {
                 </div>
             </div>
         </div>
+
+        {/* SLA Results Modal */}
+        {showSlaModal && slaResults && (
+            <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000
+            }}>
+                <div style={{
+                    background: '#1E293B',
+                    border: '1px solid #334155',
+                    borderRadius: 12,
+                    padding: 24,
+                    maxWidth: 600,
+                    width: '90%',
+                    maxHeight: '80vh',
+                    overflowY: 'auto'
+                }}>
+                    {/* Modal Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <MdBolt color="#F59E0B" />
+                            Lambda SLA Check Complete
+                        </h3>
+                        <button 
+                            onClick={() => setShowSlaModal(false)}
+                            style={{ 
+                                background: 'none', 
+                                border: 'none', 
+                                color: '#94A3B8', 
+                                fontSize: '1.5rem', 
+                                cursor: 'pointer',
+                                padding: 0,
+                                width: '30px',
+                                height: '30px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            ×
+                        </button>
+                    </div>
+
+                    {/* Trigger Info */}
+                    <div style={{ background: '#0F172A', padding: 12, borderRadius: 6, marginBottom: 16 }}>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', marginBottom: 4 }}>
+                            Triggered: {new Date(slaResults.triggeredAt).toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B' }}>
+                            Next check in: {slaResults.nextCheckIn}
+                        </div>
+                    </div>
+
+                    {/* AWS Services Status */}
+                    <div style={{ marginBottom: 16 }}>
+                        <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0 0 8px 0', color: '#f8fafc' }}>AWS Services</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                            <div style={{ 
+                                background: slaResults.workflow.lambdaInvoked ? '#065F46' : '#7F1D1D', 
+                                padding: 8, 
+                                borderRadius: 4, 
+                                textAlign: 'center' 
+                            }}>
+                                <div style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 600 }}>Lambda</div>
+                                <div style={{ fontSize: '0.6rem', color: '#D1FAE5' }}>
+                                    {slaResults.awsServices.lambda}
+                                </div>
+                            </div>
+                            <div style={{ 
+                                background: slaResults.workflow.kinesisPublished ? '#065F46' : '#7F1D1D', 
+                                padding: 8, 
+                                borderRadius: 4, 
+                                textAlign: 'center' 
+                            }}>
+                                <div style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 600 }}>Kinesis</div>
+                                <div style={{ fontSize: '0.6rem', color: '#D1FAE5' }}>
+                                    {slaResults.awsServices.kinesis}
+                                </div>
+                            </div>
+                            <div style={{ 
+                                background: slaResults.workflow.snsPublished ? '#065F46' : '#7F1D1D', 
+                                padding: 8, 
+                                borderRadius: 4, 
+                                textAlign: 'center' 
+                            }}>
+                                <div style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 600 }}>SNS</div>
+                                <div style={{ fontSize: '0.6rem', color: '#D1FAE5' }}>
+                                    {slaResults.awsServices.sns}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SLA Statistics */}
+                    <div style={{ marginBottom: 16 }}>
+                        <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0 0 8px 0', color: '#f8fafc' }}>SLA Analysis Results</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                            <div style={{ background: '#0F172A', padding: 12, borderRadius: 6, textAlign: 'center' }}>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#3B82F6' }}>
+                                    {slaResults.slaCheckResults.totalChecked}
+                                </div>
+                                <div style={{ fontSize: '0.65rem', color: '#94A3B8' }}>Total Checked</div>
+                            </div>
+                            <div style={{ background: '#0F172A', padding: 12, borderRadius: 6, textAlign: 'center' }}>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#EF4444' }}>
+                                    {slaResults.slaCheckResults.breached}
+                                </div>
+                                <div style={{ fontSize: '0.65rem', color: '#94A3B8' }}>SLA Breached</div>
+                            </div>
+                            <div style={{ background: '#0F172A', padding: 12, borderRadius: 6, textAlign: 'center' }}>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F59E0B' }}>
+                                    {slaResults.slaCheckResults.warning}
+                                </div>
+                                <div style={{ fontSize: '0.65rem', color: '#94A3B8' }}>Warning (48-72hrs)</div>
+                            </div>
+                            <div style={{ background: '#0F172A', padding: 12, borderRadius: 6, textAlign: 'center' }}>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#10B981' }}>
+                                    {slaResults.slaCheckResults.onTrack}
+                                </div>
+                                <div style={{ fontSize: '0.65rem', color: '#94A3B8' }}>On Track</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Breached Grievances */}
+                    {slaResults.slaCheckResults.breachedGrievances.length > 0 && (
+                        <div>
+                            <h4 style={{ fontSize: '0.9rem', fontWeight: 600, margin: '0 0 8px 0', color: '#f8fafc' }}>
+                                Breached Grievances ({slaResults.slaCheckResults.breachedGrievances.length})
+                            </h4>
+                            <div style={{ background: '#0F172A', padding: 12, borderRadius: 6, maxHeight: '200px', overflowY: 'auto' }}>
+                                {slaResults.slaCheckResults.breachedGrievances.map((g, idx) => (
+                                    <div key={idx} style={{ 
+                                        borderBottom: idx < slaResults.slaCheckResults.breachedGrievances.length - 1 ? '1px solid #334155' : 'none',
+                                        paddingBottom: 8, 
+                                        marginBottom: 8 
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#E2E8F0', marginBottom: 2 }}>
+                                                    {g.grievanceId} — {g.title.substring(0, 50)}...
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', color: '#94A3B8', marginBottom: 2 }}>
+                                                    {g.state} • {g.category} • Priority: {g.priority}
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', color: '#94A3B8' }}>
+                                                    Officer: {g.assignedOfficer} • Citizen: {g.citizenName}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right', marginLeft: 12 }}>
+                                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#EF4444' }}>
+                                                    {g.hoursOpen}hrs
+                                                </div>
+                                                <div style={{ fontSize: '0.6rem', color: '#FCA5A5' }}>
+                                                    overdue
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal Footer */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
+                        <button
+                            onClick={() => setShowSlaModal(false)}
+                            style={{
+                                background: '#374151',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: 6,
+                                padding: '8px 16px',
+                                fontSize: '0.8rem',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
-}
+};

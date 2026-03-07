@@ -497,13 +497,96 @@ router.get('/escrow', (req, res, next) => {
 // ─── GET /api/admin/run-sla-check ─────────────────────────────────────────────
 router.get('/run-sla-check', async (req, res, next) => {
     try {
-        const { invokeLambda } = require('../services/lambda.service');
-        await invokeLambda(
-            process.env.LAMBDA_SLA_CHECKER,
-            { timestamp: new Date().toISOString() }
-        );
-        return res.status(200).json({ success: true, message: 'Lambda invoked ✅' });
+        console.log('[SLA] Starting comprehensive SLA check workflow...');
+        
+        // Step 1: Invoke Lambda function
+        let lambdaResult = { success: false, statusCode: 0 };
+        try {
+            const { invokeLambda } = require('../services/lambda.service');
+            lambdaResult = await invokeLambda(
+                process.env.LAMBDA_SLA_CHECKER || 'ncie-sla-checker',
+                { 
+                    timestamp: new Date().toISOString(),
+                    triggeredBy: 'admin',
+                    workflow: 'sla-check'
+                }
+            );
+            console.log(`[Lambda] ncie-sla-checker invoked ✅ StatusCode: ${lambdaResult.statusCode}`);
+        } catch (lambdaErr) {
+            console.log('[Lambda] Invocation failed, continuing with analysis:', lambdaErr.message);
+            lambdaResult = { success: false, statusCode: 500, error: lambdaErr.message };
+        }
+        
+        // Step 2: Perform SLA analysis
+        const { performSLACheck } = require('../services/sla.service');
+        const slaResults = performSLACheck();
+        
+        // Step 3: Publish to Kinesis
+        let kinesisResult = { success: false };
+        try {
+            const { publishToStream } = require('../services/kinesis.service');
+            kinesisResult = await publishToStream('SLA_CHECK_COMPLETE', {
+                breached: slaResults.breached,
+                warning: slaResults.warning,
+                onTrack: slaResults.onTrack,
+                totalChecked: slaResults.totalChecked,
+                triggeredBy: 'admin',
+                lambdaInvoked: lambdaResult.success,
+                timestamp: new Date().toISOString()
+            });
+            console.log('[Kinesis] Published: SLA_CHECK_COMPLETE ✅');
+        } catch (kinesisErr) {
+            console.log('[Kinesis] Publish failed:', kinesisErr.message);
+            kinesisResult = { success: false, error: kinesisErr.message };
+        }
+        
+        // Step 4: Send SNS alert if breaches found
+        let snsResult = { success: false };
+        if (slaResults.breached > 0) {
+            try {
+                const { publishAlert } = require('../services/sns.service');
+                const message = `SLA check found ${slaResults.breached} breached grievances and ${slaResults.warning} warnings. Immediate action required for breached items.`;
+                snsResult = await publishAlert(
+                    process.env.SNS_TOPIC_ARN || 'arn:aws:sns:us-east-1:123456789012:ncie-alerts',
+                    message,
+                    'SLA Breach Alert'
+                );
+                console.log('[SNS] Published: SLA Breach Alert ✅');
+            } catch (snsErr) {
+                console.log('[SNS] Publish failed:', snsErr.message);
+                snsResult = { success: false, error: snsErr.message };
+            }
+        } else {
+            console.log('[SNS] No breaches found, skipping alert');
+            snsResult = { success: true, skipped: true };
+        }
+        
+        // Step 5: Return comprehensive response
+        const response = {
+            success: true,
+            workflow: {
+                lambdaInvoked: lambdaResult.success,
+                lambdaStatusCode: lambdaResult.statusCode,
+                slaAnalysis: true,
+                kinesisPublished: kinesisResult.success,
+                snsPublished: snsResult.success
+            },
+            slaCheckResults: slaResults,
+            triggeredAt: new Date().toISOString(),
+            nextCheckIn: '1 hour',
+            awsServices: {
+                lambda: lambdaResult.success ? 'Invoked' : 'Failed',
+                kinesis: kinesisResult.success ? 'Published' : 'Failed',
+                sns: snsResult.success ? (snsResult.skipped ? 'Skipped (no breaches)' : 'Published') : 'Failed'
+            }
+        };
+        
+        console.log(`[SLA] Workflow complete: ${slaResults.breached} breached, ${slaResults.warning} warning, ${slaResults.onTrack} on track`);
+        
+        res.status(200).json(response);
+        
     } catch (err) {
+        console.error('[SLA] Workflow failed:', err.message);
         next(err);
     }
 });

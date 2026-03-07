@@ -3,19 +3,19 @@ const EventEmitter = require('events');
 
 const kinesisEvents = new EventEmitter();
 
-let kinesisClient = null;
-try {
-    kinesisClient = new KinesisClient({
+/**
+ * Gets a fresh Kinesis client with current credentials
+ */
+const getKinesisClient = () => {
+    return new KinesisClient({
         region: process.env.AWS_REGION || 'us-east-1',
         credentials: {
-            accessKey_id: process.env.AWS_ACCESS_KEY_ID,
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
             secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
             sessionToken: process.env.AWS_SESSION_TOKEN
         }
     });
-} catch (error) {
-    console.error('[Kinesis] Failed to initialize client:', error.message);
-}
+};
 
 const STREAM_NAME = process.env.KINESIS_STREAM_NAME || 'ncie-live-stream';
 
@@ -25,25 +25,34 @@ const STREAM_NAME = process.env.KINESIS_STREAM_NAME || 'ncie-live-stream';
  * @param {Object} payload 
  */
 const publishToStream = async (eventType, payload) => {
-    if (!kinesisClient || !STREAM_NAME) {
-        console.warn(`[Kinesis] Skipped publish (Missing config or Stream Name)`);
-        return { success: false, reason: 'missing config' };
+    // Validate credentials before creating client
+    if (!process.env.AWS_ACCESS_KEY_ID || 
+        !process.env.AWS_SECRET_ACCESS_KEY ||
+        !process.env.AWS_SESSION_TOKEN) {
+        console.log('[Kinesis] Credentials not available, skipping publish');
+        return { success: false, reason: 'no credentials' };
+    }
+
+    if (!STREAM_NAME) {
+        console.warn('[Kinesis] Skipped publish (Missing Stream Name)');
+        return { success: false, reason: 'missing stream name' };
     }
 
     try {
+        const client = getKinesisClient(); // Fresh client each time
         const record = {
             eventType,
-            payload,
+            data: payload,
             timestamp: new Date().toISOString()
         };
 
         const command = new PutRecordCommand({
             StreamName: STREAM_NAME,
             Data: Buffer.from(JSON.stringify(record)),
-            PartitionKey: payload.grievanceId || payload.userId || 'ncie-global'
+            PartitionKey: eventType
         });
 
-        const response = await kinesisClient.send(command);
+        const response = await client.send(command);
         console.log(`[Kinesis] Published ${eventType} ✅ Sequence: ${response.SequenceNumber}`);
 
         // Emit locally for SSE bridge
@@ -51,7 +60,7 @@ const publishToStream = async (eventType, payload) => {
 
         return { success: true, sequenceNumber: response.SequenceNumber };
     } catch (error) {
-        console.error(`[Kinesis] Publish failed for ${eventType}:`, error.message);
+        console.log(`[Kinesis] Publish failed for ${eventType}:`, error.message);
         return { success: false, error: error.message };
     }
 };
@@ -73,7 +82,7 @@ const getStreamStatus = async () => {
         };
     }
 
-    if (!kinesisClient || !STREAM_NAME) {
+    if (!STREAM_NAME) {
         console.log('[Kinesis] Missing Kinesis config, returning mock data');
         return {
             success: true,
@@ -86,8 +95,9 @@ const getStreamStatus = async () => {
     }
 
     try {
+        const client = getKinesisClient(); // Fresh client each time
         const command = new DescribeStreamCommand({ StreamName: STREAM_NAME });
-        const response = await kinesisClient.send(command);
+        const response = await client.send(command);
         return {
             success: true,
             streamName: STREAM_NAME,

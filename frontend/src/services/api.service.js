@@ -516,6 +516,10 @@ export const apiTriggerSlaCheck = async () => {
     return await apiFetch('/admin/run-sla-check');
 };
 
+export const apiGetBreachedGrievances = async () => {
+    return await apiFetch('/grievance/breached');
+};
+
 // Admin Notifications (Shared for Citizen & Admin)
 export const apiGetNotifications = async () => {
     const res = await apiFetch('/notification');
