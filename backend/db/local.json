@@ -403,6 +403,90 @@
   ],
   "grievances": [
     {
+      "id": "GRV-B96323D2",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "audio test hello bro",
+      "description": "[Audio grievance recorded in தமிழ்] Duration: 8s",
+      "category": "Education",
+      "state": "Karnataka",
+      "district": "Unknown",
+      "status": "Critical",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772901093364-grievance-audio.webm",
+          "originalName": "grievance-audio.webm",
+          "mimetype": "audio/webm",
+          "size": 143264,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772901093364-grievance-audio.webm"
+        }
+      ],
+      "extractedText": "",
+      "formFields": null,
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-07T16:31:39.781Z",
+      "updatedAt": "2026-03-07T16:32:26.621Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-1BBFC6EB",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "test test test big test",
+      "description": "mike testing 123mike testing 123mike testing 123mike testing 123",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772900967427-idcard.jpeg",
+          "originalName": "idcard.jpeg",
+          "mimetype": "image/jpeg",
+          "size": 159719,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772900967427-idcard.jpeg"
+        }
+      ],
+      "extractedText": "J.N.N INSTITUTE OF\nENGINEERING\nAUTONOMOUS\nNAAC 'A' Grade I Approved by AICTE Affiliated to Anna University\nM Tharunraj\nCSE(CYBER SECURITY)\n2024-28\nPrincipal\n110724CY028",
+      "formFields": {
+        "principal": "M Tharunraj 2024-28",
+        "cse_cyber_security": "",
+        "naac_a_grade": "I Approved by AICTE Affiliated to Anna University"
+      },
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-07T16:29:34.420Z",
+      "updatedAt": "2026-03-07T16:30:35.419Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen verified resolution and uploaded photo proof.",
+      "verifiedAt": "2026-03-07T16:30:35.419Z"
+    },
+    {
       "id": "GRV-5C651668",
       "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
       "citizenName": "Ramesh Kumar",
@@ -2470,6 +2554,22 @@
       "beneficiaries": 0,
       "createdAt": "2026-03-05T21:22:05.663Z",
       "updatedAt": "2026-03-05T21:24:08.138Z"
+    },
+    {
+      "id": "SCH-1772893593199",
+      "name": "tESTSCEHEM",
+      "category": "",
+      "state": "All India",
+      "benefit": "34234234234",
+      "eligibility": "3244ADADAD",
+      "description": "http://localhost:5173/citizen/schemes?id=SCH-http://localhost:5173/citizen/schemes?id=SCH-003003",
+      "minAge": 18,
+      "maxAge": 65,
+      "maxIncome": "34242424",
+      "isActive": true,
+      "beneficiaries": 0,
+      "createdAt": "2026-03-07T14:26:33.199Z",
+      "updatedAt": "2026-03-07T14:26:33.199Z"
     }
   ],
   "officers": [],
@@ -2490,8 +2590,8 @@
       "departmentAlerted": "Chennai Metrowater",
       "suggestedAction": "Increase desalination output by 20% and redirect supply.",
       "historicalPattern": "Drought pattern match from Summer 2021 detected 72h prior.",
-      "createdAt": "2026-03-06T13:48:10.788Z",
-      "updatedAt": "2026-03-07T01:48:10.788Z"
+      "createdAt": "2026-03-06T16:32:44.255Z",
+      "updatedAt": "2026-03-07T04:32:44.255Z"
     },
     {
       "id": "PRESEVA-KL-4412",
@@ -2509,8 +2609,8 @@
       "departmentAlerted": "Kerala Health Services",
       "suggestedAction": "Deploy emergency buffer stock of anti-viral medications.",
       "historicalPattern": "Seasonal escalation pattern matching monsoon surge detected.",
-      "createdAt": "2026-03-05T13:48:10.788Z",
-      "updatedAt": "2026-03-06T13:48:10.788Z"
+      "createdAt": "2026-03-05T16:32:44.255Z",
+      "updatedAt": "2026-03-06T16:32:44.255Z"
     }
   ],
   "notifications": [
@@ -2830,6 +2930,42 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-06T13:13:55.612Z"
+    },
+    {
+      "id": "NOTIF-C16869C7",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-1BBFC6EB",
+      "message": "Your grievance \"test test test big test\" has been filed. Tracking ID: GRV-1BBFC6EB",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:29:34.423Z"
+    },
+    {
+      "id": "NOTIF-49231D5E",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-1BBFC6EB",
+      "message": "Your grievance GRV-1BBFC6EB status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:30:13.015Z"
+    },
+    {
+      "id": "NOTIF-C615CA5F",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-B96323D2",
+      "message": "Your grievance \"audio test hello bro\" has been filed. Tracking ID: GRV-B96323D2",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:31:39.782Z"
+    },
+    {
+      "id": "NOTIF-0EFD8CA9",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-B96323D2",
+      "message": "Your grievance GRV-B96323D2 status updated to: Critical",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:32:26.623Z"
     }
   ],
   "communityPosts": [
@@ -2840,9 +2976,9 @@
       "content": "Summer is coming and water supply is already unreliable. Sign this petition to demand daily 6-hour supply.",
       "category": "Water Supply",
       "state": "Uttar Pradesh",
-      "votes": 1252,
+      "votes": 1253,
       "isPetition": true,
-      "petitionCount": 4826,
+      "petitionCount": 4827,
       "responses": [],
       "createdAt": "2026-02-15T00:00:00.000Z",
       "signers": [
@@ -2850,14 +2986,16 @@
         "6438c408-10f1-7029-42ac-3e794871ef66",
         "347814c8-4041-7035-251d-3deb55a40609",
         "USR-CIT-001",
-        "USR-606E9802"
+        "USR-606E9802",
+        "USR-A0F40524"
       ],
       "voters": [
         "a4c8a448-40d1-70a6-1845-3113c82f9834",
         "6438c408-10f1-7029-42ac-3e794871ef66",
         "347814c8-4041-7035-251d-3deb55a40609",
         "USR-CIT-001",
-        "USR-606E9802"
+        "USR-606E9802",
+        "USR-A0F40524"
       ],
       "status": "target_reached"
     },
@@ -2934,6 +3072,22 @@
       "isPetition": false,
       "responses": [],
       "createdAt": "2026-03-05T21:24:38.815Z"
+    },
+    {
+      "id": "POST-0E0DB06C",
+      "userId": "USR-CIT-001",
+      "authorName": "Ramesh Kumar",
+      "title": "xvzxvv",
+      "content": "xvzxcv",
+      "category": "Transport",
+      "state": "Uttar Pradesh",
+      "votes": 1,
+      "voters": [
+        "USR-CIT-001"
+      ],
+      "isPetition": false,
+      "responses": [],
+      "createdAt": "2026-03-07T14:06:44.275Z"
     }
   ],
   "chatHistory": [],

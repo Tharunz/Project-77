@@ -41,8 +41,25 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             });
         }
 
-        // Run sentiment analysis on description (async when Comprehend enabled)
-        const sentimentResult = await Promise.resolve(analyzeSentiment(description));
+        // Run sentiment analysis with safe fallback — never crash grievance filing
+        let sentimentResult = {
+            label: 'Neutral',
+            sentiment: 'NEUTRAL',
+            sentimentScore: 0.5,
+            priority: 'Medium',
+            keyPhrases: [],
+            keywords: [],
+            score: { Positive: 0.1, Negative: 0.1, Neutral: 0.8, Mixed: 0.02 },
+            source: 'default'
+        };
+
+        try {
+            sentimentResult = await Promise.resolve(analyzeSentiment(description));
+        } catch (sentimentErr) {
+            console.log('[Grievance] Sentiment analysis failed, using default:', sentimentErr.message);
+            // Continue with default sentiment values
+        }
+
         // Normalize sentimentScore — local returns a number, Comprehend returns { Positive, Negative, ... }
         const sentimentScoreVal = typeof sentimentResult.sentimentScore === 'number'
             ? sentimentResult.sentimentScore

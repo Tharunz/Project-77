@@ -12,7 +12,7 @@ const normalizeStateName = (name) => {
         'Jammu & Kashmir': 'Jammu and Kashmir',
         'J & K': 'Jammu and Kashmir',
         'J&K': 'Jammu and Kashmir',
-        // South variants — THIS IS THE KEY FIX
+        // South variants — comprehensive coverage
         'Tamilnadu': 'Tamil Nadu',
         'TamilNadu': 'Tamil Nadu',
         'tamil nadu': 'Tamil Nadu',
@@ -24,6 +24,7 @@ const normalizeStateName = (name) => {
         'AP': 'Andhra Pradesh',
         'TS': 'Telangana',
         'Telegana': 'Telangana',
+        'Telangana State': 'Telangana',
         // NE variants
         'Arunanchal Pradesh': 'Arunachal Pradesh',
         'Arunachal': 'Arunachal Pradesh',
@@ -31,6 +32,7 @@ const normalizeStateName = (name) => {
         'Dadra & Nagar Haveli': 'Dadra and Nagar Haveli',
         'Dadra and Nagar Haveli and Daman and Diu': 'Dadra and Nagar Haveli',
         'Daman and Diu': 'Dadra and Nagar Haveli',
+        'Dadra & Nagar Haveli & Daman & Diu': 'Dadra and Nagar Haveli',
         'Andaman & Nicobar': 'Andaman and Nicobar',
         'Andaman & Nicobar Islands': 'Andaman and Nicobar',
         'Andaman and Nicobar Islands': 'Andaman and Nicobar',
@@ -39,6 +41,62 @@ const normalizeStateName = (name) => {
         'Delhi NCT': 'Delhi',
         'NCT Delhi': 'Delhi',
         'Pondicherry': 'Puducherry',
+        'Pondy': 'Puducherry',
+        // Additional edge cases
+        'Madhya Bharat': 'Madhya Pradesh',
+        'U.P.': 'Uttar Pradesh',
+        'UP': 'Uttar Pradesh',
+        'M.P.': 'Madhya Pradesh',
+        'MP': 'Madhya Pradesh',
+        'T.N.': 'Tamil Nadu',
+        'TN': 'Tamil Nadu',
+        'K.L.': 'Kerala',
+        'KL': 'Kerala',
+        'A.P.': 'Andhra Pradesh',
+        'TG': 'Telangana',
+        'G.A.': 'Goa',
+        'GA': 'Goa',
+        'W.B.': 'West Bengal',
+        'WB': 'West Bengal',
+        'J&K': 'Jammu and Kashmir',
+        'D.N.H.': 'Dadra and Nagar Haveli',
+        'DNH': 'Dadra and Nagar Haveli',
+        'C.G.': 'Chhattisgarh',
+        'CG': 'Chhattisgarh',
+        'J.K.': 'Jammu and Kashmir',
+        'JK': 'Jammu and Kashmir',
+        'U.K.': 'Uttarakhand',
+        'UK': 'Uttarakhand',
+        'H.P.': 'Himachal Pradesh',
+        'HP': 'Himachal Pradesh',
+        'P.B.': 'Punjab',
+        'PB': 'Punjab',
+        'R.J.': 'Rajasthan',
+        'RJ': 'Rajasthan',
+        'M.H.': 'Maharashtra',
+        'MH': 'Maharashtra',
+        'O.D.': 'Odisha',
+        'OD': 'Odisha',
+        'A.S.': 'Assam',
+        'AS': 'Assam',
+        'BR': 'Bihar',
+        'HR': 'Haryana',
+        'JH': 'Jharkhand',
+        'OR': 'Odisha',
+        'PY': 'Puducherry',
+        'SK': 'Sikkim',
+        'TR': 'Tripura',
+        'ML': 'Meghalaya',
+        'MN': 'Manipur',
+        'MZ': 'Mizoram',
+        'NL': 'Nagaland',
+        'AR': 'Arunachal Pradesh',
+        'LA': 'Ladakh',
+        'LD': 'Ladakh',
+        'CH': 'Chandigarh',
+        'AN': 'Andaman and Nicobar',
+        'DN': 'Dadra and Nagar Haveli',
+        'DD': 'Daman and Diu'
     };
     return map[name] || name;
 };
@@ -213,7 +271,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady, onP
     const [publicPredictions, setPublicPredictions] = useState([]);
     const predictionMapRef = useRef({});
 
-    // Fetch public predictions on mount
+    // Fetch public predictions on mount and re-color when data changes
     useEffect(() => {
         const loadPredictions = async () => {
             try {
@@ -235,6 +293,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady, onP
                     predictionMapRef.current = map;
                     setSageMakerLevels(levelMap);
 
+                    console.log('[IndiaMap] Loaded', res.data.length, 'predictions');
                     console.log('Prediction map keys:', Object.keys(predictionMapRef.current));
                     console.log('Tamil Nadu pred:', predictionMapRef.current['Tamil Nadu']);
                     console.log('Kerala pred:', predictionMapRef.current['Kerala']);
@@ -247,7 +306,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady, onP
             }
         };
         loadPredictions();
-    }, [onPredictionsLoaded]);
+    }, [onPredictionsLoaded, publicPredictions.length]);
 
     // Document click to close details
     useEffect(() => {

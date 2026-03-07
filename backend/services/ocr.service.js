@@ -96,29 +96,42 @@ const parseKeyValues = (blocks) => {
 };
 
 const extractWithTextract = async (fileBuffer) => {
-    const { AnalyzeDocumentCommand } = require('@aws-sdk/client-textract');
-    const client = getTextractClient();
+    try {
+        const { AnalyzeDocumentCommand } = require('@aws-sdk/client-textract');
+        const client = getTextractClient();
 
-    const response = await client.send(new AnalyzeDocumentCommand({
-        Document: { Bytes: fileBuffer },
-        FeatureTypes: ['FORMS', 'TABLES']
-    }));
+        const response = await client.send(new AnalyzeDocumentCommand({
+            Document: { Bytes: fileBuffer },
+            FeatureTypes: ['FORMS', 'TABLES']
+        }));
 
-    const blocks = response.Blocks || [];
+        const blocks = response.Blocks || [];
 
-    // Extract all LINE blocks as plain text
-    const textLines = blocks
-        .filter(b => b.BlockType === 'LINE')
-        .map(b => b.Text)
-        .join('\n');
+        // Extract all LINE blocks as plain text
+        const textLines = blocks
+            .filter(b => b.BlockType === 'LINE')
+            .map(b => b.Text)
+            .join('\n');
 
-    // Extract KEY_VALUE_SET blocks
-    const formFields = parseKeyValues(blocks);
+        // Extract KEY_VALUE_SET blocks
+        const formFields = parseKeyValues(blocks);
 
-    return {
-        text: textLines,
-        formFields: formFields
-    };
+        return {
+            text: textLines,
+            formFields: formFields
+        };
+    } catch (err) {
+        if (err.name === 'AccessDeniedException' || err.name === 'UnrecognizedClientException' || err.name === 'InvalidClientTokenId') {
+            console.log('[Textract] Blocked in Learner Labs, returning empty text');
+        } else {
+            console.log('[Textract] Error:', err.message, '— returning empty text');
+        }
+        // Return empty result but don't crash grievance filing
+        return {
+            text: '',
+            formFields: {}
+        };
+    }
 };
 
 // =============================================================================
