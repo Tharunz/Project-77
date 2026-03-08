@@ -5,7 +5,7 @@ import { LanguagePill, useLanguage } from '../context/LanguageContext';
 import {
     MdDashboard, MdListAlt, MdPsychology, MdMap, MdSchool,
     MdNotifications, MdSecurity, MdAnalytics, MdLogout, MdMenu,
-    MdClose, MdAdminPanelSettings, MdChevronRight, MdWarning, MdTimer, MdShield, MdAccountBalanceWallet
+    MdClose, MdAdminPanelSettings, MdChevronRight, MdWarning, MdTimer, MdShield, MdAccountBalanceWallet, MdSettings
 } from 'react-icons/md';
 import { PROJECT_NAME } from '../config/constants';
 import './AdminLayout.css';
@@ -29,7 +29,8 @@ export default function AdminLayout() {
         { to: '/admin/distress', icon: <MdWarning />, label: t('Distress Index') },
         { to: '/admin/sla', icon: <MdTimer />, label: t('SLA Tracker') },
         { to: '/admin/escrow', icon: <MdAccountBalanceWallet />, label: t('NYAYKOSH Ledger') },
-        { to: '/admin/audits', icon: <MdSecurity />, label: t('Ghost Audits') }
+        { to: '/admin/audits', icon: <MdSecurity />, label: t('Ghost Audits') },
+        { to: '/admin/config', icon: <MdSettings />, label: t('Configuration') }
     ];
 
     const handleLogout = () => {

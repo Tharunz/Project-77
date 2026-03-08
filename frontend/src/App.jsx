@@ -30,6 +30,7 @@ const SLATracker = lazy(() => import('./pages/admin/SLATracker'));
 const PreSeva = lazy(() => import('./pages/admin/PreSeva'));
 const EscrowManagement = lazy(() => import('./pages/admin/EscrowManagement'));
 const GhostAudits = lazy(() => import('./pages/admin/GhostAudits'));
+const ConfigPanel = lazy(() => import('./pages/admin/ConfigPanel'));
 
 // Citizen Pages — all lazy
 const HomePage = lazy(() => import('./pages/citizen/HomePage'));
@@ -99,6 +100,7 @@ function AppRoutes() {
           <Route path="preseva" element={<PreSeva />} />
           <Route path="escrow" element={<EscrowManagement />} />
           <Route path="audits" element={<GhostAudits />} />
+          <Route path="config" element={<ConfigPanel />} />
         </Route>
 
         {/* Citizen Routes */}

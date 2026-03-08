@@ -18,28 +18,42 @@ const getTextractClient = () => {
  * Extracts text from a document in S3
  * @param {string} bucketName - S3 bucket name
  * @param {string} objectKey - S3 object key
- * @returns {Promise<Object>} Extracted text blocks and parsed fields (income, name)
+ * @returns {Promise<Object>} Extracted text and parsed fields with bulletproof error handling
  */
 const extractDocumentText = async (bucketName, objectKey) => {
+    // Guard: skip non-image/non-PDF files
+    const supportedExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.tiff'];
+    const ext = '.' + objectKey.toLowerCase().split('.').pop();
+    if (!supportedExtensions.includes(ext)) {
+        console.log(`[Textract] Skipping unsupported file type: ${ext}`);
+        return { 
+            extractedText: '', 
+            blockCount: 0, 
+            detectedFields: {}, 
+            source: 'Skipped (unsupported file type)' 
+        };
+    }
+
     // Validate credentials before creating client
     if (!process.env.AWS_ACCESS_KEY_ID || 
         !process.env.AWS_SECRET_ACCESS_KEY ||
         !process.env.AWS_SESSION_TOKEN) {
         console.log('[Textract] Credentials not available, using mock analysis');
-        return {
-            textBlocks: ['MOCK_TEXT: INCOME 120000', 'NAME: Citizen'],
-            extractedIncome: 120000,
-            extractedName: 'Citizen'
+        return { 
+            extractedText: 'MOCK_TEXT: INCOME 120000, NAME: Citizen', 
+            blockCount: 2, 
+            detectedFields: { name: 'Citizen', income: '120000' },
+            source: 'Mock (no credentials)' 
         };
     }
 
     if (!bucketName || !objectKey) {
         console.warn(`[Textract] Skipped analysis for ${objectKey} (Missing args)`);
-        // Fallback mock
-        return {
-            textBlocks: ['MOCK_TEXT: INCOME 120000', 'NAME: Citizen'],
-            extractedIncome: 120000,
-            extractedName: 'Citizen'
+        return { 
+            extractedText: '', 
+            blockCount: 0, 
+            detectedFields: {}, 
+            source: 'Skipped (missing arguments)' 
         };
     }
 
@@ -82,19 +96,23 @@ const extractDocumentText = async (bucketName, objectKey) => {
             extractedName = nameMatch[1].trim();
         }
 
+        const detectedFields = {};
+        if (extractedName) detectedFields.name = extractedName;
+        if (extractedIncome) detectedFields.income = extractedIncome;
+
         return {
-            textBlocks: lines.slice(0, 50), // Send first 50 lines
-            extractedIncome,
-            extractedName
+            extractedText: lines.join('\n').slice(0, 1000), // First 1000 chars
+            blockCount: lines.length,
+            detectedFields,
+            source: 'Amazon Textract'
         };
     } catch (error) {
-        console.error(`[Textract] Extraction failed:`, error.message);
-        // Graceful degradation
-        return {
-            textBlocks: ['Analysis Failed'],
-            extractedIncome: null,
-            extractedName: null,
-            error: error.message
+        console.log(`[Textract] Could not extract from ${objectKey}:`, error.message);
+        return { 
+            extractedText: '', 
+            blockCount: 0, 
+            detectedFields: {},
+            source: 'Extraction failed gracefully'
         };
     }
 };

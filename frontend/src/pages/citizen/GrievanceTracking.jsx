@@ -3,6 +3,7 @@ import { MdTrackChanges, MdSearch, MdCheckCircle, MdHourglassEmpty, MdArrowForwa
 import { apiTrackGrievance, apiVerifyResolution, apiGetEscrowProjects, apiVerifyEscrow, apiGetMyGrievances, apiFetch } from '../../services/api.service';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import TextractViewer from '../../components/TextractViewer';
 
 function EscrowVerificationPanel({ grievanceId, onSuccess, showToast }) {
     const [rating, setRating] = useState(0);
@@ -421,6 +422,7 @@ export default function GrievanceTracking() {
                             </div>
                         </div>
                     )}
+                    <TextractViewer grievance={result} />
                 </div>
             )}
 
