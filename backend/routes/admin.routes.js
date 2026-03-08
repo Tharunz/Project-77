@@ -11,6 +11,7 @@ const {
     getCategoryBreakdown, getSentimentTrend, getStateAnalytics, getSLAData
 } = require('../services/analytics.service');
 const { publishToStream, getStreamStatus } = require('../services/kinesis.service');
+const { publishEvent } = require('../services/eventbridge.service');
 const db = require('../db/database');
 
 // Apply auth to all admin routes
@@ -561,7 +562,28 @@ router.get('/run-sla-check', async (req, res, next) => {
             snsResult = { success: true, skipped: true };
         }
         
-        // Step 5: Return comprehensive response
+        // Step 5: Publish to EventBridge if breaches found
+        let eventBridgeResult = { success: true, skipped: true };
+        if (slaResults.breached > 0) {
+            try {
+                eventBridgeResult = await publishEvent(
+                    'ncie.sla',
+                    'SLA Breach Detected',
+                    { 
+                        breachedCount: slaResults.breached,
+                        states: [...new Set(slaResults.breachedGrievances.map(g => g.state))],
+                        timestamp: new Date().toISOString()
+                    }
+                );
+            } catch (eventBridgeErr) {
+                console.log('[EventBridge] Publish failed:', eventBridgeErr.message);
+                eventBridgeResult = { success: false, error: eventBridgeErr.message };
+            }
+        } else {
+            console.log('[EventBridge] No breaches found, skipping publish');
+        }
+        
+        // Step 6: Return comprehensive response
         const response = {
             success: true,
             workflow: {
@@ -569,7 +591,8 @@ router.get('/run-sla-check', async (req, res, next) => {
                 lambdaStatusCode: lambdaResult.statusCode,
                 slaAnalysis: true,
                 kinesisPublished: kinesisResult.success,
-                snsPublished: snsResult.success
+                snsPublished: snsResult.success,
+                eventBridgePublished: eventBridgeResult.success
             },
             slaCheckResults: slaResults,
             triggeredAt: new Date().toISOString(),
@@ -577,7 +600,8 @@ router.get('/run-sla-check', async (req, res, next) => {
             awsServices: {
                 lambda: lambdaResult.success ? 'Invoked' : 'Failed',
                 kinesis: kinesisResult.success ? 'Published' : 'Failed',
-                sns: snsResult.success ? (snsResult.skipped ? 'Skipped (no breaches)' : 'Published') : 'Failed'
+                sns: snsResult.success ? (snsResult.skipped ? 'Skipped (no breaches)' : 'Published') : 'Failed',
+                eventBridge: eventBridgeResult.success ? (eventBridgeResult.skipped ? 'Skipped (no breaches)' : 'Published') : 'Failed'
             }
         };
         

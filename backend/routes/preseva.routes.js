@@ -13,6 +13,7 @@ const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth.middleware');
 const { getPredictions, getAlerts, getThreatCorridors, fileReport, runPreSevaAnalysis, isPresevaLambda, isSageMaker } = require('../services/preseva.service');
 const { publishToStream } = require('../services/kinesis.service');
+const { publishEvent } = require('../services/eventbridge.service');
 const db = require('../db/database');
 
 // ─── GET /api/preseva/public-predictions (no auth — homepage map) ─────────────
@@ -27,6 +28,20 @@ router.get('/public-predictions', async (req, res, next) => {
         const predictions = await getPredictions();
         const top36 = predictions.slice(0, 36);
         const usingSageMaker = top36.some(p => p.poweredBy === 'Amazon SageMaker');
+        
+        // Publish to EventBridge for CRITICAL predictions (non-blocking)
+        const criticalStates = predictions.filter(p => p.riskLevel === 'CRITICAL');
+        if (criticalStates.length > 0) {
+            publishEvent(
+                'ncie.preseva',
+                'Crisis Predicted',
+                { 
+                    criticalStates: criticalStates.map(s => s.state), 
+                    count: criticalStates.length 
+                }
+            ).catch(() => { });
+        }
+        
         clearTimeout(timeout);
         if (!res.headersSent) return res.status(200).json({
             success: true,

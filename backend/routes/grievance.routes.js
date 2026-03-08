@@ -26,6 +26,7 @@ const { extractDocumentText } = require('../services/textract.service');
 const { publishAlert } = require('../services/sns.service');
 const { enqueueGrievance } = require('../services/sqs.service');
 const { publishToStream } = require('../services/kinesis.service');
+const { publishEvent: publishBridgeEvent } = require('../services/eventbridge.service');
 const db = require('../db/database');
 const dbService = require('../services/db.service');
 
@@ -232,6 +233,19 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             process.env.LAMBDA_GRIEVANCE_PROCESSOR,
             { grievanceId: grievance.id, category, state, priority }
         ).then(() => console.log('[Grievance] Lambda processor triggered ✅')).catch(() => { });
+
+        // Publish to EventBridge (non-blocking)
+        publishBridgeEvent(
+            'ncie.grievance',
+            'Grievance Filed',
+            { 
+                grievanceId: grievance.id, 
+                state: grievance.state, 
+                category: grievance.category, 
+                priority: grievance.priority, 
+                userId: req.user.id 
+            }
+        ).catch(() => { });
 
         return res.status(201).json({
             success: true,
