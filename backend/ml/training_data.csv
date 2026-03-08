@@ -1,0 +1,99 @@
+state,category,month,previous_7day_count,avg_sentiment_score,population_density,election_proximity_days,monsoon_active,infrastructure_age_years,resolution_rate,label
+Uttar Pradesh,Water Supply,6,12,0.82,800,180,1,15,0.45,1
+Bihar,Road Repair,7,8,0.75,650,90,1,20,0.38,1
+Rajasthan,Electricity,5,6,0.65,200,365,0,12,0.52,0
+Maharashtra,Sanitation,8,15,0.88,950,45,1,18,0.41,1
+West Bengal,Water Supply,7,10,0.79,750,120,1,22,0.43,1
+Tamil Nadu,Road Repair,4,4,0.55,400,200,0,10,0.65,0
+Gujarat,Electricity,3,3,0.48,350,300,0,8,0.71,0
+Karnataka,Sanitation,9,11,0.81,500,60,1,16,0.44,1
+Uttar Pradesh,Road Repair,8,14,0.85,800,30,1,25,0.35,1
+Bihar,Water Supply,6,9,0.77,650,150,1,19,0.40,1
+Madhya Pradesh,Electricity,7,7,0.70,300,100,1,14,0.48,0
+Odisha,Sanitation,8,13,0.83,280,75,1,21,0.39,1
+Punjab,Water Supply,5,5,0.60,400,250,0,9,0.68,0
+Haryana,Road Repair,6,6,0.68,380,180,1,11,0.55,0
+Rajasthan,Water Supply,5,8,0.73,200,90,0,17,0.46,1
+Maharashtra,Road Repair,7,10,0.78,950,120,1,20,0.42,1
+West Bengal,Electricity,8,12,0.80,750,60,1,23,0.38,1
+Tamil Nadu,Sanitation,4,3,0.50,400,300,0,7,0.73,0
+Gujarat,Water Supply,3,2,0.42,350,365,0,6,0.78,0
+Karnataka,Road Repair,9,9,0.76,500,45,1,15,0.47,1
+Uttar Pradesh,Electricity,6,11,0.81,800,120,1,18,0.43,1
+Bihar,Sanitation,7,14,0.86,650,90,1,22,0.37,1
+Madhya Pradesh,Water Supply,8,7,0.71,300,150,1,13,0.50,0
+Odisha,Road Repair,7,10,0.78,280,100,1,19,0.41,1
+Punjab,Electricity,4,4,0.55,400,200,0,8,0.67,0
+Haryana,Sanitation,5,5,0.62,380,250,0,10,0.63,0
+Rajasthan,Road Repair,6,6,0.67,200,180,0,16,0.49,0
+Maharashtra,Electricity,9,13,0.84,950,30,1,21,0.40,1
+West Bengal,Sanitation,8,11,0.80,750,75,1,20,0.43,1
+Tamil Nadu,Water Supply,3,2,0.45,400,365,0,5,0.80,0
+Gujarat,Road Repair,4,3,0.50,350,300,0,7,0.75,0
+Karnataka,Electricity,7,8,0.73,500,120,1,14,0.48,0
+Uttar Pradesh,Sanitation,8,16,0.89,800,60,1,26,0.34,1
+Bihar,Road Repair,6,9,0.76,650,150,1,18,0.42,1
+Madhya Pradesh,Sanitation,7,8,0.72,300,100,1,15,0.47,0
+Odisha,Electricity,8,11,0.79,280,75,1,20,0.40,1
+Punjab,Road Repair,5,4,0.57,400,200,0,9,0.66,0
+Haryana,Water Supply,4,3,0.52,380,300,0,8,0.70,0
+Rajasthan,Sanitation,7,7,0.70,200,120,0,17,0.46,0
+Maharashtra,Sanitation,8,14,0.85,950,45,1,22,0.39,1
+West Bengal,Road Repair,7,9,0.75,750,100,1,19,0.44,1
+Tamil Nadu,Electricity,3,2,0.43,400,365,0,6,0.77,0
+Gujarat,Sanitation,4,3,0.51,350,300,0,7,0.74,0
+Karnataka,Water Supply,6,7,0.70,500,150,1,13,0.51,0
+Uttar Pradesh,Water Supply,7,13,0.83,800,90,1,17,0.44,1
+Bihar,Electricity,8,10,0.78,650,75,1,21,0.41,1
+Madhya Pradesh,Road Repair,6,6,0.67,300,150,0,12,0.54,0
+Odisha,Water Supply,7,9,0.75,280,100,1,18,0.43,1
+Punjab,Sanitation,5,4,0.58,400,200,0,10,0.64,0
+Haryana,Electricity,4,3,0.53,380,300,0,9,0.69,0
+Rajasthan,Electricity,6,5,0.63,200,180,0,15,0.51,0
+Maharashtra,Water Supply,9,12,0.82,950,60,1,20,0.42,1
+West Bengal,Electricity,7,10,0.77,750,120,1,18,0.45,1
+Tamil Nadu,Road Repair,3,2,0.44,400,365,0,6,0.76,0
+Gujarat,Electricity,4,2,0.47,350,300,0,7,0.76,0
+Karnataka,Sanitation,8,8,0.74,500,90,1,16,0.46,0
+Uttar Pradesh,Road Repair,6,10,0.79,800,150,1,16,0.46,1
+Bihar,Water Supply,7,11,0.80,650,120,1,20,0.41,1
+Madhya Pradesh,Electricity,8,7,0.71,300,90,1,14,0.49,0
+Odisha,Sanitation,7,10,0.77,280,100,1,19,0.42,1
+Punjab,Water Supply,4,3,0.54,400,250,0,8,0.68,0
+Haryana,Road Repair,5,4,0.59,380,200,0,11,0.62,0
+Rajasthan,Water Supply,7,7,0.71,200,120,0,18,0.45,0
+Maharashtra,Road Repair,8,11,0.79,950,75,1,19,0.43,1
+West Bengal,Water Supply,6,8,0.74,750,150,1,17,0.46,1
+Tamil Nadu,Sanitation,4,2,0.46,400,300,0,7,0.75,0
+Gujarat,Water Supply,3,2,0.43,350,365,0,5,0.79,0
+Karnataka,Road Repair,7,7,0.71,500,120,1,12,0.52,0
+Uttar Pradesh,Sanitation,9,17,0.90,800,45,1,27,0.33,1
+Bihar,Sanitation,8,12,0.82,650,90,1,23,0.38,1
+Madhya Pradesh,Water Supply,7,6,0.68,300,120,1,11,0.56,0
+Odisha,Road Repair,8,9,0.76,280,90,1,17,0.44,1
+Punjab,Electricity,4,3,0.53,400,250,0,8,0.67,0
+Haryana,Sanitation,5,4,0.60,380,200,0,10,0.63,0
+Rajasthan,Road Repair,6,5,0.64,200,180,0,14,0.52,0
+Maharashtra,Electricity,9,11,0.80,950,60,1,20,0.42,1
+West Bengal,Sanitation,8,10,0.78,750,90,1,19,0.43,1
+Tamil Nadu,Water Supply,3,1,0.40,400,365,0,5,0.81,0
+Gujarat,Road Repair,4,2,0.48,350,300,0,6,0.76,0
+Karnataka,Electricity,7,7,0.70,500,120,0,13,0.50,0
+Uttar Pradesh,Electricity,8,12,0.82,800,90,1,19,0.43,1
+Bihar,Road Repair,7,10,0.78,650,120,1,19,0.42,1
+Madhya Pradesh,Sanitation,8,7,0.71,300,90,1,15,0.47,0
+Odisha,Electricity,7,9,0.75,280,100,1,18,0.43,1
+Punjab,Road Repair,5,3,0.55,400,200,0,9,0.66,0
+Haryana,Water Supply,4,3,0.52,380,300,0,8,0.70,0
+Rajasthan,Sanitation,7,6,0.68,200,150,0,16,0.48,0
+Maharashtra,Sanitation,9,13,0.84,950,45,1,21,0.40,1
+West Bengal,Road Repair,7,8,0.74,750,120,1,17,0.46,1
+Tamil Nadu,Electricity,3,1,0.41,400,365,0,6,0.78,0
+Gujarat,Sanitation,4,2,0.49,350,300,0,7,0.75,0
+Karnataka,Water Supply,6,6,0.68,500,150,0,12,0.53,0
+Uttar Pradesh,Water Supply,8,14,0.85,800,75,1,18,0.44,1
+Bihar,Electricity,7,9,0.76,650,100,1,20,0.42,1
+Madhya Pradesh,Road Repair,6,5,0.65,300,150,0,11,0.55,0
+Odisha,Water Supply,8,8,0.74,280,90,1,17,0.44,1
+Punjab,Sanitation,5,3,0.56,400,200,0,9,0.65,0
+Haryana,Electricity,4,3,0.54,380,300,0,9,0.69,0

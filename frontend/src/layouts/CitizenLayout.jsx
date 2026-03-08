@@ -26,7 +26,7 @@ export default function CitizenLayout() {
         { to: '/citizen/track', icon: <MdTrackChanges />, label: t('trackGrievance') },
         { to: '/citizen/roadmap', icon: <MdMap />, label: t('roadmap'), badge: 'AI' },
         { to: '/citizen/chatbot', icon: <MdChat />, label: t('assistant') },
-        { to: '/citizen/engagement', icon: <MdBarChart />, label: 'CI Score' },
+        { to: '/citizen/engagement', icon: <MdBarChart />, label: t('CI Score') },
         { to: '/citizen/community', icon: <MdPeople />, label: t('community') },
         { to: '/citizen/news', icon: <MdNewspaper />, label: t('news') },
         { to: '/citizen/profile', icon: <MdPerson />, label: t('profile') },
@@ -66,7 +66,7 @@ export default function CitizenLayout() {
                     <LanguagePill />
                     <div className="citizen-user-badge">
                         <div className="citizen-avatar">{user?.name?.[0] || 'C'}</div>
-                        <span className="citizen-name-text">{user?.name?.split(' ')[0] || 'Citizen'}</span>
+                        <span className="citizen-name-text">{t(user?.name?.split(' ')[0]) || t('Citizen')}</span>
                     </div>
                     <button className="logout-btn-header" onClick={handleLogout}><MdLogout /></button>
                     <button className="mobile-menu-btn" onClick={() => setMobileOpen(!mobileOpen)}>

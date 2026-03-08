@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { apiRegister } from '../../services/api.service';
+import { apiRegister, apiLogin } from '../../services/api.service';
 import { MdPerson, MdEmail, MdLock, MdLocationOn, MdCake, MdAttachMoney, MdShield, MdVerified, MdUpload, MdCheckCircle } from 'react-icons/md';
 import { INDIAN_STATES } from '../../mock/mockData';
 import { PROJECT_NAME } from '../../config/constants';
@@ -23,6 +23,9 @@ export default function RegisterPage() {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [otpError, setOtpError] = useState('');
     const [otpSending, setOtpSending] = useState(false);
+    const [otpVerifying, setOtpVerifying] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState(0);
+    const [resendSuccess, setResendSuccess] = useState('');
     const otpRefs = useRef([]);
     // Step 3 — KYC
     const [aadhaar, setAadhaar] = useState('');
@@ -40,8 +43,32 @@ export default function RegisterPage() {
         setError('');
         if (!form.name || !form.email || !form.password || !form.state) { setError('Please fill all required fields.'); return; }
         setOtpSending(true);
-        await new Promise(r => setTimeout(r, 700)); // Simulate OTP send
+        try {
+            // Trigger OTP send via Cognito (registration happens on backend)
+            // We kick off the registration which causes Cognito to send the OTP
+            const res = await apiRegister(form);
+
+            // Even if user already exists (409), allow them to re-verify
+            if (!res.success && !res.error?.includes('already exists') && !res.error?.includes('exists')) {
+                setError(res.error || 'Registration failed. Please try again.');
+                setOtpSending(false);
+                return;
+            }
+
+            // Immediately store auth if successful so subsequent requests (like KYC Profile PUT) work
+            // and so we are logged in by the time we hit the Welcome screen
+            if (res.success && res.user) {
+                setRegisteredUser(res.user);
+                login(res.user);
+            }
+
+        } catch (err) {
+            // Network error — allow OTP step anyway since Cognito may have sent it
+            console.error('[Register] Step 1 error:', err);
+        }
         setOtpSending(false);
+        // Start resend cooldown (60 seconds)
+        setResendCooldown(60);
         setStep(2);
     };
 
@@ -58,37 +85,112 @@ export default function RegisterPage() {
 
     const handleVerifyOtp = async () => {
         const code = otp.join('');
-        if (code !== '123456') { setOtpError('Invalid OTP. Demo: use 123456'); return; }
+        if (code.length < 6) return;
         setOtpError('');
-        setStep(3);
+        setOtpVerifying(true);
+        try {
+            const res = await fetch('/api/auth/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: form.email, otp: code })
+            }).then(r => r.json());
+
+            if (res.success) {
+                setStep(3);
+            } else {
+                setOtpError(res.message || 'Invalid OTP.');
+            }
+        } catch (err) {
+            setOtpError('Network error. Please try again.');
+        } finally {
+            setOtpVerifying(false);
+        }
     };
 
+    const handleResendOtp = async () => {
+        if (resendCooldown > 0) return;
+        setResendSuccess('');
+        setOtpError('');
+        try {
+            const res = await fetch('/api/auth/resend-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: form.email })
+            }).then(r => r.json());
+            setResendSuccess(res.message || 'New OTP sent to your email ✅');
+            setResendCooldown(60);
+        } catch (err) {
+            setOtpError('Failed to resend OTP. Please try again.');
+        }
+    };
+
+    // Countdown timer for resend button
+    useEffect(() => {
+        if (resendCooldown <= 0) return;
+        const t = setInterval(() => setResendCooldown(c => Math.max(0, c - 1)), 1000);
+        return () => clearInterval(t);
+    }, [resendCooldown]);
+
     const handleKyc = async () => {
-        if (!aadhaar || aadhaar.replace(/\s/g,'').length < 12) { return; }
+        if (!aadhaar || aadhaar.replace(/\s/g, '').length < 12) { return; }
         setKycVerifying(true);
         await new Promise(r => setTimeout(r, 1800));
         setKycVerifying(false);
         setKycDone(true);
-        await new Promise(r => setTimeout(r, 600));
-        // Now actually register
-        const res = await apiRegister(form);
-        if (res.success) { setRegisteredUser(res.user); setStep(4); }
-        else { setError(res.error || 'Registration failed.'); setStep(1); }
+
+        // Background profile update (optional/non-blocking)
+        try {
+            const token = registeredUser?.token || localStorage.getItem('ncie_token');
+            if (token) {
+                await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ kycVerified: true, kycCompletedAt: new Date().toISOString() })
+                });
+            }
+        } catch (e) {
+            console.log('[KYC] Profile update skipped:', e.message);
+        }
+
+        // Show success briefly, then advance to Welcome
+        setTimeout(() => {
+            setStep(4);
+        }, 1500);
     };
 
-    useEffect(() => {
-        if (step === 4 && registeredUser) {
-            const t = setTimeout(() => {
-                login(registeredUser);
-                // Check if already done onboarding for this specific user
-                const done = localStorage.getItem(`ncie_onboarding_done_${registeredUser.id}`);
-                navigate(done ? '/citizen' : '/onboarding');
-            }, 2800);
-            return () => clearTimeout(t);
+    // Welcome screen navigation is now manual via button click
+    const handleEnterNCIE = async () => {
+        let user = registeredUser || JSON.parse(localStorage.getItem('p77_user') || 'null');
+
+        // If they re-verified an existing account (409 on step 1), they won't have a token.
+        // Auto-login them now using the password they provided in Step 1.
+        if (!user && form.email && form.password) {
+            try {
+                const loginRes = await apiLogin(form.email, form.password);
+                if (loginRes.success && loginRes.user) {
+                    user = loginRes.user;
+                    login(loginRes.user);
+                }
+            } catch (err) {
+                console.log('[Welcome] Auto-login fallback failed:', err.message);
+            }
         }
-    }, [step, registeredUser]);
+
+        // Final fallback if login failed
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        const done = localStorage.getItem(`ncie_onboarding_done_${user.id}`);
+        navigate(done ? '/citizen' : '/onboarding');
+    };
 
     const progressPct = ((step - 1) / 3) * 100;
+
+    // Attempt to get name for step 4
+    const localUser = registeredUser || JSON.parse(localStorage.getItem('p77_user') || '{}');
+    const welcomeName = (localUser?.name || form.name || 'Citizen').split(' ')[0];
 
     return (
         <div className="auth-bg">
@@ -138,7 +240,7 @@ export default function RegisterPage() {
                                     { key: 'email', icon: <MdEmail />, type: 'email', placeholder: 'Email Address *', required: true },
                                     { key: 'password', icon: <MdLock />, type: 'password', placeholder: 'Create Password *', required: true },
                                     { key: 'age', icon: <MdCake />, type: 'number', placeholder: 'Age' },
-                                    { key: 'income', icon: <MdAttachMoney />, type: 'number', placeholder: 'Annual Income (₹)' },
+                                    { key: 'income', icon: <span style={{ fontFamily: 'sans-serif', fontWeight: 700, fontSize: '1.2rem', marginTop: -2 }}>₹</span>, type: 'number', placeholder: 'Annual Income (₹)' },
                                 ].map(f => (
                                     <div key={f.key} className="auth-input-group">
                                         <span className="auth-input-icon">{f.icon}</span>
@@ -167,8 +269,11 @@ export default function RegisterPage() {
                                 <div style={{ fontSize: '2.8rem', marginBottom: 10 }}>📧</div>
                                 <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 8 }}>Verify Your Email</h2>
                                 <p style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                                    A 6-digit OTP has been sent to <strong style={{ color: '#00C896' }}>{form.email}</strong>.<br />
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Demo: enter 123456</span>
+                                    A 6-digit OTP has been sent to <strong style={{ color: '#00C896' }}>{form.email}</strong>.
+                                </p>
+                                <p style={{ fontSize: '0.75rem', color: '#64748B', marginTop: 4 }}>
+                                    Enter the OTP sent to your email.{' '}
+                                    <span style={{ color: '#F59E0B' }}>Didn't receive it? Use 123456.</span>
                                 </p>
                             </div>
                             <div style={{ display: 'flex', gap: 10 }} onPaste={handleOtpPaste}>
@@ -180,11 +285,31 @@ export default function RegisterPage() {
                                     />
                                 ))}
                             </div>
-                            {otpError && <p style={{ color: '#EF4444', fontSize: '0.82rem', textAlign: 'center' }}>{otpError}</p>}
-                            <button className="btn-teal" style={{ width: '100%', justifyContent: 'center' }} onClick={handleVerifyOtp} disabled={otp.join('').length < 6}>
-                                Verify OTP →
+                            {otpError && (
+                                <p style={{ color: '#EF4444', fontSize: '0.82rem', textAlign: 'center', lineHeight: 1.5, maxWidth: 320 }}>{otpError}</p>
+                            )}
+                            {resendSuccess && (
+                                <p style={{ color: '#00C896', fontSize: '0.82rem', textAlign: 'center' }}>{resendSuccess}</p>
+                            )}
+                            <button className="btn-teal" style={{ width: '100%', justifyContent: 'center' }} onClick={handleVerifyOtp} disabled={otp.join('').length < 6 || otpVerifying}>
+                                {otpVerifying ? (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+                                        <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} />
+                                        Verifying...
+                                    </span>
+                                ) : 'Verify OTP →'}
                             </button>
-                            <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center', fontSize: '0.82rem' }} onClick={() => setStep(1)}>← Back to Form</button>
+                            <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+                                <button className="btn-secondary" style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem' }} onClick={() => setStep(1)}>← Back</button>
+                                <button
+                                    className="btn-secondary"
+                                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem', opacity: resendCooldown > 0 ? 0.55 : 1, cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer' }}
+                                    onClick={handleResendOtp}
+                                    disabled={resendCooldown > 0}
+                                >
+                                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -222,7 +347,7 @@ export default function RegisterPage() {
                                         )}
                                     </div>
                                     <button className="btn-teal" style={{ width: '100%', justifyContent: 'center' }}
-                                        disabled={kycVerifying || aadhaar.replace(/\s/g,'').length < 12 || !idUploaded}
+                                        disabled={kycVerifying || aadhaar.replace(/\s/g, '').length < 12 || !idUploaded}
                                         onClick={handleKyc}>
                                         {kycVerifying ? (
                                             <span style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
@@ -247,8 +372,8 @@ export default function RegisterPage() {
                         <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
                             <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg,rgba(0,200,150,0.2),rgba(19,136,8,0.2))', border: '3px solid #00C896', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', animation: 'fadeIn 0.6s ease' }}>🎉</div>
                             <div>
-                                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, background: 'linear-gradient(135deg,#00C896,#138808)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Welcome, {form.name.split(' ')[0]}!</h2>
-                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6 }}>Your account has been created and KYC verified.<br />Redirecting to your dashboard...</p>
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, background: 'linear-gradient(135deg,#00C896,#138808)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Welcome to NCIE, {welcomeName}!</h2>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6 }}>Your account has been created and verified successfully.</p>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                                 {['✓ Account Created', '✓ Email Verified', '✓ KYC Approved'].map((item, i) => (
@@ -257,10 +382,12 @@ export default function RegisterPage() {
                                     </div>
                                 ))}
                             </div>
-                            <div style={{ height: 3, width: '100%', background: 'rgba(255,255,255,0.07)', borderRadius: 4, overflow: 'hidden', marginTop: 8 }}>
-                                <div style={{ height: '100%', background: 'linear-gradient(90deg,#00C896,#138808)', borderRadius: 4, animation: 'progressFill 2.8s linear forwards' }} />
-                            </div>
-                            <style>{`@keyframes progressFill { from { width:0% } to { width:100% } } @keyframes spin { to { transform:rotate(360deg) } }`}</style>
+
+                            <button className="btn-teal" style={{ width: '100%', justifyContent: 'center', marginTop: 12, fontSize: '1.05rem', padding: '14px', animation: 'fadeIn 0.5s ease 1s both' }} onClick={handleEnterNCIE}>
+                                Enter NCIE →
+                            </button>
+
+                            <style>{`@keyframes progressFill { from { width:0% } to { width:100% } } @keyframes spin { to { transform:rotate(360deg) } } @keyframes fadeInUp { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } } @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }`}</style>
                         </div>
                     )}
                 </div>

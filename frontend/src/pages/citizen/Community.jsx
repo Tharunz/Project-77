@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MdPeople, MdThumbUp, MdComment, MdVerified, MdGavel, MdAdd, MdShare } from 'react-icons/md';
+import { useAuth } from '../../context/AuthContext';
 import {
     apiGetCommunityPosts, apiUpvotePost, apiCreateCommunityPost,
     apiGetPetitions, apiSignPetition, apiCreatePetition
@@ -9,6 +10,7 @@ const CATS = ['All', 'General', 'Water Supply', 'Healthcare', 'Finance', 'Transp
 const TABS = ['Posts', 'Petitions'];
 
 export default function Community() {
+    const { user } = useAuth();
     const [tab, setTab] = useState('Posts');
     const [posts, setPosts] = useState([]);
     const [petitions, setPetitions] = useState([]);
@@ -28,8 +30,38 @@ export default function Community() {
                 apiGetCommunityPosts(),
                 apiGetPetitions()
             ]);
-            if (postsRes.success) setPosts((postsRes.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-            if (petitionsRes.success) setPetitions((petitionsRes.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+            if (postsRes.success) {
+                const data = postsRes.data || [];
+                setPosts(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+                if (user) {
+                    const token = localStorage.getItem('token');
+                    let cognitoSub = null;
+                    if (token) {
+                        try { cognitoSub = JSON.parse(atob(token.split('.')[1])).sub; } catch (e) { }
+                    }
+                    const voted = {};
+                    data.forEach(p => {
+                        if (p.voters && (p.voters.includes(user.id) || p.voters.includes(user.userId) || p.voters.includes(user.email) || (cognitoSub && p.voters.includes(cognitoSub)))) voted[p.id] = true;
+                    });
+                    setVotedPosts(voted);
+                }
+            }
+            if (petitionsRes.success) {
+                const data = petitionsRes.data || [];
+                setPetitions(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+                if (user) {
+                    const token = localStorage.getItem('token');
+                    let cognitoSub = null;
+                    if (token) {
+                        try { cognitoSub = JSON.parse(atob(token.split('.')[1])).sub; } catch (e) { }
+                    }
+                    const signed = {};
+                    data.forEach(p => {
+                        if (p.signers && (p.signers.includes(user.id) || p.signers.includes(user.userId) || p.signers.includes(user.email) || (cognitoSub && p.signers.includes(cognitoSub)))) signed[p.id] = true;
+                    });
+                    setSignedPetitions(signed);
+                }
+            }
         } catch (e) {
             setError('Failed to load community data. Please try again.');
         }
@@ -49,13 +81,18 @@ export default function Community() {
 
     const handleSignPetition = async (id) => {
         if (signedPetitions[id]) return;
+
+        // Optimistic UI update
+        setSignedPetitions(s => ({ ...s, [id]: true }));
+        setPetitions(ps => ps.map(p => p.id === id ? { ...p, petitionCount: (p.petitionCount || 0) + 1 } : p));
+
         const res = await apiSignPetition(id);
-        if (res.success) {
-            setPetitions(ps => ps.map(p => p.id === id ? { ...p, petitionCount: res.data?.petitionCount ?? (p.petitionCount + 1) } : p));
-            setSignedPetitions(s => ({ ...s, [id]: true }));
-        } else {
-            // Already signed or error
-            setSignedPetitions(s => ({ ...s, [id]: true }));
+
+        if (!res.success) {
+            // If it's a 409 or similar, it means they already signed it.
+            // We keep the signed state as true, but we should revert the speculative +1 count 
+            // since the server didn't actually add a new signature.
+            setPetitions(ps => ps.map(p => p.id === id ? { ...p, petitionCount: Math.max(0, (p.petitionCount || 1) - 1) } : p));
         }
     };
 

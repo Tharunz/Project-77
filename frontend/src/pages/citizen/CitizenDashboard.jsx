@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { MdDashboard, MdSchool, MdEdit, MdTrackChanges, MdChat, MdArrowForward, MdCheckCircle, MdHourglassEmpty, MdWarning, MdTimeline, MdAnalytics, MdShield, MdMap, MdClose, MdBookmark, MdStar } from 'react-icons/md';
-import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail, apiGetMySchemeApplications, apiGetBookmarkedSchemes } from '../../services/api.service';
+import { apiGetMyGrievances, apiGetMatchedSchemes, apiGetBenefitRoadmap, apiGetBenefitGap, apiGetPreSevaAlerts, apiGetHeatmapStateDetail, apiGetMySchemeApplications, apiGetBookmarkedSchemes, apiFetch, apiGetStatePreSeva } from '../../services/api.service';
 
 const STATUS_ICONS = { Pending: <MdHourglassEmpty />, Resolved: <MdCheckCircle />, Critical: <MdWarning />, 'In Progress': <MdEdit /> };
 const STATUS_COLORS = { Pending: '#F59E0B', Resolved: '#00C896', Critical: '#EF4444', 'In Progress': '#3B82F6' };
@@ -21,18 +21,23 @@ export default function CitizenDashboard() {
     const [dismissedAlert, setDismissedAlert] = useState(false);
     const [schemeApplications, setSchemeApplications] = useState([]);
     const [bookmarks, setBookmarks] = useState([]);
+    const [ciScore, setCiScore] = useState(null);
+    const [ciLevel, setCiLevel] = useState(null);
+    const [statePreseva, setStatePreseva] = useState(null);
 
     useEffect(() => {
+        const withTimeout = (promise, ms = 8000, fallback = {}) =>
+            Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
+
         const load = async () => {
             setLoading(true);
             try {
-                // Load applications first so we can pass applied schemeIds to benefit gap
                 const [g, s, r, sa, bk] = await Promise.all([
-                    apiGetMyGrievances(),
-                    apiGetMatchedSchemes(),
-                    apiGetBenefitRoadmap(),
-                    apiGetMySchemeApplications(),
-                    apiGetBookmarkedSchemes()
+                    withTimeout(apiGetMyGrievances(),        8000, { success: true, data: [] }),
+                    withTimeout(apiGetMatchedSchemes(),       8000, { success: true, data: [] }),
+                    withTimeout(apiGetBenefitRoadmap(),       8000, { success: false, data: null }),
+                    withTimeout(apiGetMySchemeApplications(), 8000, { success: true, data: [] }),
+                    withTimeout(apiGetBookmarkedSchemes(),    8000, { success: true, data: [] })
                 ]);
                 setGrievances(g && Array.isArray(g.data) ? g.data : []);
                 setSchemes(s && Array.isArray(s.data) ? s.data : []);
@@ -41,9 +46,18 @@ export default function CitizenDashboard() {
                 setSchemeApplications(appliedApps);
                 if (bk.success && Array.isArray(bk.data)) setBookmarks(bk.data);
 
+                // Fetch CI Score from dedicated endpoint
+                try {
+                    const scoreRes = await withTimeout(apiFetch('/citizen/score'), 5000, null);
+                    if (scoreRes?.success && scoreRes.data) {
+                        setCiScore(scoreRes.data?.ciScore ?? scoreRes.data?.janShaktiScore ?? scoreRes.data?.score ?? 0);
+                        setCiLevel(scoreRes.data.level || null);
+                    }
+                } catch (_) { }
+
                 // Pass applied schemeIds so benefit gap reflects real claimed count
                 const claimedIds = appliedApps.map(a => a.schemeId).filter(Boolean);
-                const gp = await apiGetBenefitGap(claimedIds);
+                const gp = await withTimeout(apiGetBenefitGap(claimedIds), 5000, null);
                 setGap(gp && gp.data ? gp.data : null);
             } catch (err) {
                 console.error("Dashboard load error:", err);
@@ -51,22 +65,27 @@ export default function CitizenDashboard() {
                 setLoading(false);
             }
 
-            // Load PRESEVA predictions for user's state
+            // Load PRESEVA predictions for user's state (non-blocking)
             try {
-                const alerts = await apiGetPreSevaAlerts();
+                const alerts = await withTimeout(apiGetPreSevaAlerts(), 8000, null);
                 const userState = user?.state;
-                if (alerts.success && Array.isArray(alerts.data)) {
+                if (alerts?.success && Array.isArray(alerts.data)) {
                     const stateAlert = alerts.data.find(a => !a.prevented && a.urgency === 'critical' && (!userState || a.state === userState || userState === a.state));
                     if (stateAlert) setPresevaAlert(stateAlert);
                 }
-            } catch (_) {}
+            } catch (_) { }
 
-            // Load heatmap/distress data for user's state
+            // Load heatmap/distress data for user's state (non-blocking)
             if (user?.state) {
                 try {
-                    const hd = await apiGetHeatmapStateDetail(user.state);
-                    if (hd.success && hd.data) setDistressData(hd.data);
-                } catch (_) {}
+                    const hd = await withTimeout(apiGetHeatmapStateDetail(user.state), 8000, null);
+                    if (hd?.success && hd.data) setDistressData(hd.data);
+                } catch (_) { }
+
+                try {
+                    const sp = await withTimeout(apiGetStatePreSeva(user.state), 8000, null);
+                    if (sp?.success) setStatePreseva(sp);
+                } catch (_) { }
             }
         };
         load();
@@ -82,7 +101,7 @@ export default function CitizenDashboard() {
     const stats = [
         { label: t('totalFiled'), value: (grievances || []).length, color: '#3B82F6' },
         { label: t('resolved'), value: (grievances || []).filter(g => g.status === 'Resolved').length, color: '#00C896' },
-        { label: 'Missed Benefits', value: gap ? gap.gapCount : 0, color: '#EF4444' },
+        { label: t('Missed Benefits'), value: gap ? gap.gapCount : 0, color: '#EF4444' },
         { label: t('matchedSchemes'), value: gap ? gap.eligibleCount : (schemes || []).length, color: '#8B5CF6' },
     ];
 
@@ -106,13 +125,13 @@ export default function CitizenDashboard() {
                         <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', boxShadow: '0 0 10px #EF4444', animation: 'pulse 1.2s ease-in-out infinite' }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.7rem', fontFamily: 'JetBrains Mono', color: '#F87171', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>⚡ PRESEVA Predictive Alert — {presevaAlert.urgency?.toUpperCase() || 'CRITICAL'}</div>
-                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: 3 }}>{presevaAlert.title}</div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Predicted in <strong style={{ color: '#FCA5A5' }}>{presevaAlert.daysUntil} days</strong> in {presevaAlert.district}, {presevaAlert.state}. <span style={{ color: '#00C896' }}>Government departments have been automatically alerted.</span></div>
+                        <div style={{ fontSize: '0.7rem', fontFamily: 'JetBrains Mono', color: '#F87171', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>⚡ {t('PRESEVA Predictive Alert')} — {t(presevaAlert.urgency?.toUpperCase() || 'CRITICAL')}</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-white)', marginBottom: 3 }}>{t(presevaAlert.title)}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{t('Predicted in')} <strong style={{ color: '#FCA5A5' }}>{presevaAlert.daysUntil} {t('days')}</strong> {t('in')} {presevaAlert.district}, {presevaAlert.state}. <span style={{ color: '#00C896' }}>{t('Government departments have been automatically alerted.')}</span></div>
                     </div>
                     <div style={{ textAlign: 'center', flexShrink: 0 }}>
                         <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.6rem', fontWeight: 900, color: '#EF4444' }}>{presevaAlert.probability}%</div>
-                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Probability</div>
+                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{t('Probability')}</div>
                     </div>
                     <button onClick={() => setDismissedAlert(true)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem', flexShrink: 0, alignSelf: 'flex-start' }}><MdClose /></button>
                 </div>
@@ -128,26 +147,31 @@ export default function CitizenDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
                     <div style={{ flex: 1 }}>
                         <h1 style={{ fontSize: '1.4rem', marginBottom: 6 }}>
-                            Namaste, <span style={{ color: 'var(--saffron)' }}>{user?.name?.split(' ')[0] || 'Citizen'}</span> 🙏
+                            {t('Namaste')}, <span style={{ color: 'var(--saffron)' }}>
+                                {(user?.name || user?.fullName || user?.attributes?.name || user?.email?.split('@')[0] || 'Citizen').split(' ')[0]}
+                            </span> 🙏
                         </h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                            Your personal PRESEVA-aware governance dashboard — AI features active.
+                            {t('Your personal PRESEVA-aware governance dashboard — AI features active.')}
                         </p>
                         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-                            {user?.state && <span className="badge badge-inprogress">📍 {user.state}</span>}
-                            {user?.age && <span className="badge badge-pending">🎂 Age {user.age}</span>}
-                            {gap && <span className="badge badge-critical" style={{ background: 'rgba(239,68,68,0.15)', borderColor: '#EF4444' }}>⚠️ {gap.gapCount} Missed Benefits</span>}
-                            {distressData && <span style={{ fontSize: '0.72rem', fontWeight: 700, background: 'rgba(139,92,246,0.15)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 100, padding: '2px 8px' }}>📊 Area Distress: {distressData.distressIndex || Math.round(((distressData.pending || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%</span>}
+                            {user?.state && <span className="badge badge-inprogress">📍 {t(user.state)}</span>}
+                            {user?.age && <span className="badge badge-pending">🎂 {t('Age')} {user.age}</span>}
+                            {gap && <span className="badge badge-critical" style={{ background: 'rgba(239,68,68,0.15)', borderColor: '#EF4444' }}>⚠️ {gap.gapCount} {t('Missed Benefits')}</span>}
+                            {distressData && <span style={{ fontSize: '0.72rem', fontWeight: 700, background: 'rgba(139,92,246,0.15)', color: '#A78BFA', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 100, padding: '2px 8px' }}>📊 {t('Area Distress')}: {distressData.distressIndex || Math.round(((distressData.pending || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%</span>}
                         </div>
                     </div>
                     {/* CI Score badge */}
                     <Link to="/citizen/engagement" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                        <div style={{ background: 'rgba(0,200,150,0.1)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 12, padding: '12px 16px', textAlign: 'center', minWidth: 90, transition: 'transform 0.2s', cursor: 'pointer' }}
+                        <div style={{ background: ciScore >= 60 ? 'rgba(0,200,150,0.1)' : 'rgba(255,107,44,0.08)', border: `1px solid ${ciScore >= 60 ? 'rgba(0,200,150,0.35)' : 'rgba(255,107,44,0.25)'}`, borderRadius: 12, padding: '12px 16px', textAlign: 'center', minWidth: 90, transition: 'transform 0.2s', cursor: 'pointer', position: 'relative' }}
                             onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
                             onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                            <MdStar style={{ color: '#00C896', fontSize: '1.3rem' }} />
-                            <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.3rem', fontWeight: 900, color: '#00C896', lineHeight: 1, marginTop: 4 }}>{user?.ciScore || user?.janShaktiScore || 0}</div>
-                            <div style={{ fontSize: '0.6rem', color: 'var(--teal)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>CI Score</div>
+                            <MdStar style={{ color: ciScore >= 60 ? '#00C896' : '#FF6B2C', fontSize: '1.3rem' }} />
+                            <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.3rem', fontWeight: 900, color: ciScore >= 60 ? '#00C896' : '#FF6B2C', lineHeight: 1, marginTop: 4 }}>
+                                {ciScore !== null ? ciScore : (user?.ciScore || user?.janShaktiScore || '...')}
+                            </div>
+                            <div style={{ fontSize: '0.6rem', color: ciScore >= 60 ? 'var(--teal)' : 'var(--saffron)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 2 }}>{t('CI Score')}</div>
+                            {ciLevel && <div style={{ fontSize: '0.55rem', color: 'var(--text-muted)', marginTop: 1 }}>{t(ciLevel)}</div>}
                         </div>
                     </Link>
                 </div>
@@ -158,15 +182,15 @@ export default function CitizenDashboard() {
                 <div className="glass-card" style={{ padding: '20px 24px', border: '1px solid rgba(239,68,68,0.2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                         <h2 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <MdAnalytics style={{ color: '#EF4444' }} /> Benefit Gap Analysis
+                            <MdAnalytics style={{ color: '#EF4444' }} /> {t('Benefit Gap Analysis')}
                         </h2>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#EF4444' }}>{gap.gapPercentage}% Gap</span>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 900, color: '#EF4444' }}>{gap.gapPercentage}% {t('Gap')}</span>
                     </div>
                     <div style={{ height: 10, background: 'rgba(255, 255, 255, 0.08)', borderRadius: 5, overflow: 'hidden', marginBottom: 14 }}>
                         <div style={{ width: `${100 - gap.gapPercentage}%`, height: '100%', background: '#00C896', transition: 'width 1s ease' }} />
                     </div>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                        You are currently missing out on <strong style={{ color: '#EF4444' }}>{gap.gapCount}</strong> schemes you are eligible for. Your profile qualifies for {gap.eligibleCount} benefits, but only {gap.claimedCount} are registered.
+                        {t('You are currently missing out on')} <strong style={{ color: '#EF4444' }}>{gap.gapCount}</strong> {t('schemes you are eligible for. Your profile qualifies for')} {gap.eligibleCount} {t('benefits, but only')} {gap.claimedCount} {t('are registered.')}
                     </p>
                     <Link to="/citizen/schemes" className="btn-secondary" style={{ marginTop: 14, alignSelf: 'flex-start', color: '#EF4444', borderColor: '#EF4444' }}>
                         {t('resolveGaps')} <MdArrowForward />
@@ -197,20 +221,20 @@ export default function CitizenDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                                 <MdMap style={{ color: '#8B5CF6', fontSize: '1.2rem' }} />
                                 <span style={{ fontFamily: 'JetBrains Mono', fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                    Area Distress Intelligence — {user?.state || 'Your State'}
+                                    {t('Area Distress Intelligence')} — {t(user?.state || 'Your State')}
                                 </span>
                             </div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 6 }}>Local Service Distress Index</h3>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 6 }}>{t('Local Service Distress Index')}</h3>
                             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                                {distressData.topCategory ? `Most common issue in your area: ` : 'Analyzing local service patterns...'}
-                                {distressData.topCategory && <strong style={{ color: '#A78BFA' }}>{distressData.topCategory}</strong>}
+                                {distressData.topCategory ? t(`Most common issue in your area: `) : t('Analyzing local service patterns...')}
+                                {distressData.topCategory && <strong style={{ color: '#A78BFA' }}>{t(distressData.topCategory)}</strong>}
                             </p>
                         </div>
                         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                             {[
-                                { label: 'Total Issues', value: distressData.count || distressData.totalGrievances || 0, color: '#8B5CF6' },
-                                { label: 'Resolved', value: distressData.resolved || 0, color: '#00C896' },
-                                { label: 'Distress Index', value: `${distressData.distressIndex || Math.round(((distressData.pending || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%`, color: '#F59E0B' },
+                                { label: t('Total Issues'), value: distressData.count || distressData.totalGrievances || 0, color: '#8B5CF6' },
+                                { label: t('Resolved'), value: distressData.resolved || 0, color: '#00C896' },
+                                { label: t('Distress Index'), value: `${distressData.distressIndex || Math.round(((distressData.pending || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%`, color: '#F59E0B' },
                             ].map(d => (
                                 <div key={d.label} style={{ textAlign: 'center', minWidth: 70 }}>
                                     <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.4rem', fontWeight: 800, color: d.color }}>{d.value}</div>
@@ -227,7 +251,7 @@ export default function CitizenDashboard() {
                         }} />
                     </div>
                     <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>
-                        Resolution rate: <strong style={{ color: '#A78BFA' }}>{distressData.resolutionRate || Math.round(((distressData.resolved || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%</strong> in {user?.state}
+                        {t('Resolution rate')}: <strong style={{ color: '#A78BFA' }}>{distressData.resolutionRate || Math.round(((distressData.resolved || 0) / Math.max((distressData.count || distressData.totalGrievances || 1), 1)) * 100)}%</strong> {t('in')} {t(user?.state)}
                     </p>
                 </div>
             )}
@@ -236,16 +260,16 @@ export default function CitizenDashboard() {
             {roadmap && (
                 <div>
                     <h2 style={{ fontSize: '1.1rem', marginBottom: 16, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <MdTimeline style={{ color: 'var(--saffron)' }} /> Your Personalized Benefit Roadmap
+                        <MdTimeline style={{ color: 'var(--saffron)' }} /> {t('Your Personalized Benefit Roadmap')}
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
                         {roadmap.phases.map((phase) => (
                             <div key={phase.phase} className="glass-card" style={{ padding: 20, borderTop: `4px solid ${phase.phase === 1 ? '#00C896' : phase.phase === 2 ? '#F59E0B' : '#3B82F6'}` }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>Phase {phase.phase}</span>
-                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.06)' }}>{phase.count} items</span>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--text-muted)' }}>{t('Phase')} {phase.phase}</span>
+                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.06)' }}>{phase.count} {t('items')}</span>
                                 </div>
-                                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 14 }}>{phase.label}</h3>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 14 }}>{t(phase.label)}</h3>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                                     {phase.schemes.slice(0, 3).map(s => (
                                         <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -255,7 +279,7 @@ export default function CitizenDashboard() {
                                     ))}
                                 </div>
                                 <Link to="/citizen/schemes" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.82rem', color: 'var(--saffron)', textDecoration: 'none', fontWeight: 700 }}>
-                                    View Phase Details <MdArrowForward />
+                                    {t('View Phase Details')} <MdArrowForward />
                                 </Link>
                             </div>
                         ))}
@@ -276,13 +300,13 @@ export default function CitizenDashboard() {
                             transition: 'all 0.2s ease',
                             position: 'relative', overflow: 'hidden'
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 32px ${action.color}20`; e.currentTarget.style.borderColor = `${action.color}50`; }}
-                        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = `${action.color}25`; }}>
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 12px 32px ${action.color}20`; e.currentTarget.style.borderColor = `${action.color}50`; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = `${action.color}25`; }}>
                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${action.color}, transparent)` }} />
                             <div style={{ width: 44, height: 44, borderRadius: 12, background: `${action.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: action.color }}>{action.icon}</div>
                             <div>
                                 <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-white)', marginBottom: 3 }}>{action.label}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{action.desc}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{t(action.desc)}</div>
                             </div>
                             <MdArrowForward style={{ color: action.color, fontSize: '1rem', alignSelf: 'flex-end', opacity: 0.7 }} />
                         </Link>
@@ -294,8 +318,8 @@ export default function CitizenDashboard() {
             {schemeApplications.length > 0 && (
                 <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><MdSchool style={{ color: '#00C896' }} /> My Scheme Applications</h2>
-                        <Link to="/citizen/schemes" style={{ fontSize: '0.82rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 4 }}>Explore More <MdArrowForward /></Link>
+                        <h2 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}><MdSchool style={{ color: '#00C896' }} /> {t('My Scheme Applications')}</h2>
+                        <Link to="/citizen/schemes" style={{ fontSize: '0.82rem', color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: 4 }}>{t('Explore More')} <MdArrowForward /></Link>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {schemeApplications.map(app => {
@@ -304,10 +328,10 @@ export default function CitizenDashboard() {
                                 <div key={app.id} className="glass-card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
                                     <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor, flexShrink: 0, boxShadow: `0 0 8px ${statusColor}` }} />
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 2 }}>{app.schemeName}</p>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{app.category} · Applied {app.appliedOn} · <span style={{ color: 'var(--teal)' }}>{app.benefit}</span></p>
+                                        <p style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 2 }}>{t(app.schemeName)}</p>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t(app.category)} · {t('Applied')} {app.appliedOn} · <span style={{ color: 'var(--teal)' }}>{t(app.benefit)}</span></p>
                                     </div>
-                                    <span style={{ padding: '4px 10px', borderRadius: 20, background: `${statusColor}18`, border: `1px solid ${statusColor}50`, color: statusColor, fontSize: '0.75rem', fontWeight: 700 }}>{app.status}</span>
+                                    <span style={{ padding: '4px 10px', borderRadius: 20, background: `${statusColor}18`, border: `1px solid ${statusColor}50`, color: statusColor, fontSize: '0.75rem', fontWeight: 700 }}>{t(app.status)}</span>
                                 </div>
                             );
                         })}
@@ -315,28 +339,58 @@ export default function CitizenDashboard() {
                 </div>
             )}
 
-            {/* State Intelligence Mini-Card (F12) */}
+            {/* State Intelligence Mini-Card (F12) — Powered by SageMaker */}
             {user?.state && (
                 <div style={{ background: 'linear-gradient(135deg, rgba(0,229,160,0.06), rgba(92,142,255,0.05))', border: '1px solid rgba(0,229,160,0.2)', borderRadius: 'var(--radius-lg)', padding: '20px 24px', position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, #00E5A0, #5C8EFF)' }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 14 }}>
                         <div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>🗺️ State Intelligence — {user.state}</div>
-                            <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>PRESEVA Active Predictions</h3>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                🗺️ {t('State Intelligence')} — {t(user.state)}
+                                {statePreseva?.poweredBy === 'Amazon SageMaker' && (
+                                    <span style={{ fontSize: '0.6rem', background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 4, padding: '1px 5px', fontWeight: 800 }}>⚡ SageMaker</span>
+                                )}
+                            </div>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>{t('Governance Intelligence')}</h3>
                         </div>
-                        <Link to="/citizen/file-grievance" className="btn-secondary" style={{ fontSize: '0.78rem' }}>+ Raise Grievance</Link>
+                        <Link to="/citizen/file-grievance" className="btn-secondary" style={{ fontSize: '0.78rem' }}>+ {t('Raise Grievance')}</Link>
                     </div>
-                    {presevaAlert ? (
+                    {statePreseva?.predictions && statePreseva.predictions.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {statePreseva.predictions.slice(0, 3).map((pred, i) => {
+                                const riskColor = pred.riskLevel === 'CRITICAL' ? '#EF4444' : pred.riskLevel === 'HIGH' ? '#F59E0B' : pred.riskLevel === 'MEDIUM' ? '#3B82F6' : '#00C896';
+                                return (
+                                    <div key={i} style={{ background: `${riskColor}08`, border: `1px solid ${riskColor}30`, borderLeft: `3px solid ${riskColor}`, borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>
+                                            {pred.category === 'Water Supply' ? '💧' : pred.category === 'Healthcare' ? '🏥' : pred.category === 'Infrastructure' ? '🏗️' : '⚡'}
+                                        </span>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: riskColor }}>{t(pred.category)}</div>
+                                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>{t(pred.recommendedAction?.slice(0, 60))}...</div>
+                                        </div>
+                                        <div style={{ textAlign: 'center', flexShrink: 0 }}>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: riskColor }}>{pred.confidence}</div>
+                                            <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700 }}>{t(pred.riskLevel)}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : presevaAlert ? (
                         <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                             <span style={{ fontSize: '1.3rem', flexShrink: 0 }}>⚡</span>
                             <div>
-                                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#EF4444', marginBottom: 4 }}>{presevaAlert.title}</div>
-                                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Predicted in <strong>{presevaAlert.state}</strong> within <strong>{presevaAlert.daysUntil} days</strong> · {presevaAlert.confidence}% confidence</div>
+                                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#EF4444', marginBottom: 4 }}>{t(presevaAlert.title)}</div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{t('Predicted in')} <strong>{t(presevaAlert.state)}</strong> {t('within')} <strong>{presevaAlert.daysUntil} {t('days')}</strong> · {presevaAlert.confidence}% {t('confidence')}</div>
                             </div>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', gap: 12 }}>
-                            {[{ label: 'Active Alerts', val: '3', color: '#EF4444' }, { label: 'Prevented', val: '12', color: '#00C896' }, { label: 'Under Watch', val: '7', color: '#F59E0B' }].map(d => (
+                            {[
+                                { label: t('Active Alerts'), val: '3', color: '#EF4444' },
+                                { label: t('Prevented'), val: '12', color: '#00C896' },
+                                { label: t('Under Watch'), val: '7', color: '#F59E0B' }
+                            ].map(d => (
                                 <div key={d.label} style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                                     <div style={{ fontFamily: 'Space Grotesk', fontSize: '1.4rem', fontWeight: 800, color: d.color }}>{d.val}</div>
                                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3 }}>{d.label}</div>
@@ -350,32 +404,32 @@ export default function CitizenDashboard() {
             {/* Bookmark Hub (F13) */}
             {bookmarks.length > 0 && (
                 <div>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Saved Items</h2>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}><MdBookmark style={{ color: '#8B5CF6' }} /> {t('Saved Items')}</h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
                         {bookmarks.slice(0, 6).map(s => (
                             <div key={s.id} className="glass-card" style={{ padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
                                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color || '#8B5CF6', flexShrink: 0 }} />
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontWeight: 700, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
-                                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>{s.category}</p>
+                                    <p style={{ fontWeight: 700, fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t(s.name)}</p>
+                                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>{t(s.category)}</p>
                                 </div>
                                 <MdBookmark style={{ color: '#8B5CF6', flexShrink: 0 }} />
                             </div>
                         ))}
                     </div>
-                    {bookmarks.length > 6 && <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>+{bookmarks.length - 6} more saved — <Link to="/citizen/profile" style={{ color: '#8B5CF6' }}>View All</Link></p>}
+                    {bookmarks.length > 6 && <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>+{bookmarks.length - 6} {t('more saved')} — <Link to="/citizen/profile" style={{ color: '#8B5CF6' }}>{t('View All')}</Link></p>}
                 </div>
             )}
 
             {/* My Grievances */}
             <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>My Grievances</h2>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{t('My Grievances')}</h2>
                     <Link to="/citizen/track" style={{ fontSize: '0.82rem', color: 'var(--saffron)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        View All <MdArrowForward />
+                        {t('View All')} <MdArrowForward />
                     </Link>
                 </div>
-                {loading ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading intelligence data...</p> : (
+                {loading ? <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('Loading intelligence data...')}</p> : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {(grievances || []).slice(0, 4).map(g => (
                             <Link
@@ -398,15 +452,15 @@ export default function CitizenDashboard() {
                                     {STATUS_ICONS[g.status] || <MdHourglassEmpty />}
                                 </span>
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{g.title}</p>
+                                    <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{t(g.title)}</p>
                                     <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>{g.id} · {g.createdAt}</p>
                                 </div>
                                 <span className={`badge badge-${g.status === 'Resolved' ? 'resolved' : g.status === 'Critical' ? 'critical' : g.status === 'In Progress' ? 'inprogress' : 'pending'}`}>
-                                    {g.status}
+                                    {t(g.status)}
                                 </span>
                             </Link>
                         ))}
-                        {(grievances || []).length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No grievances filed yet. <Link to="/citizen/file-grievance" style={{ color: 'var(--saffron)' }}>File your first →</Link></p>}
+                        {(grievances || []).length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('No grievances filed yet.')} <Link to="/citizen/file-grievance" style={{ color: 'var(--saffron)' }}>{t('File your first')} →</Link></p>}
                     </div>
                 )}
             </div>

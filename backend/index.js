@@ -27,6 +27,9 @@ const communityRoutes = require('./routes/community.routes');
 
 // Group 4 & 5 Routes
 const citizenRoutes = require('./routes/citizen.routes');
+const pollyRoutes = require('./routes/polly.routes');
+const escrowRoutes = require('./routes/escrow.routes');
+const bookmarksRoutes = require('./routes/bookmarks.routes');
 
 // ─── Import Middleware ────────────────────────────────────────────────────────
 const { errorHandler, notFound } = require('./middleware/errorHandler.middleware');
@@ -56,12 +59,26 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Access-Token']
 }));
 
 // ─── Body Parsers ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Disable ETag globally - prevents ALL 304 responses
+app.set('etag', false);
+
+// Admin-specific cache middleware - prevents caching of admin routes
+app.use('/api/admin', (req, res, next) => {
+    res.set({
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'Surrogate-Control': 'no-store'
+    });
+    next();
+});
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
@@ -86,6 +103,48 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// ─── Live Event Feed (SSE) ────────────────────────────────────────────────────
+app.get('/api/live-feed', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Connection', 'keep-alive');
+
+    const { kinesisEvents } = require('./services/kinesis.service');
+
+    const sendEvent = (data) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // Send initial mock events if no real events are available
+    const mockEvents = [
+        { type: 'GRIEVANCE_FILED', category: 'Infrastructure', state: 'Delhi', priority: 'HIGH' },
+        { type: 'PRESEVA_ANALYSIS_RUN', criticalCount: 3 },
+        { type: 'USER_LOGIN', state: 'Maharashtra' },
+        { type: 'FRAUD_REVIEW', grievanceId: 'GRV-12345', finalStatus: 'Cleared' }
+    ];
+
+    // Send mock events every 10 seconds if no real events
+    let mockEventInterval = setInterval(() => {
+        const randomEvent = mockEvents[Math.floor(Math.random() * mockEvents.length)];
+        sendEvent(randomEvent);
+    }, 10000);
+
+    kinesisEvents.on('event', sendEvent);
+
+    req.on('close', () => {
+        kinesisEvents.removeListener('event', sendEvent);
+        clearInterval(mockEventInterval);
+        res.end();
+    });
+
+    // Send an initial event to show connection is working
+    setTimeout(() => {
+        sendEvent({ type: 'CONNECTION_ESTABLISHED', timestamp: new Date().toISOString() });
+    }, 100);
+});
+
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/grievance', grievanceRoutes);
@@ -104,6 +163,9 @@ app.use('/api/community', communityRoutes);
 
 // Group 4 & 5 Routes
 app.use('/api/citizen', citizenRoutes);
+app.use('/api/polly', pollyRoutes);
+app.use('/api/escrow', escrowRoutes);
+app.use('/api/bookmarks', bookmarksRoutes);
 
 // ─── 404 + Error Handlers ─────────────────────────────────────────────────────
 app.use(notFound);
@@ -111,53 +173,42 @@ app.use(errorHandler);
 
 // ─── Startup ──────────────────────────────────────────────────────────────────
 const startServer = async () => {
+    // 1. Fetch AWS Secrets
+    try {
+        const { getSecrets } = require('./services/secrets.service');
+        const secrets = await getSecrets();
+        if (secrets) {
+            Object.keys(secrets).forEach(key => {
+                process.env[key] = secrets[key];
+            });
+            console.log('[NCIE] Secrets loaded into environment variables');
+        }
+    } catch (e) {
+        console.error('[NCIE] Failed to load secrets at startup:', e.message);
+    }
+
+    // 2. Fetch AWS SSM Configuration
+    try {
+        const { loadConfig } = require('./services/ssm.service');
+        const ssmConfig = await loadConfig();
+        if (ssmConfig) {
+            Object.keys(ssmConfig).forEach(key => {
+                process.env[key] = ssmConfig[key];
+            });
+            console.log('[NCIE] SSM Configuration loaded into environment variables');
+        }
+    } catch (e) {
+        console.error('[NCIE] Failed to load SSM config at startup:', e.message);
+    }
+
     // Auto-seed database if empty
     await seed();
 
     app.listen(PORT, () => {
-        console.log('');
-        console.log('╔══════════════════════════════════════════════════════╗');
-        console.log('║        🇮🇳  PROJECT NCIE BACKEND  🇮🇳                 ║');
-        console.log('║   AI-Powered Citizen Services Super-Platform          ║');
-        console.log('║   AI ASCEND 2026 — AWS & Kyndryl Hackathon            ║');
-        console.log('╠══════════════════════════════════════════════════════╣');
-        console.log(`║   Server:    http://localhost:${PORT}                    ║`);
-        console.log(`║   Health:    http://localhost:${PORT}/api/health          ║`);
-        console.log(`║   Env:       ${(process.env.NODE_ENV || 'development').padEnd(42)}║`);
-        console.log('╠══════════════════════════════════════════════════════╣');
-        console.log('║   GROUP 1 & 2 Core Routes:                           ║');
-        console.log(`║   POST /api/auth/register|login                      ║`);
-        console.log(`║   GET  /api/schemes + /api/admin/dashboard            ║`);
-        console.log(`║   GET  /api/schemes/recommend|eligibility-check       ║`);
-        console.log(`║   GET  /api/admin/officers/leaderboard|sla-tracker    ║`);
-        console.log('╠══════════════════════════════════════════════════════╣');
-        console.log('║   GROUP 3 Routes:                                     ║');
-        console.log(`║   POST /api/chatbot/message              [#21]       ║`);
-        console.log(`║   POST /api/translate                    [#22]       ║`);
-        console.log(`║   GET  /api/translate/languages          [#22]       ║`);
-        console.log(`║   POST /api/ocr/extract                  [#23]       ║`);
-        console.log(`║   POST /api/notification/send            [#25]       ║`);
-        console.log(`║   GET  /api/preseva/predictions          [#26]       ║`);
-        console.log(`║   GET  /api/preseva/threat-corridors     [#27]       ║`);
-        console.log(`║   GET  /api/heatmap                      [#28]       ║`);
-        console.log(`║   GET  /api/heatmap/summary              [#28]       ║`);
-        console.log(`║   GET  /api/community/posts              [#29]       ║`);
-        console.log(`║   POST /api/community/posts/:id/vote     [#29]       ║`);
-        console.log(`║   GET  /api/community/petitions          [#30]       ║`);
-        console.log(`║   POST /api/community/petitions/:id/sign [#30]       ║`);
-        console.log('╠══════════════════════════════════════════════════════╣');
-        console.log('║   GROUP 4 & 5 Routes:                                 ║');
-        console.log(`║   GET   /api/citizen/score              [#31]         ║`);
-        console.log(`║   GET   /api/citizen/footprint          [#32]         ║`);
-        console.log(`║   GET   /api/citizen/predict-future     [#33]         ║`);
-        console.log(`║   GET   /api/admin/officers/wall        [#34]         ║`);
-        console.log(`║   GET   /api/citizen/news               [#35]         ║`);
-        console.log(`║   GET   /api/citizen/escrow             [#36]         ║`);
-        console.log(`║   POST  /api/citizen/escrow/:id/verify  [#37]         ║`);
-        console.log(`║   GET   /api/admin/escrow               [#38]         ║`);
-        console.log(`║   GET   /api/admin/ghost-audits         [#39]         ║`);
-        console.log('╚══════════════════════════════════════════════════════╝');
-        console.log('');
+        console.log(`\n[NCIE] Backend running on http://localhost:${PORT}`);
+        console.log(`[NCIE] AWS Region: ${process.env.AWS_REGION || 'not set'}`);
+        console.log(`[NCIE] Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`[NCIE] Health check: http://localhost:${PORT}/api/health\n`);
     });
 };
 

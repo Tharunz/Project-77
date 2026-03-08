@@ -82,44 +82,54 @@ export default function ProfilePage() {
             return;
         }
         setSaving(true);
-        const res = await apiUpdateProfile({ name: form.name, email: form.email, state: form.state, age: form.age, income: form.income });
-        setSaving(false);
-        if (res.success && res.data) {
-            login({ ...user, ...res.data });
-        } else {
-            login({ ...user, ...form });
-        }
-        // Re-fetch full profile to sync stats and ensure DB state is reflected
-        apiGetProfile().then(r => {
-            if (r.success && r.data) {
-                login({ ...user, ...r.data });
-                if (r.data.stats) {
-                    const s = r.data.stats;
-                    setProfileStats([
-                        { label: 'Grievances Filed', value: s.totalGrievances ?? 0, color: '#3B82F6' },
-                        { label: 'Resolved', value: s.resolvedGrievances ?? 0, color: '#00C896' },
-                        { label: 'Pending', value: s.pendingGrievances ?? 0, color: '#F59E0B' },
-                        { label: 'Schemes Matched', value: s.schemesMatched ?? 0, color: '#8B5CF6' },
-                    ]);
-                }
+        try {
+            const res = await apiUpdateProfile({ name: form.name, email: form.email, state: form.state, age: form.age, income: form.income });
+            if (res.success && res.data) {
+                login({ ...user, ...res.data });
+            } else {
+                login({ ...user, ...form });
             }
-        });
-        setEditMode(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+            // Re-fetch full profile to sync stats and ensure DB state is reflected
+            apiGetProfile().then(r => {
+                if (r.success && r.data) {
+                    login({ ...user, ...r.data });
+                    if (r.data.stats) {
+                        const s = r.data.stats;
+                        setProfileStats([
+                            { label: 'Grievances Filed', value: s.totalGrievances ?? 0, color: '#3B82F6' },
+                            { label: 'Resolved', value: s.resolvedGrievances ?? 0, color: '#00C896' },
+                            { label: 'Pending', value: s.pendingGrievances ?? 0, color: '#F59E0B' },
+                            { label: 'Schemes Matched', value: s.schemesMatched ?? 0, color: '#8B5CF6' },
+                        ]);
+                    }
+                }
+            });
+            setEditMode(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+            console.error('[Profile] Save error:', err);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleEmailOtpConfirm = async () => {
         if (emailOtp !== '123456') { setEmailOtpMsg({ type: 'error', text: 'Invalid OTP. Demo: use 123456' }); return; }
         setEmailOtpLoading(true);
-        const res = await apiUpdateProfile({ name: form.name, email: emailOtpModal.pendingEmail, state: form.state, age: form.age, income: form.income });
-        setEmailOtpLoading(false);
-        if (res.success && res.data) login({ ...user, ...res.data, email: emailOtpModal.pendingEmail });
-        else login({ ...user, ...form, email: emailOtpModal.pendingEmail });
-        setEmailOtpModal(null);
-        setEditMode(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        try {
+            const res = await apiUpdateProfile({ name: form.name, email: emailOtpModal.pendingEmail, state: form.state, age: form.age, income: form.income });
+            if (res.success && res.data) login({ ...user, ...res.data, email: emailOtpModal.pendingEmail });
+            else login({ ...user, ...form, email: emailOtpModal.pendingEmail });
+            setEmailOtpModal(null);
+            setEditMode(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+            setEmailOtpMsg({ type: 'error', text: 'Failed to verify email. Try again.' });
+        } finally {
+            setEmailOtpLoading(false);
+        }
     };
 
     const handleExport = async () => {
@@ -135,9 +145,14 @@ export default function ProfilePage() {
     const handleDelete = async () => {
         if (deleteConfirm !== 'DELETE') return;
         setDeleting(true);
-        const res = await apiDeleteAccount();
-        setDeleting(false);
-        if (res.success) logout();
+        try {
+            const res = await apiDeleteAccount();
+            if (res.success) logout();
+        } catch (err) {
+            console.error('[Profile] Delete account error:', err);
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const handlePasswordChange = async () => {
@@ -146,34 +161,54 @@ export default function ProfilePage() {
             if (pwForm.newPw !== pwForm.confirm) { setPwMsg({ type: 'error', text: 'New passwords do not match.' }); return; }
             if (pwForm.newPw.length < 6) { setPwMsg({ type: 'error', text: 'Password must be at least 6 characters.' }); return; }
             setPwSaving(true);
-            await apiSendOTP(user?.email);
-            setPwSaving(false);
-            setPwOtpStep(true);
-            setPwMsg({ type: 'success', text: 'OTP sent to your registered email. (Demo: use 123456)' });
+            try {
+                await apiSendOTP(user?.email);
+                setPwOtpStep(true);
+                setPwMsg({ type: 'success', text: 'OTP sent to your registered email. (Demo: use 123456)' });
+            } catch (err) {
+                setPwMsg({ type: 'error', text: 'Failed to send OTP. Try again.' });
+            } finally {
+                setPwSaving(false);
+            }
             return;
         }
         if (pwOtp !== '123456') { setPwMsg({ type: 'error', text: 'Invalid OTP. Demo: use 123456' }); return; }
         setPwSaving(true);
-        const res = await apiChangePassword(pwForm.current, pwForm.newPw);
-        setPwSaving(false);
-        if (res.success) { setPwMsg({ type: 'success', text: 'Password changed successfully!' }); setPwForm({ current: '', newPw: '', confirm: '' }); setPwOtpStep(false); setPwOtp(''); }
-        else setPwMsg({ type: 'error', text: res.message || 'Failed to change password.' });
+        try {
+            const res = await apiChangePassword(pwForm.current, pwForm.newPw);
+            if (res.success) { setPwMsg({ type: 'success', text: 'Password changed successfully!' }); setPwForm({ current: '', newPw: '', confirm: '' }); setPwOtpStep(false); setPwOtp(''); }
+            else setPwMsg({ type: 'error', text: res.message || 'Failed to change password.' });
+        } catch (err) {
+            setPwMsg({ type: 'error', text: 'Failed to change password. Try again.' });
+        } finally {
+            setPwSaving(false);
+        }
     };
 
     const handleSendOTP = async () => {
         setKycLoading(true); setKycMsg(null);
-        const res = await apiSendOTP(phone);
-        setKycLoading(false);
-        if (res.success) { setOtpSent(true); setKycMsg({ type: 'success', text: 'OTP sent! (Demo: use 1234)' }); }
-        else setKycMsg({ type: 'error', text: res.message || 'Failed to send OTP.' });
+        try {
+            const res = await apiSendOTP(phone);
+            if (res.success) { setOtpSent(true); setKycMsg({ type: 'success', text: 'OTP sent! (Demo: use 1234)' }); }
+            else setKycMsg({ type: 'error', text: res.message || 'Failed to send OTP.' });
+        } catch (err) {
+            setKycMsg({ type: 'error', text: 'Failed to send OTP. Try again.' });
+        } finally {
+            setKycLoading(false);
+        }
     };
 
     const handleVerifyOTP = async () => {
         setKycLoading(true); setKycMsg(null);
-        const res = await apiVerifyOTP(otp);
-        setKycLoading(false);
-        if (res.success) { setMobileVerified(true); setKycMsg({ type: 'success', text: 'Mobile verified successfully! ✓' }); login({ ...user, mobileVerified: true, phone }); }
-        else setKycMsg({ type: 'error', text: res.message || 'Invalid OTP.' });
+        try {
+            const res = await apiVerifyOTP(otp);
+            if (res.success) { setMobileVerified(true); setKycMsg({ type: 'success', text: 'Mobile verified successfully! ✓' }); login({ ...user, mobileVerified: true, phone }); }
+            else setKycMsg({ type: 'error', text: res.message || 'Invalid OTP.' });
+        } catch (err) {
+            setKycMsg({ type: 'error', text: 'Failed to verify OTP. Try again.' });
+        } finally {
+            setKycLoading(false);
+        }
     };
 
     const handleUnbookmark = async (id) => {
@@ -330,28 +365,28 @@ export default function ProfilePage() {
 
             {/* Bookmarked Schemes */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>
-                    <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Bookmarked Schemes {bookmarks.length > 0 && `(${bookmarks.length})`}</h4>
-                    {bookmarks.length === 0 && (
-                        <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                            <MdBookmark style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
-                            No bookmarked schemes yet.<br />
-                            <Link to="/citizen/schemes" style={{ color: 'var(--saffron)', fontWeight: 600 }}>Browse Schemes →</Link>
-                        </div>
-                    )}
-                    {bookmarks.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {bookmarks.map(s => (
-                                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
-                                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: catColors[s.category] || '#6B7280', flexShrink: 0 }} />
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
-                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.category} • {s.state}</p>
-                                    </div>
-                                    <button onClick={() => handleUnbookmark(s.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, fontSize: '1rem' }} title="Remove bookmark">✕</button>
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 700, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 7 }}><MdBookmark style={{ color: '#8B5CF6' }} /> Bookmarked Schemes {bookmarks.length > 0 && `(${bookmarks.length})`}</h4>
+                {bookmarks.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                        <MdBookmark style={{ fontSize: '2rem', marginBottom: 8, opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
+                        No bookmarked schemes yet.<br />
+                        <Link to="/citizen/schemes" style={{ color: 'var(--saffron)', fontWeight: 600 }}>Browse Schemes →</Link>
+                    </div>
+                )}
+                {bookmarks.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {bookmarks.map(s => (
+                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                                <span style={{ width: 10, height: 10, borderRadius: '50%', background: catColors[s.category] || '#6B7280', flexShrink: 0 }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</p>
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.category} • {s.state}</p>
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                                <button onClick={() => handleUnbookmark(s.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, fontSize: '1rem' }} title="Remove bookmark">✕</button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Data & Privacy */}
@@ -389,23 +424,23 @@ export default function ProfilePage() {
 
             {/* Delete Account Modal */}
             {showDeleteModal && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}>
-                    <div style={{ background: 'var(--bg-card)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 16, padding: 32, maxWidth: 420, width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+                    <div style={{ background: '#0D1117', border: '1px solid rgba(239,68,68,0.4)', borderRadius: 12, padding: 32, maxWidth: 420, width: '90%', display: 'flex', flexDirection: 'column', gap: 16, position: 'relative', zIndex: 10000, opacity: 1 }}>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '3rem', marginBottom: 8 }}>⚠️</div>
-                            <h2 style={{ fontSize: '1.2rem', color: 'var(--red)', marginBottom: 8 }}>Delete Account Permanently</h2>
-                            <p style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                                This action is <strong style={{ color: 'var(--red)' }}>irreversible</strong>. All your grievances, data, and profile will be permanently deleted. You will be logged out immediately.
+                            <h2 style={{ fontSize: '1.1rem', color: '#EF4444', fontWeight: 700, marginBottom: 8 }}>Delete Account Permanently</h2>
+                            <p style={{ fontSize: '0.83rem', color: '#CBD5E1', lineHeight: 1.6 }}>
+                                This action is <strong style={{ color: '#EF4444' }}>irreversible</strong>. All your grievances, data, and profile will be permanently deleted. You will be logged out immediately.
                             </p>
                         </div>
                         <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: 14 }}>
-                            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 8 }}>Type <strong style={{ color: 'var(--red)' }}>DELETE</strong> to confirm:</p>
+                            <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginBottom: 8 }}>Type <strong style={{ color: '#EF4444' }}>DELETE</strong> to confirm:</p>
                             <input className="form-input" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder="Type DELETE here" style={{ borderColor: deleteConfirm === 'DELETE' ? 'rgba(239,68,68,0.6)' : undefined }} />
                         </div>
                         <div style={{ display: 'flex', gap: 10 }}>
-                            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }}>Cancel</button>
+                            <button style={{ flex: 1, padding: '10px 24px', borderRadius: 8, background: 'transparent', color: '#94A3B8', border: '1px solid #334155', cursor: 'pointer', fontWeight: 600, fontFamily: 'Inter' }} onClick={() => { setShowDeleteModal(false); setDeleteConfirm(''); }}>Cancel</button>
                             <button onClick={handleDelete} disabled={deleteConfirm !== 'DELETE' || deleting}
-                                style={{ flex: 1, padding: '10px 16px', borderRadius: 8, border: 'none', background: deleteConfirm === 'DELETE' ? '#DC2626' : 'rgba(239,68,68,0.2)', color: deleteConfirm === 'DELETE' ? 'white' : 'rgba(239,68,68,0.4)', fontWeight: 700, fontSize: '0.85rem', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontFamily: 'Inter' }}>
+                                style={{ flex: 1, padding: '10px 24px', borderRadius: 8, border: 'none', background: deleteConfirm === 'DELETE' ? '#EF4444' : 'rgba(239,68,68,0.2)', color: deleteConfirm === 'DELETE' ? 'white' : 'rgba(239,68,68,0.4)', fontWeight: 600, fontSize: '0.85rem', cursor: deleteConfirm === 'DELETE' ? 'pointer' : 'not-allowed', fontFamily: 'Inter' }}>
                                 {deleting ? 'Deleting...' : '🗑 Delete Forever'}
                             </button>
                         </div>

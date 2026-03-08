@@ -13,8 +13,9 @@ const router = express.Router();
 const { protect } = require('../middleware/auth.middleware');
 const db = require('../db/database');
 
-// ─── GET /api/schemes ─────────────────────────────────────────────────────────
+// ─── GET /api/schemes ─────────────────────────────────────────────────────
 router.get('/', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /schemes`);
     try {
         const { category, state, search, page = 1, limit = 20 } = req.query;
         const db_instance = db.getDb();
@@ -63,9 +64,10 @@ router.get('/', (req, res, next) => {
 // ─── GET /api/schemes/recommend ───────────────────────────────────────────────
 // Must be BEFORE /:id to avoid route conflict
 router.get('/recommend', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /schemes/recommend - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
-        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        const user = db_instance.get('users').find(u => u.id === req.user.id || u.id === req.user.userId || u.email === req.user.email).value();
 
         if (!user) {
             return res.status(404).json({
@@ -190,6 +192,7 @@ router.get('/time-machine', (req, res, next) => {
 
 // ─── POST /api/schemes/benefit-gap ───────────────────────────────────────────
 router.post('/benefit-gap', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] POST /schemes/benefit-gap - user: ${req.user?.id || 'none'}`);
     try {
         const { claimedSchemeIds = [] } = req.body;
         const db_instance = db.getDb();
@@ -235,9 +238,10 @@ router.post('/benefit-gap', protect, (req, res, next) => {
 // Personalized scheme benefit roadmap for citizen (used by apiGetBenefitRoadmap)
 // → AWS swap: Amazon Personalize or SageMaker recommendation model
 router.get('/benefit-roadmap', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /schemes/benefit-roadmap - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
-        const user = db_instance.get('users').find({ id: req.user.id }).value();
+        const user = db_instance.get('users').find(u => u.id === req.user.id || u.id === req.user.userId || u.email === req.user.email).value();
 
         if (!user) {
             return res.status(404).json({
@@ -292,7 +296,7 @@ router.get('/benefit-roadmap', protect, (req, res, next) => {
                 ...s,
                 phaseLabel: 'Apply Now',
                 actionText: 'Apply Online',
-                done: user.name.toLowerCase().includes('ramesh') && (i === 0 || i === 1) // First and second are completed
+                done: user?.name?.toLowerCase().includes('ramesh') && (i === 0 || i === 1) // First and second are completed
             }));
 
         // Phase 2 — Improve Eligibility: near-miss schemes
@@ -351,6 +355,7 @@ router.get('/benefit-roadmap', protect, (req, res, next) => {
 // ─── GET /api/schemes/my-applications ────────────────────────────────────────
 // Must be BEFORE /:id to avoid route conflict
 router.get('/my-applications', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /schemes/my-applications - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
         let apps = [];

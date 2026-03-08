@@ -35,7 +35,7 @@ export default function FraudDetection() {
         const load = async () => {
             setLoading(true);
             const res = await apiGetFraudDuplicates();
-            setItems(Array.isArray(res.data) ? res.data : []);
+            setItems(Array.isArray(res.audits) ? res.audits : []);
             setLoading(false);
         };
         load();

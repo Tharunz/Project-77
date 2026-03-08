@@ -57,7 +57,11 @@ export default function EngagementDashboard() {
 
     const levelCfg = LEVEL_CONFIG[score?.level] || LEVEL_CONFIG['Beginner'];
     const ciScore = score?.ciScore || score?.janShaktiScore || 0;
-    const scoreMax = (score?.level === 'CI Champion' || score?.level === 'Jan Shakti Champion') ? 300 : score?.level === 'Active Citizen' ? 200 : score?.level === 'Aware Citizen' ? 100 : 70;
+    const isChampion = (score?.level === 'CI Champion' || score?.level === 'Jan Shakti Champion');
+    let scoreMax = isChampion ? 300 : score?.level === 'Active Citizen' ? 200 : score?.level === 'Aware Citizen' ? 100 : 70;
+    if (isChampion && ciScore >= 300) {
+        scoreMax = Math.ceil((ciScore + 1) / 500) * 500;
+    }
     const scorePct = score ? Math.min((ciScore / scoreMax) * 100, 100) : 0;
 
     return (

@@ -5,7 +5,7 @@ import { LanguagePill, useLanguage } from '../context/LanguageContext';
 import {
     MdDashboard, MdListAlt, MdPsychology, MdMap, MdSchool,
     MdNotifications, MdSecurity, MdAnalytics, MdLogout, MdMenu,
-    MdClose, MdAdminPanelSettings, MdChevronRight, MdWarning, MdTimer, MdShield, MdAccountBalanceWallet
+    MdClose, MdAdminPanelSettings, MdChevronRight, MdWarning, MdTimer, MdShield, MdAccountBalanceWallet, MdSettings
 } from 'react-icons/md';
 import { PROJECT_NAME } from '../config/constants';
 import './AdminLayout.css';
@@ -18,18 +18,19 @@ export default function AdminLayout() {
 
     const navItems = [
         { to: '/admin', icon: <MdDashboard />, label: t('dashboard'), end: true },
-        { to: '/admin/preseva', icon: <MdShield />, label: 'PRESEVA AI', highlight: true },
+        { to: '/admin/preseva', icon: <MdShield />, label: t('PRESEVA AI'), highlight: true },
         { to: '/admin/grievances', icon: <MdListAlt />, label: t('grievances') },
-        { to: '/admin/sentiment', icon: <MdPsychology />, label: 'Sentiment AI' },
-        { to: '/admin/heatmap', icon: <MdMap />, label: 'India Heatmap' },
+        { to: '/admin/sentiment', icon: <MdPsychology />, label: t('Sentiment AI') },
+        { to: '/admin/heatmap', icon: <MdMap />, label: t('India Heatmap') },
         { to: '/admin/schemes', icon: <MdSchool />, label: t('schemes') },
-        { to: '/admin/notifications', icon: <MdNotifications />, label: 'Notifications' },
-        { to: '/admin/fraud', icon: <MdSecurity />, label: 'Fraud Detection' },
-        { to: '/admin/analytics', icon: <MdAnalytics />, label: 'Analytics' },
-        { to: '/admin/distress', icon: <MdWarning />, label: 'Distress Index' },
-        { to: '/admin/sla', icon: <MdTimer />, label: 'SLA Tracker' },
-        { to: '/admin/escrow', icon: <MdAccountBalanceWallet />, label: 'NYAYKOSH Ledger' },
-        { to: '/admin/audits', icon: <MdSecurity />, label: 'Ghost Audits' }
+        { to: '/admin/notifications', icon: <MdNotifications />, label: t('Notifications') },
+        { to: '/admin/fraud', icon: <MdSecurity />, label: t('Fraud Detection') },
+        { to: '/admin/analytics', icon: <MdAnalytics />, label: t('Analytics') },
+        { to: '/admin/distress', icon: <MdWarning />, label: t('Distress Index') },
+        { to: '/admin/sla', icon: <MdTimer />, label: t('SLA Tracker') },
+        { to: '/admin/escrow', icon: <MdAccountBalanceWallet />, label: t('NYAYKOSH Ledger') },
+        { to: '/admin/audits', icon: <MdSecurity />, label: t('Ghost Audits') },
+        { to: '/admin/config', icon: <MdSettings />, label: t('Configuration') }
     ];
 
     const handleLogout = () => {
@@ -70,7 +71,7 @@ export default function AdminLayout() {
 
                 <div className="sidebar-badge">
                     <MdAdminPanelSettings />
-                    <span>Admin Portal</span>
+                    <span>{t('Admin Portal')}</span>
                 </div>
 
                 <nav className="sidebar-nav">
@@ -92,8 +93,8 @@ export default function AdminLayout() {
                     <div className="admin-user-info">
                         <div className="admin-avatar">{user?.name?.[0] || 'A'}</div>
                         <div className="admin-user-details">
-                            <span className="admin-name">{user?.name || 'Admin'}</span>
-                            <span className="admin-role">{user?.role || 'Super Admin'}</span>
+                            <span className="admin-name">{t(user?.name) || t('Admin')}</span>
+                            <span className="admin-role">{t(user?.role) || t('Super Admin')}</span>
                         </div>
                     </div>
                     <button className="logout-btn" onClick={handleLogout}>
@@ -105,12 +106,12 @@ export default function AdminLayout() {
             {/* Main Content */}
             <div className="admin-main">
                 <header className="admin-topbar">
-                    <div className="topbar-title">{PROJECT_NAME} — Integrated Citizen Intelligence Platform</div>
+                    <div className="topbar-title">{PROJECT_NAME} — {t('Integrated Citizen Intelligence Platform')}</div>
                     <div className="topbar-right">
                         <LanguagePill />
                         <div className="topbar-status">
                             <span className="status-dot" />
-                            <span>Live</span>
+                            <span>{t('Live')}</span>
                         </div>
                         <div className="topbar-date">
                             {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

@@ -43,9 +43,9 @@ const seed = async (force = false) => {
     // ============================================
     // USERS
     // ============================================
-    const adminPass = await bcrypt.hash('admin123', SALT_ROUNDS);
-    const rameshPass = await bcrypt.hash('ramesh123', SALT_ROUNDS);
-    const citizenPass = await bcrypt.hash('citizen123', SALT_ROUNDS);
+    const adminPass = await bcrypt.hash('Admin@12345', SALT_ROUNDS);
+    const rameshPass = await bcrypt.hash('Ramesh@12345', SALT_ROUNDS);
+    const citizenPass = await bcrypt.hash('Citizen@12345', SALT_ROUNDS);
 
     const users = [
         {
