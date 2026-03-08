@@ -13,13 +13,30 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { protect, adminOnly } = require('../middleware/auth.middleware');
-const { analyze: analyzeSentiment } = require('../services/sentiment.service');
-const { upload, getFileUrl } = require('../services/storage.service');
+const { analyzeSentiment } = require('../services/sentiment.service');
+const { upload, getFileUrl, processUploadedFiles } = require('../services/storage.service');
+const { extractFromDocument } = require('../services/ocr.service');
 const { createNotification, sendGrievanceFiledEmail, sendStatusUpdateEmail } = require('../services/notification.service');
+const { publishEvent } = require('../services/events.service');
+const { notifyNewGrievance } = require('../services/realtime.service');
+const { logGrievanceFiled } = require('../services/logger.service');
+const { invokeLambda } = require('../services/lambda.service');
+const { analyzeDocument } = require('../services/rekognition.service');
+const { extractDocumentText } = require('../services/textract.service');
+const { publishAlert } = require('../services/sns.service');
+const { enqueueGrievance } = require('../services/sqs.service');
+const { publishToStream } = require('../services/kinesis.service');
+const { publishEvent: publishBridgeEvent } = require('../services/eventbridge.service');
 const db = require('../db/database');
+const dbService = require('../services/db.service');
+
+// ─── DynamoDB table names ──────────────────────────────────────────────────────
+const GRIEVANCES_TABLE = process.env.DYNAMO_GRIEVANCES_TABLE || 'ncie-grievances';
+
 
 // ─── POST /api/grievance/file ─────────────────────────────────────────────────
 router.post('/file', protect, upload.array('documents', 5), async (req, res, next) => {
+    console.log(`[ROUTE HIT] POST /grievance/file - user: ${req.user?.id || req.user?.userId || 'none'}`);
     try {
         const { title, description, category, state, district, priority } = req.body;
 
@@ -31,17 +48,72 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             });
         }
 
-        // Run sentiment analysis on description
-        const sentimentResult = analyzeSentiment(description);
+        // Run sentiment analysis with safe fallback — never crash grievance filing
+        let sentimentResult = {
+            label: 'Neutral',
+            sentiment: 'NEUTRAL',
+            sentimentScore: 0.5,
+            priority: 'Medium',
+            keyPhrases: [],
+            keywords: [],
+            score: { Positive: 0.1, Negative: 0.1, Neutral: 0.8, Mixed: 0.02 },
+            source: 'default'
+        };
 
-        // Handle uploaded documents
-        const documents = (req.files || []).map(file => ({
-            filename: file.filename,
-            originalName: file.originalname,
-            mimetype: file.mimetype,
-            size: file.size,
-            url: getFileUrl(file.filename)
-        }));
+        try {
+            sentimentResult = await Promise.resolve(analyzeSentiment(description));
+        } catch (sentimentErr) {
+            console.log('[Grievance] Sentiment analysis failed, using default:', sentimentErr.message);
+            // Continue with default sentiment values
+        }
+
+        // Normalize sentimentScore — local returns a number, Comprehend returns { Positive, Negative, ... }
+        const sentimentScoreVal = typeof sentimentResult.sentimentScore === 'number'
+            ? sentimentResult.sentimentScore
+            : (typeof sentimentResult.score === 'number' ? sentimentResult.score : 0.5);
+
+        // Handle uploaded documents — supports both local disk and S3
+        const documents = await processUploadedFiles(req.files || [], 'grievance-documents');
+
+        // Extract Text from the first document using OCR
+        let extractedText = null;
+        let formFields = null;
+        if (req.files && req.files.length > 0) {
+            try {
+                const firstFile = req.files[0];
+                const fileSource = firstFile.buffer || firstFile.path;
+                const ocrResult = await extractFromDocument(fileSource);
+                extractedText = ocrResult.text;
+                formFields = Object.keys(ocrResult.formFields).length > 0 ? ocrResult.formFields : null;
+            } catch (err) {
+                console.error("⚠️  OCR extraction failed:", err.message);
+            }
+        }
+
+        // Rekognition integration
+        let rekognitionLabels = [];
+        let rekognitionModerationFlags = [];
+        let documentFraudScore = 0.05;
+        let isSuspiciousDocument = false;
+        let documentTextAnalysis = { textBlocks: [], extractedIncome: null, extractedName: null };
+
+        if (documents && documents.length > 0) {
+            const firstDoc = documents[0];
+            // Get S3 Key or use filename
+            const uploadedFileKey = firstDoc.filename || firstDoc.originalName;
+            const bucketName = process.env.S3_BUCKET || process.env.S3_BUCKET_NAME || 'ncie-documents-tharun';
+
+            // Rekognition Auth
+            const fraudAnalysis = await analyzeDocument(bucketName, uploadedFileKey);
+            documentFraudScore = fraudAnalysis.fraudScore;
+            isSuspiciousDocument = fraudAnalysis.isSuspicious;
+            rekognitionLabels = fraudAnalysis.labels || [];
+            rekognitionModerationFlags = fraudAnalysis.moderationFlags || [];
+
+            // Textract Auth
+            documentTextAnalysis = await extractDocumentText(bucketName, uploadedFileKey);
+        }
+
 
         const db_instance = db.getDb();
 
@@ -69,19 +141,41 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
             district: district || 'Unknown',
             status: 'Pending',
             sentiment: sentimentResult.label,
-            sentimentScore: sentimentResult.score,
-            priority: priority || sentimentResult.priority,
+            sentimentScore: sentimentScoreVal,
+            sentimentData: sentimentResult.score || null,   // Full score object (from Comprehend)
+            keyPhrases: sentimentResult.keyPhrases || sentimentResult.keywords || [],
+            priority: priority || sentimentResult.priority || sentimentResult.priorityRaw || 'MEDIUM',
             assignedOfficer: null,
             documents,
+            extractedText,
+            formFields,
             isDuplicate,
-            fraudScore: isDuplicate ? 0.65 : 0.05,
+            fraudScore: Math.max(isDuplicate ? 0.65 : 0.05, documentFraudScore),
+            isSuspicious: isDuplicate || isSuspiciousDocument,
+            documentLabels: rekognitionLabels,
+            moderationFlags: rekognitionModerationFlags,
             adminNote: null,
+            extractedTextBlocks: documentTextAnalysis.textBlocks || [],
+            extractedIncome: documentTextAnalysis.extractedIncome || null,
+            extractedName: documentTextAnalysis.extractedName || null,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             resolvedAt: null
         };
 
         db_instance.get('grievances').push(grievance).write();
+
+        // ── DynamoDB dual-write (when ENABLE_DYNAMO=true) ─────────────────────
+        if (dbService.isDynamo()) {
+            const dynamoItem = {
+                grievanceId: grievance.id,      // PK
+                citizenId: req.user.userId || req.user.id,  // for GSI citizenId-index
+                ...grievance
+            };
+            dbService.put(GRIEVANCES_TABLE, dynamoItem).catch(err =>
+                console.error('[DYNAMO] grievance put failed:', err.message)
+            );
+        }
 
         // Create in-app notification
         createNotification(
@@ -96,6 +190,62 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
         if (user?.email) {
             sendGrievanceFiledEmail(user, grievance).catch(() => { });
         }
+
+        // Publish civic event (non-blocking — does not block the response)
+        publishEvent('GrievanceFiled', {
+            grievanceId: grievance.id,
+            citizenId: req.user.id,
+            state: grievance.state,
+            category: grievance.category,
+            sentiment: grievance.sentiment,
+            priority: grievance.priority
+        }).catch(() => { });
+
+        // Push to AppSync for real-time admin dashboard (non-blocking)
+        notifyNewGrievance(grievance).catch(() => { });
+
+        // Log to CloudWatch (non-blocking)
+        logGrievanceFiled({ grievanceId: grievance.id, state: grievance.state, category: grievance.category, sentiment: grievance.sentiment, priority: grievance.priority }).catch(() => { });
+
+        // Push to Kinesis (non-blocking)
+        publishToStream('GRIEVANCE_FILED', {
+            grievanceId: grievance.id,
+            citizenId: req.user.id,
+            category: grievance.category,
+            state: grievance.state,
+            priority: grievance.priority
+        }).catch(() => { });
+
+        // Publish to SNS
+        if (process.env.SNS_TOPIC_ARN) {
+            publishAlert(
+                process.env.SNS_TOPIC_ARN,
+                `New Grievance [${grievance.id}] filed by ${req.user.name} in ${grievance.state}. Category: ${grievance.category}. Priority: ${grievance.priority}.`,
+                `[NCIE] New ${grievance.priority === 'Critical' ? 'CRITICAL ' : ''}Grievance`
+            ).catch(() => { });
+        }
+
+        // Enqueue to SQS (non-blocking)
+        enqueueGrievance(grievance).catch(() => { });
+
+        // Invoke Lambda
+        invokeLambda(
+            process.env.LAMBDA_GRIEVANCE_PROCESSOR,
+            { grievanceId: grievance.id, category, state, priority }
+        ).then(() => console.log('[Grievance] Lambda processor triggered ✅')).catch(() => { });
+
+        // Publish to EventBridge (non-blocking)
+        publishBridgeEvent(
+            'ncie.grievance',
+            'Grievance Filed',
+            { 
+                grievanceId: grievance.id, 
+                state: grievance.state, 
+                category: grievance.category, 
+                priority: grievance.priority, 
+                userId: req.user.id 
+            }
+        ).catch(() => { });
 
         return res.status(201).json({
             success: true,
@@ -114,6 +264,7 @@ router.post('/file', protect, upload.array('documents', 5), async (req, res, nex
 
 // ─── GET /api/grievance/track/:id ─────────────────────────────────────────────
 router.get('/track/:id', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/track/${req.params.id}`);
     try {
         const db_instance = db.getDb();
         const grievance = db_instance.get('grievances')
@@ -214,14 +365,38 @@ router.get('/track/:id', (req, res, next) => {
 });
 
 // ─── GET /api/grievance/my-grievances ─────────────────────────────────────────
-router.get('/my-grievances', protect, (req, res, next) => {
+router.get('/my-grievances', protect, async (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/my-grievances - user: ${req.user?.id || req.user?.userId || 'none'}`);
+    const timeout = setTimeout(() => {
+        if (!res.headersSent) {
+            console.warn('[Grievance] my-grievances timeout — returning empty fallback');
+            res.json({ success: true, data: [], meta: { total: 0, page: 1, limit: 10, pages: 0 }, message: 'Found 0 grievance(s).', timestamp: new Date().toISOString() });
+        }
+    }, 2000);
+
     try {
-        const db_instance = db.getDb();
+        const userId = req.user.id || req.user.userId;
         const { page = 1, limit = 10, status, category, sortBy = 'createdAt', order = 'desc' } = req.query;
 
-        let grievances = db_instance.get('grievances')
-            .filter({ userId: req.user.id })
-            .value();
+        let grievances = [];
+
+        if (dbService.isDynamo()) {
+            // Scan directly — GSI indexes may not exist in Learner Labs
+            try {
+                const all = await dbService.scan(GRIEVANCES_TABLE) || [];
+                grievances = all.filter(g => g.citizenId === userId || g.userId === userId);
+            } catch (scanErr) {
+                console.warn('[DYNAMO] scan failed, using lowdb:', scanErr.message);
+                const db_instance = db.getDb();
+                grievances = db_instance.get('grievances').filter(g => g.userId === userId || g.userId === req.user.email).value();
+            }
+        } else {
+            // ── Local lowdb ────────────────────────────────────────────────
+            const db_instance = db.getDb();
+            grievances = db_instance.get('grievances')
+                .filter(g => g.userId === userId || g.userId === req.user.email)
+                .value();
+        }
 
         if (status) grievances = grievances.filter(g => g.status === status);
         if (category) grievances = grievances.filter(g => g.category === category);
@@ -237,20 +412,25 @@ router.get('/my-grievances', protect, (req, res, next) => {
         const start = (parseInt(page) - 1) * parseInt(limit);
         const data = grievances.slice(start, start + parseInt(limit));
 
-        return res.status(200).json({
-            success: true,
-            data,
-            meta: { total, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total / parseInt(limit)) },
-            message: `Found ${total} grievance(s).`,
-            timestamp: new Date().toISOString()
-        });
+        clearTimeout(timeout);
+        if (!res.headersSent) {
+            return res.status(200).json({
+                success: true,
+                data,
+                meta: { total, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total / parseInt(limit)) },
+                message: `Found ${total} grievance(s).`,
+                timestamp: new Date().toISOString()
+            });
+        }
     } catch (err) {
-        next(err);
+        clearTimeout(timeout);
+        if (!res.headersSent) next(err);
     }
 });
 
 // ─── GET /api/grievance/critical ──────────────────────────────────────────────
 router.get('/critical', protect, adminOnly, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/critical - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
         const grievances = db_instance.get('grievances').value();
@@ -307,6 +487,7 @@ router.post('/:id/verify', protect, async (req, res, next) => {
 
 // ─── GET /api/grievance/search ────────────────────────────────────────────────
 router.get('/search', (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/search - q: ${req.query.q || 'none'}`);
     try {
         const { q, state, category, status, priority, page = 1, limit = 20 } = req.query;
         const db_instance = db.getDb();
@@ -347,6 +528,7 @@ router.get('/search', (req, res, next) => {
 
 // ─── GET /api/grievance/all (admin only) ──────────────────────────────────────
 router.get('/all', protect, adminOnly, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /grievance/all - user: ${req.user?.id || 'none'}`);
     try {
         const { page = 1, limit = 20, status, category, state, priority, sentiment } = req.query;
         const db_instance = db.getDb();
@@ -379,6 +561,7 @@ router.get('/all', protect, adminOnly, (req, res, next) => {
 
 // ─── PATCH /api/grievance/update/:id (admin only) ─────────────────────────────
 router.patch('/update/:id', protect, adminOnly, async (req, res, next) => {
+    console.log(`[ROUTE HIT] PATCH /grievance/update/${req.params.id} - user: ${req.user?.id || 'none'}`);
     try {
         const { status, assignedOfficer, adminNote, priority } = req.body;
         const db_instance = db.getDb();
@@ -402,6 +585,15 @@ router.patch('/update/:id', protect, adminOnly, async (req, res, next) => {
         };
 
         db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).assign(updates).write();
+
+        // ── DynamoDB update (when enabled) ────────────────────────────────
+        if (dbService.isDynamo()) {
+            dbService.update(GRIEVANCES_TABLE, {
+                grievanceId: req.params.id.toUpperCase(),
+                createdAt: grievance.createdAt
+            }, updates)
+                .catch(err => console.error('[DYNAMO] grievance update failed:', err.message));
+        }
 
         const updated = db_instance.get('grievances').find({ id: req.params.id.toUpperCase() }).value();
 
@@ -448,25 +640,25 @@ router.post('/:id/summarize', protect, adminOnly, (req, res, next) => {
             });
         }
 
-        const desc   = (grievance.description || '').toLowerCase();
-        const cat    = (grievance.category    || 'General').toLowerCase();
-        const prio   = (grievance.priority    || 'Medium');
-        const state  = grievance.state || 'Unknown';
-        const cName  = grievance.citizenName || 'Citizen';
+        const desc = (grievance.description || '').toLowerCase();
+        const cat = (grievance.category || 'General').toLowerCase();
+        const prio = (grievance.priority || 'Medium');
+        const state = grievance.state || 'Unknown';
+        const cName = grievance.citizenName || 'Citizen';
 
         // ── Issue detection heuristics ────────────────────────────────────────
         const isAudio = desc.includes('[audio grievance');
 
         // Category-level templates
         const CAT_MAP = {
-            water:         { dept: 'Department of Water Resources', impact: '1,200–4,000', action1: 'Dispatch field inspection team within 24 hours', action2: 'Coordinate with State Water Board for emergency supply', key1: 'Water supply disruption affecting daily household needs', key2: 'Potential public health risk if not addressed promptly' },
-            road:          { dept: 'Public Works Department (PWD)', impact: '500–2,000',  action1: 'Schedule road inspection and pothole repair crew', action2: 'Place safety barriers and hazard markers immediately', key1: 'Road infrastructure damage causing commuter risk', key2: 'Risk of vehicle damage and pedestrian injuries' },
-            electricity:   { dept: 'State Electricity Distribution Board', impact: '800–3,500', action1: 'Dispatch DISCOM engineer for fault assessment', action2: 'Coordinate with substation for load re-routing', key1: 'Power supply failure affecting residential and commercial areas', key2: 'Risk to medical equipment and cold-chain storage' },
-            health:        { dept: 'Ministry of Health & Family Welfare', impact: '300–1,500', action1: 'Alert District Chief Medical Officer', action2: 'Deploy mobile health unit for area assessment', key1: 'Public health concern requiring immediate medical intervention', key2: 'Potential for disease spread if not contained' },
-            sanitation:    { dept: 'Urban Local Body / Swachh Bharat Mission', impact: '600–2,500', action1: 'Schedule emergency sanitation crew deployment', action2: 'Issue advisory to affected residents', key1: 'Sanitation failure posing hygiene and health risks', key2: 'Environmental contamination if drainage is blocked' },
-            education:     { dept: 'Ministry of Education / State School Board', impact: '200–800',  action1: 'Contact District Education Officer for intervention', action2: 'Schedule school facility audit', key1: 'Educational infrastructure or access issue affecting students', key2: 'Potential impact on academic continuity for enrolled students' },
-            corruption:    { dept: 'State Vigilance & Anti-Corruption Bureau', impact: '100–600',  action1: 'Initiate formal investigation with Vigilance Bureau', action2: 'Preserve digital evidence and witness statements', key1: 'Alleged misconduct or corruption by a government official', key2: 'Risk of evidence destruction if not acted upon quickly' },
-            pension:       { dept: 'Department of Social Justice & Empowerment', impact: '50–300',   action1: 'Expedite pension file review at District Treasury', action2: 'Contact beneficiary for document verification', key1: 'Delayed pension disbursement causing financial hardship', key2: 'Elderly citizen at risk without income support' },
+            water: { dept: 'Department of Water Resources', impact: '1,200–4,000', action1: 'Dispatch field inspection team within 24 hours', action2: 'Coordinate with State Water Board for emergency supply', key1: 'Water supply disruption affecting daily household needs', key2: 'Potential public health risk if not addressed promptly' },
+            road: { dept: 'Public Works Department (PWD)', impact: '500–2,000', action1: 'Schedule road inspection and pothole repair crew', action2: 'Place safety barriers and hazard markers immediately', key1: 'Road infrastructure damage causing commuter risk', key2: 'Risk of vehicle damage and pedestrian injuries' },
+            electricity: { dept: 'State Electricity Distribution Board', impact: '800–3,500', action1: 'Dispatch DISCOM engineer for fault assessment', action2: 'Coordinate with substation for load re-routing', key1: 'Power supply failure affecting residential and commercial areas', key2: 'Risk to medical equipment and cold-chain storage' },
+            health: { dept: 'Ministry of Health & Family Welfare', impact: '300–1,500', action1: 'Alert District Chief Medical Officer', action2: 'Deploy mobile health unit for area assessment', key1: 'Public health concern requiring immediate medical intervention', key2: 'Potential for disease spread if not contained' },
+            sanitation: { dept: 'Urban Local Body / Swachh Bharat Mission', impact: '600–2,500', action1: 'Schedule emergency sanitation crew deployment', action2: 'Issue advisory to affected residents', key1: 'Sanitation failure posing hygiene and health risks', key2: 'Environmental contamination if drainage is blocked' },
+            education: { dept: 'Ministry of Education / State School Board', impact: '200–800', action1: 'Contact District Education Officer for intervention', action2: 'Schedule school facility audit', key1: 'Educational infrastructure or access issue affecting students', key2: 'Potential impact on academic continuity for enrolled students' },
+            corruption: { dept: 'State Vigilance & Anti-Corruption Bureau', impact: '100–600', action1: 'Initiate formal investigation with Vigilance Bureau', action2: 'Preserve digital evidence and witness statements', key1: 'Alleged misconduct or corruption by a government official', key2: 'Risk of evidence destruction if not acted upon quickly' },
+            pension: { dept: 'Department of Social Justice & Empowerment', impact: '50–300', action1: 'Expedite pension file review at District Treasury', action2: 'Contact beneficiary for document verification', key1: 'Delayed pension disbursement causing financial hardship', key2: 'Elderly citizen at risk without income support' },
         };
 
         // Match category
@@ -486,8 +678,8 @@ router.post('/:id/summarize', protect, adminOnly, (req, res, next) => {
         // Urgency scoring
         const URGENCY_KEYWORDS = ['urgent', 'emergency', 'critical', 'dying', 'fire', 'flood', 'disease', 'contaminated', 'no water', 'power cut', 'illegal', 'bribe'];
         const urgencyHits = URGENCY_KEYWORDS.filter(k => desc.includes(k) || cat.includes(k)).length;
-        const prioBoost   = prio === 'High' ? 2 : prio === 'Critical' ? 3 : 0;
-        const rawScore    = Math.min(1, (urgencyHits * 0.15) + (prioBoost * 0.12) + (sentimentBoost(grievance.sentimentScore)));
+        const prioBoost = prio === 'High' ? 2 : prio === 'Critical' ? 3 : 0;
+        const rawScore = Math.min(1, (urgencyHits * 0.15) + (prioBoost * 0.12) + (sentimentBoost(grievance.sentimentScore)));
         const urgencyScore = parseFloat((0.45 + rawScore * 0.55).toFixed(2)); // always between 0.45–1.0
         const urgencyLevel = urgencyScore > 0.78 ? 'Critical' : urgencyScore > 0.60 ? 'High' : urgencyScore > 0.45 ? 'Medium' : 'Low';
 
@@ -502,15 +694,15 @@ router.post('/:id/summarize', protect, adminOnly, (req, res, next) => {
             success: true,
             data: {
                 summary,
-                keyIssues:          [tpl.key1, tpl.key2],
+                keyIssues: [tpl.key1, tpl.key2],
                 urgencyLevel,
                 urgencyScore,
                 recommendedActions: [tpl.action1, tpl.action2],
-                estimatedImpact:    `~${tpl.impact} citizens`,
-                department:         tpl.dept,
+                estimatedImpact: `~${tpl.impact} citizens`,
+                department: tpl.dept,
                 confidence,
-                isAudioGrievance:   isAudio,
-                generatedAt:        new Date().toISOString()
+                isAudioGrievance: isAudio,
+                generatedAt: new Date().toISOString()
             },
             message: 'AI analysis complete.',
             timestamp: new Date().toISOString()
@@ -544,6 +736,15 @@ router.delete('/:id', protect, adminOnly, (req, res, next) => {
 
         db_instance.get('grievances').remove({ id: req.params.id.toUpperCase() }).write();
 
+        // ── DynamoDB delete (when enabled) ───────────────────────────────
+        if (dbService.isDynamo()) {
+            dbService.delete(GRIEVANCES_TABLE, {
+                grievanceId: req.params.id.toUpperCase(),
+                createdAt: grievance.createdAt
+            })
+                .catch(err => console.error('[DYNAMO] grievance delete failed:', err.message));
+        }
+
         return res.status(200).json({
             success: true,
             data: { id: req.params.id },
@@ -554,5 +755,92 @@ router.delete('/:id', protect, adminOnly, (req, res, next) => {
         next(err);
     }
 });
+
+// ─── GET /api/grievance/:id/documents ────────────────────────────────────────
+router.get('/:id/documents', protect, async (req, res, next) => {
+    try {
+        const id = req.params.id.toUpperCase();
+        const db_instance = db.getDb();
+        const grievance = db_instance.get('grievances').find(g => g.id === id).value();
+
+        // Also try DynamoDB if enabled
+        let final = grievance;
+        if (!grievance && dbService.isDynamo()) {
+            try {
+                // Use query instead of get because we only have the Partition Key (grievanceId)
+                const items = await dbService.query(GRIEVANCES_TABLE, {
+                    expression: 'grievanceId = :id',
+                    values: { ':id': id }
+                });
+                if (items && items.length > 0) final = items[0];
+            } catch (err) {
+                console.warn('[DYNAMO] document fetch query failed:', err.message);
+            }
+        }
+
+        if (!final) {
+            return res.status(404).json({ success: false, message: 'Grievance not found.' });
+        }
+
+        const documents = final.documents || final.attachments || [];
+
+        // Normalize documents array — each item may be a string URL or object
+        const normalized = documents.map((doc, i) => {
+            const url = typeof doc === 'string' ? doc : (doc.url || doc.path || null);
+            const name = typeof doc === 'string'
+                ? (url ? url.split('/').pop() : `Document ${i + 1}`)
+                : (doc.originalName || doc.filename || doc.name || `Document ${i + 1}`);
+            const mimetype = typeof doc === 'object' ? (doc.mimetype || '') : '';
+            const isImage = mimetype.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+            const isAudio = mimetype.startsWith('audio/') || /\.(webm|ogg|mp3|wav|m4a)$/i.test(name);
+            return {
+                url: url ? (url.startsWith('http') ? url : `http://localhost:${process.env.PORT || 5000}${url}`) : null,
+                name,
+                type: isImage ? 'image' : isAudio ? 'audio' : 'document',
+                uploadedAt: typeof doc === 'object' ? (doc.uploadedAt || final.createdAt) : final.createdAt
+            };
+        });
+
+        return res.json(normalized);
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── GET /api/grievance/document-url ───────────────────────────────────────────
+router.get('/document-url', protect, async (req, res) => {
+  res.set('Cache-Control', 'no-store')
+  try {
+    const { key } = req.query
+    if (!key) return res.status(400).json({ error: 'key required' })
+
+    const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3')
+    const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
+
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        sessionToken: process.env.AWS_SESSION_TOKEN
+      }
+    })
+
+    const url = await getSignedUrl(
+      s3,
+      new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+        Key: key
+      }),
+      { expiresIn: 86400 }
+    )
+
+    console.log(`[S3] Presigned URL generated for citizen: ${key} ✅`)
+    res.json({ success: true, url })
+  } catch(err) {
+    console.log(`[S3] URL generation failed: ${err.message}`)
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
 
 module.exports = router;

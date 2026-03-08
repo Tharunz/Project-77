@@ -1,39 +1,6 @@
 {
   "users": [
     {
-      "id": "USR-ADMIN-001",
-      "name": "Rajiv Sharma",
-      "email": "admin@gov.in",
-      "password": "$2a$10$op5nWlctie8XFpHl3Wsz1u3L0MPb1DBEj/1j1Td1jVvRxh7m4//kG",
-      "state": "Delhi",
-      "district": "New Delhi",
-      "age": 45,
-      "income": 0,
-      "role": "admin",
-      "janShaktiScore": 100,
-      "createdAt": "2026-01-01T00:00:00.000Z"
-    },
-    {
-      "id": "USR-CIT-001",
-      "name": "Ramesh Kumar",
-      "email": "ramesh@gmail.com",
-      "password": "$2a$10$0DAY0xBQh5akaSdYlV0p8.m4q2CrTvI65nSb0wbst5XF5PP5IhZ5y",
-      "state": "Uttar Pradesh",
-      "district": "Lucknow",
-      "age": 38,
-      "income": 150000,
-      "role": "citizen",
-      "janShaktiScore": 72,
-      "createdAt": "2026-01-15T08:30:00.000Z",
-      "bookmarkedSchemes": [],
-      "pendingPhone": "1234123412",
-      "pendingOtp": "1234",
-      "otpExpiry": 1772693178299,
-      "phone": "1231231231",
-      "mobileVerified": true,
-      "updatedAt": "2026-03-05T06:40:59.349Z"
-    },
-    {
       "id": "USR-CIT-002",
       "name": "Priya Nair",
       "email": "priya@gmail.com",
@@ -356,9 +323,740 @@
       "role": "citizen",
       "janShaktiScore": 50,
       "createdAt": "2026-03-05T08:53:11.756Z"
+    },
+    {
+      "id": "USR-D2B34597",
+      "name": "h",
+      "email": "hj@gmail.com",
+      "password": "$2a$10$6TKOIZ7tdo53S9XG3Z5aH.8LcB8D4BkwEhf4J73km66oih/s5zWmq",
+      "state": "Mizoram",
+      "district": null,
+      "age": 15,
+      "income": 123123123,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T09:00:18.061Z"
+    },
+    {
+      "id": "USR-477DA8BA",
+      "name": "Aquila",
+      "email": "aquila@gmail.com",
+      "password": "$2a$10$uswbRcSVg4fjLTj5WywF8e9E1nv1r3wtqPPkz.uapF2PPH0RAR89u",
+      "state": "Odisha",
+      "district": null,
+      "age": 12,
+      "income": 15000,
+      "gender": null,
+      "role": "citizen",
+      "janShaktiScore": 50,
+      "createdAt": "2026-03-05T16:58:05.720Z"
+    },
+    {
+      "id": "USR-62C216B5",
+      "name": "Aquila01",
+      "email": "xbot60523@gmail.com",
+      "role": "citizen",
+      "state": "Tamil Nadu",
+      "janShaktiScore": 50,
+      "cognitoSub": "0488f418-6031-70b2-1f29-4bbbf325f846",
+      "createdAt": "2026-03-06T17:34:07.785Z"
+    },
+    {
+      "id": "USR-B6CFB4DB",
+      "name": "lk",
+      "email": "lk@gmail.com",
+      "role": "citizen",
+      "state": "Nagaland",
+      "janShaktiScore": 50,
+      "cognitoSub": "f4d89458-20f1-70ac-d586-9d644a656b67",
+      "createdAt": "2026-03-06T18:55:50.228Z"
+    },
+    {
+      "id": "USR-ADMIN-001",
+      "name": "Rajesh Kumar",
+      "email": "admin@gov.in",
+      "password": "$2a$10$YOYO1KBqbfJXoPMr76BDDOJolycjhCpSuLdF0uCRKXLhKjEhXBrAG",
+      "role": "admin",
+      "state": "Delhi",
+      "district": "New Delhi",
+      "department": "Ministry of Civil Services",
+      "janShaktiScore": 95,
+      "isVerified": true,
+      "createdAt": "2026-03-06T21:18:24.974Z"
+    },
+    {
+      "id": "USR-CIT-001",
+      "name": "Ramesh Kumar",
+      "email": "ramesh@gmail.com",
+      "password": "$2a$10$cuW6GF3s4CBsKERCtLrmqujRiTeoOcci3d1debt9GzQcFxk8ntuou",
+      "role": "citizen",
+      "state": "Uttar Pradesh",
+      "district": "Lucknow",
+      "age": 42,
+      "income": 180000,
+      "janShaktiScore": 62,
+      "phone": "+919876543210",
+      "isVerified": true,
+      "createdAt": "2026-03-06T21:18:24.974Z"
     }
   ],
   "grievances": [
+    {
+      "id": "GRV-0CB4593E",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "afasdfasfsfsf",
+      "description": "afasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsf",
+      "category": "Education",
+      "state": "Jharkhand",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772941362366-Aquila Resume.pdf",
+          "originalName": "Aquila Resume.pdf",
+          "mimetype": "application/pdf",
+          "size": 631921,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772941362366-Aquila Resume.pdf"
+        }
+      ],
+      "extractedText": "THARUNRAJ.M (Aquila)\nComputer Science Student\nCybersecurity Enthusiast\nLow-Level Coder\nFull-Stack Developer\ntrinity.localhost@gmail.com\n+91 7010768207\nD5\ngithub.com/Tharunz\nI\nSUMMARY\nI\nEDUCATION\nPassionate CS student specializing in cybersecurity with hands-on\nB.E. Computer Science (Cyber\nexperience since age 11. Expertise in reverse engineering, low-level\nSecurity)\nJ.N.N Institute of Engineering\nprogramming, and backend development. Proven track record building\n2024 2028\nproduction-ready applications from encrypted messaging to Al-powered\nLKG through 12th Grade\nsolutions and physics simulations. Strong proficiency in systems\nS.B.O.A School and Junior College\nprogramming, code review, data structures, and problem-solving.\n2007 2021\nI\nPROJECTS\nI\nTECHNICAL SKILLS\nZecrypted\nEncryption\nReal-time\nSecurity\nCore Expertise\nEnd-to-end encrypted messaging app as 12th-grade project with secure\nReverse Engineering\nprotocols and real-time features\nLow-Level Programming\nStudyMate\nIBM Granite\nNLP\nGenAl\nCode Review\nBackend Dev\nDSA\nPDF-based Q&A system with IBM Granite for document analysis (24-hour\nGenAl hackathon)\nProblem Solving\ndeAl-fy\nNLP\nML\nText Processing\nCybersecurity\nLocal NLP tool for humanizing LLM-generated text, addressing AI\nPenetration Testing\nEncryption\ndetection concerns\nNetwork Security\nSchwarzschild 2D Simulator\nC++\nSDL2\nPhysics\nVulnerability Assessment\nPhysics-based black hole simulation using C++ and SDL2 with real-time\nrendering\nLanguages\nGzone\nWeb Scraping\nTorrent\nBackend\nC++\nC\nPython\nJavaScript\nGame scraping software with integrated torrent functionality and web\nAssembly\nscraping algorithms\nAI/ML\nCobutra\nGPS\nReal-time\nMobile\nCollege bus tracking system for real-time location monitoring and route\nNLP\nLLMs\nGenAl\noptimization\nData Analytics\nRecon\nAPI\nAnalytics\nWeb Dev\nTools\nValorant player analytics platform for performance tracking and statistics\nGit\nSDL2\nTorrent Protocols\nvisualization\nWeb Scraping",
+      "formFields": {
+        "i_summary": "",
+        "github_com_tharunz": "X D5",
+        "recon": "API Analytics Web Dev",
+        "b_e_computer_science_cyber_security": "J.N.N Institute of Engineering 2024 2028",
+        "trinity_localhost_gmail_com": "X",
+        "tools": "Git SDL2 Torrent Protocols Web Scraping",
+        "core_expertise": "Reverse Engineering",
+        "lkg_through_12th_grade_s_b_o_a_school_and_junior_college": "2007 2021",
+        "languages": "C++ C Python"
+      },
+      "isDuplicate": false,
+      "fraudScore": 18,
+      "documentLabels": [
+        {
+          "name": "Document",
+          "confidence": 94
+        },
+        {
+          "name": "Text",
+          "confidence": 89
+        },
+        {
+          "name": "Paper",
+          "confidence": 82
+        }
+      ],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T03:42:56.606Z",
+      "updatedAt": "2026-03-08T03:42:56.606Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-B5CEF671",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "TEst for recko",
+      "description": "asfdsf fasf sfasf af sf  sd sfds",
+      "category": "Healthcare",
+      "state": "Jharkhand",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772940047644-Aquila Resume.pdf",
+          "originalName": "Aquila Resume.pdf",
+          "mimetype": "application/pdf",
+          "size": 631921,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772940047644-Aquila Resume.pdf"
+        }
+      ],
+      "extractedText": "THARUNRAJ.M (Aquila)\nComputer Science Student\nCybersecurity Enthusiast\nLow-Level Coder\nFull-Stack Developer\ntrinity.localhost@gmail.com\n+91 7010768207\nD5\ngithub.com/Tharunz\nI\nSUMMARY\nI\nEDUCATION\nPassionate CS student specializing in cybersecurity with hands-on\nB.E. Computer Science (Cyber\nexperience since age 11. Expertise in reverse engineering, low-level\nSecurity)\nJ.N.N Institute of Engineering\nprogramming, and backend development. Proven track record building\n2024 2028\nproduction-ready applications from encrypted messaging to Al-powered\nLKG through 12th Grade\nsolutions and physics simulations. Strong proficiency in systems\nS.B.O.A School and Junior College\nprogramming, code review, data structures, and problem-solving.\n2007 2021\nI\nPROJECTS\nI\nTECHNICAL SKILLS\nZecrypted\nEncryption\nReal-time\nSecurity\nCore Expertise\nEnd-to-end encrypted messaging app as 12th-grade project with secure\nReverse Engineering\nprotocols and real-time features\nLow-Level Programming\nStudyMate\nIBM Granite\nNLP\nGenAl\nCode Review\nBackend Dev\nDSA\nPDF-based Q&A system with IBM Granite for document analysis (24-hour\nGenAl hackathon)\nProblem Solving\ndeAl-fy\nNLP\nML\nText Processing\nCybersecurity\nLocal NLP tool for humanizing LLM-generated text, addressing AI\nPenetration Testing\nEncryption\ndetection concerns\nNetwork Security\nSchwarzschild 2D Simulator\nC++\nSDL2\nPhysics\nVulnerability Assessment\nPhysics-based black hole simulation using C++ and SDL2 with real-time\nrendering\nLanguages\nGzone\nWeb Scraping\nTorrent\nBackend\nC++\nC\nPython\nJavaScript\nGame scraping software with integrated torrent functionality and web\nAssembly\nscraping algorithms\nAI/ML\nCobutra\nGPS\nReal-time\nMobile\nCollege bus tracking system for real-time location monitoring and route\nNLP\nLLMs\nGenAl\noptimization\nData Analytics\nRecon\nAPI\nAnalytics\nWeb Dev\nTools\nValorant player analytics platform for performance tracking and statistics\nGit\nSDL2\nTorrent Protocols\nvisualization\nWeb Scraping",
+      "formFields": {
+        "i_summary": "",
+        "github_com_tharunz": "X D5",
+        "recon": "API Analytics Web Dev",
+        "b_e_computer_science_cyber_security": "J.N.N Institute of Engineering 2024 2028",
+        "trinity_localhost_gmail_com": "X",
+        "tools": "Git SDL2 Torrent Protocols Web Scraping",
+        "core_expertise": "Reverse Engineering",
+        "lkg_through_12th_grade_s_b_o_a_school_and_junior_college": "2007 2021",
+        "languages": "C++ C Python"
+      },
+      "isDuplicate": false,
+      "fraudScore": 16,
+      "documentLabels": [
+        {
+          "name": "Document",
+          "confidence": 94
+        },
+        {
+          "name": "Text",
+          "confidence": 89
+        },
+        {
+          "name": "Paper",
+          "confidence": 82
+        }
+      ],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T03:21:00.338Z",
+      "updatedAt": "2026-03-08T03:21:00.338Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-94DD2AE2",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "TTEST",
+      "description": "TTESTTTESTTTESTTTESTTTESTTTEST",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772932857731-Aquila Resume.pdf",
+          "originalName": "Aquila Resume.pdf",
+          "mimetype": "application/pdf",
+          "size": 631921,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772932857731-Aquila Resume.pdf"
+        }
+      ],
+      "extractedText": "THARUNRAJ.M (Aquila)\nComputer Science Student\nCybersecurity Enthusiast\nLow-Level Coder\nFull-Stack Developer\ntrinity.localhost@gmail.com\n+91 7010768207\nD5\ngithub.com/Tharunz\nI\nSUMMARY\nI\nEDUCATION\nPassionate CS student specializing in cybersecurity with hands-on\nB.E. Computer Science (Cyber\nexperience since age 11. Expertise in reverse engineering, low-level\nSecurity)\nJ.N.N Institute of Engineering\nprogramming, and backend development. Proven track record building\n2024 2028\nproduction-ready applications from encrypted messaging to Al-powered\nLKG through 12th Grade\nsolutions and physics simulations. Strong proficiency in systems\nS.B.O.A School and Junior College\nprogramming, code review, data structures, and problem-solving.\n2007 2021\nI\nPROJECTS\nI\nTECHNICAL SKILLS\nZecrypted\nEncryption\nReal-time\nSecurity\nCore Expertise\nEnd-to-end encrypted messaging app as 12th-grade project with secure\nReverse Engineering\nprotocols and real-time features\nLow-Level Programming\nStudyMate\nIBM Granite\nNLP\nGenAl\nCode Review\nBackend Dev\nDSA\nPDF-based Q&A system with IBM Granite for document analysis (24-hour\nGenAl hackathon)\nProblem Solving\ndeAl-fy\nNLP\nML\nText Processing\nCybersecurity\nLocal NLP tool for humanizing LLM-generated text, addressing AI\nPenetration Testing\nEncryption\ndetection concerns\nNetwork Security\nSchwarzschild 2D Simulator\nC++\nSDL2\nPhysics\nVulnerability Assessment\nPhysics-based black hole simulation using C++ and SDL2 with real-time\nrendering\nLanguages\nGzone\nWeb Scraping\nTorrent\nBackend\nC++\nC\nPython\nJavaScript\nGame scraping software with integrated torrent functionality and web\nAssembly\nscraping algorithms\nAI/ML\nCobutra\nGPS\nReal-time\nMobile\nCollege bus tracking system for real-time location monitoring and route\nNLP\nLLMs\nGenAl\noptimization\nData Analytics\nRecon\nAPI\nAnalytics\nWeb Dev\nTools\nValorant player analytics platform for performance tracking and statistics\nGit\nSDL2\nTorrent Protocols\nvisualization\nWeb Scraping",
+      "formFields": {
+        "i_summary": "",
+        "github_com_tharunz": "X D5",
+        "recon": "API Analytics Web Dev",
+        "b_e_computer_science_cyber_security": "J.N.N Institute of Engineering 2024 2028",
+        "trinity_localhost_gmail_com": "X",
+        "tools": "Git SDL2 Torrent Protocols Web Scraping",
+        "core_expertise": "Reverse Engineering",
+        "lkg_through_12th_grade_s_b_o_a_school_and_junior_college": "2007 2021",
+        "languages": "C++ C Python"
+      },
+      "isDuplicate": false,
+      "fraudScore": 0.10802636232591387,
+      "isSuspicious": false,
+      "documentLabels": [
+        "Document",
+        "Text",
+        "Paper"
+      ],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T01:21:11.841Z",
+      "updatedAt": "2026-03-08T01:22:54.743Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-08T01:22:54.743Z"
+    },
+    {
+      "id": "GRV-05AB1014",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "Test for eventbridge",
+      "description": "Test for eventbridgeTest for eventbridgeTest for eventbridge",
+      "category": "Electricity",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [],
+      "extractedText": null,
+      "formFields": null,
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "isSuspicious": false,
+      "documentLabels": [],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T01:07:34.757Z",
+      "updatedAt": "2026-03-08T01:07:34.757Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-BA5B068F",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "This is another test grievance",
+      "description": "This is another test grievanceThis is another test grievance",
+      "category": "Water Supply",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [],
+      "extractedText": null,
+      "formFields": null,
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "isSuspicious": false,
+      "documentLabels": [],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T00:07:34.585Z",
+      "updatedAt": "2026-03-08T00:07:34.585Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-B96323D2",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "audio test hello bro",
+      "description": "[Audio grievance recorded in தமிழ்] Duration: 8s",
+      "category": "Education",
+      "state": "Karnataka",
+      "district": "Unknown",
+      "status": "Critical",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772901093364-grievance-audio.webm",
+          "originalName": "grievance-audio.webm",
+          "mimetype": "audio/webm",
+          "size": 143264,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772901093364-grievance-audio.webm"
+        }
+      ],
+      "extractedText": "",
+      "formFields": null,
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-07T16:31:39.781Z",
+      "updatedAt": "2026-03-07T16:32:26.621Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-1BBFC6EB",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "test test test big test",
+      "description": "mike testing 123mike testing 123mike testing 123mike testing 123",
+      "category": "Healthcare",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772900967427-idcard.jpeg",
+          "originalName": "idcard.jpeg",
+          "mimetype": "image/jpeg",
+          "size": 159719,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772900967427-idcard.jpeg"
+        }
+      ],
+      "isDuplicate": false,
+      "fraudScore": 0.12,
+      "extractedName": "Ramesh Kumar",
+      "extractedIncome": 150000,
+      "extractedTextBlocks": [
+        "GOVERNMENT OF INDIA",
+        "INCOME CERTIFICATE",
+        "NAME: Ramesh Kumar",
+        "ANNUAL INCOME: 1,50,000",
+        "VERIFIED BY: TEHSILDAR"
+      ],
+      "adminNote": null,
+      "createdAt": "2026-03-07T16:29:34.420Z",
+      "updatedAt": "2026-03-07T16:30:35.419Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen verified resolution and uploaded photo proof.",
+      "verifiedAt": "2026-03-07T16:30:35.419Z"
+    },
+    {
+      "id": "GRV-5C651668",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "citizenName": "Ramesh Kumar",
+      "title": "Audio test",
+      "description": "[Audio grievance recorded in தமிழ்] Duration: 7s",
+      "category": "Roads & Infrastructure",
+      "state": "Andhra Pradesh",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.0006,
+        "Negative": 0.0009,
+        "Neutral": 0.9985,
+        "Mixed": 0
+      },
+      "keyPhrases": [
+        "[audio grievance",
+        "தமிழ்] duration"
+      ],
+      "priority": "Medium",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772740207270-grievance-audio.webm",
+          "originalName": "grievance-audio.webm",
+          "mimetype": "audio/webm",
+          "size": 120080,
+          "url": "https://ncie-documents-tharun.s3.us-east-1.amazonaws.com/grievance-documents/1772740207270-grievance-audio.webm"
+        }
+      ],
+      "extractedText": null,
+      "formFields": null,
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T19:50:11.185Z",
+      "updatedAt": "2026-03-06T13:15:30.910Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen verified resolution and uploaded photo proof.",
+      "verifiedAt": "2026-03-06T13:15:30.910Z"
+    },
+    {
+      "id": "GRV-456244E7",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "citizenName": "Ramesh Kumar",
+      "title": "water problem bro",
+      "description": "big water problem bro, fix bro",
+      "category": "Water Supply",
+      "state": "Tamil Nadu",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Negative",
+      "sentimentScore": 0.421,
+      "sentimentData": {
+        "Positive": 0.0578,
+        "Negative": 0.5785,
+        "Neutral": 0.0929,
+        "Mixed": 0.2707
+      },
+      "keyPhrases": [
+        "big water problem"
+      ],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772739445063-aadhar.jpeg",
+          "originalName": "aadhar.jpeg",
+          "mimetype": "image/jpeg",
+          "size": 140307,
+          "url": "https://ncie-documents-tharun.s3.us-east-1.amazonaws.com/grievance-documents/1772739445063-aadhar.jpeg"
+        }
+      ],
+      "extractedText": "311817₹\n- -\n- -\nGovernment of India\nAADHAAR\n(586)160) / INFORMATION\nGovernment of India\n& aim @iquifiencenco\nshows Limits Cad menus\n616581\naddition DUL @sinen Units Cad\nassemb closed security\nBIANL BIRTHDLIL\nDas sussing UIDAI\nUnique Identification Authority of India\nshows asu etuCL AML Agib\nSTID shows - QR doCam)\nUNITED QR and cruCasefiew account www.uidai.gov.in do\n6T630T/ Enrolment No.: 0000/00687/91744\nOR TLI\naddress Comm(Sub\nTo\n(if\n- USE 10\ndingui - ADDITIONAL\nM Tharunra)\nC/O Muralirajan S,\nand ### / Community\nDoor number 14. Plot number 8, Adithiyam illam,\nQum - Liverging\nKadappa Road, Ramani Nagar,\nLINEN @4 submitted\nSRM GRAND HOTEL,\nNew Lakshmipuram,\n- Quin mAadhaar\nVTC: Kolathur,\n/Cu\nPO: Kolathur,\nDistrict: Tiruvallur,\n& Camsus Signature güysmeri Quig Commin\nState: Tamil Nadu,\nPIN Code: 600099,\nAadhaar is proof of identity, not of citizenship or date of birth (DOB) DOB\nMobile: 7010768207\nis based on information supported by proof of DOB document specified in\nregulations, submitted by Aadhaar number holder.\nSignature Not Verified\nThis Aadhaar letter should be verified through either online\nTignature ,\nauthentication by UIDAl-appointed authentication agency or QR code\nscanning using mAadhaar or Aadhaar QR Scanner app available in app\nstores or using secure QR code reader app available on\nwww.uidai.gov.in.\nAadhaar is unique and secure\nDocuments to support identity and address should be updated in\nAadhaar after every 10 years from date of enrolment for Aadhaar.\nAadhaar helps you avail of various Government and Non-\nGovernment benefits/services.\nKeep your mobile number and email id updated in Aadhaar.\n2 asm 616001 / Your Aadhaar No. :\nDownload mAadhaar app to avail of Aadhaar services\n6494 2290 8905\nUse the feature of Lock/Unlock Aadhaar/biometrics to ensure security\nVID 9156 4028 9354 7364\nwhen not using Aadhaar/biometrics\nEntities seeking Aadhaar are obligated to seek consent\nasm). steargy SIGNL 1\n-\nGovernment of India\nUnique Identification Authority of India\n(LP -\nC/O 9. 01 BIDLIT 14.\nAadhaar no. issued 21/10/2017\nM Tharunraj\nBIRLIT 8, BULD ULIT\nJose (bmitr/DOB: 02/11/2004\nagest/ MALE\n20/03/2025 Details on #\nSTILL\nBILL\nsublic Birth 600099\nAddress:\nDD\n-\naddress\nC/O Muralirajan S, Door number 14, Plot number 8,\nin\nANR)\nAdithiyam illam, Kadappa Road Ramani Nagar,\nAadhaar is proof of identity, not of citizenship\nSRM GRAND HOTEL. New Lakshmipuram,\nor date of birth. It should be used with verification (online\nKolathur, PO: Kolathur, DIST: Tiruvallur,\nTamil Nadu 600099\nauthentication, or scanning of QR code / offline XML).\n6494 2290 8905\n6494 2290 8905\nVID 9156 4028 9354 7364\n6160151 6160151 SILT\n1947\nhelp@uidai.gov.in\nwww.uidai.gov.in",
+      "formFields": {
+        "and": "",
+        "community": "",
+        "linen": "",
+        "lp": "M Tharunraj Jose",
+        "aadhaar_is_unique_and_secure": "X",
+        "bmitr_dob": "02/11/2004",
+        "download_maadhaar_app_to_avail_of_aadhaar_services": "X",
+        "aadhaar_helps_you_avail_of_various_government_and_non_government_benefits_services": "X",
+        "use_the_feature_of_lock_unlock_aadhaar_biometrics_to_ensure_security_when_not_using_aadhaar_biometrics": "X",
+        "documents_to_support_identity_and_address_should_be_updated_in_aadhaar_after_every_10_years_from_date_of_enrolment_for_aadhaar": "X",
+        "c_o": "BIRLIT 8, BULD",
+        "das_sussing": "STID",
+        "signature_not_verified_tignature": "",
+        "6t630t_enrolment_no": "0000/00687/91744",
+        "aim_shows_limits_616581_addition_dul_sinen_assemb_closed": "X",
+        "entities_seeking_aadhaar_are_obligated_to_seek_consent": "X -",
+        "dd_address": "in ANR) Aadhaar is proof of identity, not of citizenship or date of birth. It should be used with verification authentication, or scanning of QR code / offline XML).",
+        "aadhaar_is_proof_of_identity_not_of_citizenship_or_date_of_birth_dob_dob_is_based_on_information_supported_by_proof_of_dob_document_specified_in_regulations_submitted_by_aadhaar_number_holder": "X",
+        "this_aadhaar_letter_should_be_verified_through_either_online_authentication_by_uidal_appointed_authentication_agency_or_qr_code_scanning_using_maadhaar_or_aadhaar_qr_scanner_app_available_in_app_stores_or_using_secure_qr_code_reader_app_available_on_www_uidai_gov_in": "X",
+        "po": "Kolathur,",
+        "pin_code": "600099,",
+        "mobile": "7010768207",
+        "district": "Tiruvallur,",
+        "vtc": "Kolathur,",
+        "vid": "9156 4028 9354 7364",
+        "state": "Tamil Nadu,",
+        "sublic_birth": "600099",
+        "agest": "MALE",
+        "dist": "Tiruvallur,",
+        "2_asm_616001_your_aadhaar_no": "6494 2290 8905",
+        "tamil_nadu": "600099",
+        "if": "",
+        "kolathur_po": "Kolathur,",
+        "www_uidai_gov_in": "X",
+        "new": "Lakshmipuram,",
+        "bianl_birthdlil": "Unique Identification Authority of India",
+        "help_uidai_gov_in": "X"
+      },
+      "isDuplicate": true,
+      "fraudScore": 0.88,
+      "rekognitionLabels": [
+        "Identity Document",
+        "Person",
+        "Photo",
+        "Saffron"
+      ],
+      "moderationFlags": [
+        "Face Overlap",
+        "Low Quality"
+      ],
+      "adminNote": "Rekognition detected potential tampering in ID photo.",
+      "createdAt": "2026-03-05T19:37:32.718Z",
+      "updatedAt": "2026-03-05T19:37:32.718Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-352AA10D",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "citizenName": "Ramesh Kumar",
+      "title": "Some Test to test s3 fiel upload",
+      "description": "so this entire thing is attached to test to how the S3 file uploaded Textiles gearbox",
+      "category": "Roads & Infrastructure",
+      "state": "Tamil Nadu",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.519,
+      "sentimentData": {
+        "Positive": 0.039,
+        "Negative": 0.0364,
+        "Neutral": 0.8933,
+        "Mixed": 0.0314
+      },
+      "keyPhrases": [
+        "this entire thing",
+        "the s3 file"
+      ],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772735384060-aadhar.jpeg",
+          "originalName": "aadhar.jpeg",
+          "mimetype": "image/jpeg",
+          "size": 140307,
+          "url": "https://ncie-documents-tharun.s3.us-east-1.amazonaws.com/grievance-documents/1772735384060-aadhar.jpeg"
+        }
+      ],
+      "extractedText": "311817₹\n- -\n- -\nGovernment of India\nAADHAAR\n(586)160) / INFORMATION\nGovernment of India\n& aim @iquifiencenco\nshows Limits Cad menus\n616581\naddition DUL @sinen Units Cad\nassemb closed security\nBIANL BIRTHDLIL\nDas sussing UIDAI\nUnique Identification Authority of India\nshows asu etuCL AML Agib\nSTID shows - QR doCam)\nUNITED QR and cruCasefiew account www.uidai.gov.in do\n6T630T/ Enrolment No.: 0000/00687/91744\nOR TLI\naddress Comm(Sub\nTo\n(if\n- USE 10\ndingui - ADDITIONAL\nM Tharunra)\nC/O Muralirajan S,\nand ### / Community\nDoor number 14. Plot number 8, Adithiyam illam,\nQum - Liverging\nKadappa Road, Ramani Nagar,\nLINEN @4 submitted\nSRM GRAND HOTEL,\nNew Lakshmipuram,\n- Quin mAadhaar\nVTC: Kolathur,\n/Cu\nPO: Kolathur,\nDistrict: Tiruvallur,\n& Camsus Signature güysmeri Quig Commin\nState: Tamil Nadu,\nPIN Code: 600099,\nAadhaar is proof of identity, not of citizenship or date of birth (DOB) DOB\nMobile: 7010768207\nis based on information supported by proof of DOB document specified in\nregulations, submitted by Aadhaar number holder.\nSignature Not Verified\nThis Aadhaar letter should be verified through either online\nTignature ,\nauthentication by UIDAl-appointed authentication agency or QR code\nscanning using mAadhaar or Aadhaar QR Scanner app available in app\nstores or using secure QR code reader app available on\nwww.uidai.gov.in.\nAadhaar is unique and secure\nDocuments to support identity and address should be updated in\nAadhaar after every 10 years from date of enrolment for Aadhaar.\nAadhaar helps you avail of various Government and Non-\nGovernment benefits/services.\nKeep your mobile number and email id updated in Aadhaar.\n2 asm 616001 / Your Aadhaar No. :\nDownload mAadhaar app to avail of Aadhaar services\n6494 2290 8905\nUse the feature of Lock/Unlock Aadhaar/biometrics to ensure security\nVID 9156 4028 9354 7364\nwhen not using Aadhaar/biometrics\nEntities seeking Aadhaar are obligated to seek consent\nasm). steargy SIGNL 1\n-\nGovernment of India\nUnique Identification Authority of India\n(LP -\nC/O 9. 01 BIDLIT 14.\nAadhaar no. issued 21/10/2017\nM Tharunraj\nBIRLIT 8, BULD ULIT\nJose (bmitr/DOB: 02/11/2004\nagest/ MALE\n20/03/2025 Details on #\nSTILL\nBILL\nsublic Birth 600099\nAddress:\nDD\n-\naddress\nC/O Muralirajan S, Door number 14, Plot number 8,\nin\nANR)\nAdithiyam illam, Kadappa Road Ramani Nagar,\nAadhaar is proof of identity, not of citizenship\nSRM GRAND HOTEL. New Lakshmipuram,\nor date of birth. It should be used with verification (online\nKolathur, PO: Kolathur, DIST: Tiruvallur,\nTamil Nadu 600099\nauthentication, or scanning of QR code / offline XML).\n6494 2290 8905\n6494 2290 8905\nVID 9156 4028 9354 7364\n6160151 6160151 SILT\n1947\nhelp@uidai.gov.in\nwww.uidai.gov.in",
+      "formFields": {
+        "and": "",
+        "community": "",
+        "linen": "",
+        "lp": "M Tharunraj Jose",
+        "aadhaar_is_unique_and_secure": "X",
+        "bmitr_dob": "02/11/2004",
+        "download_maadhaar_app_to_avail_of_aadhaar_services": "X",
+        "aadhaar_helps_you_avail_of_various_government_and_non_government_benefits_services": "X",
+        "use_the_feature_of_lock_unlock_aadhaar_biometrics_to_ensure_security_when_not_using_aadhaar_biometrics": "X",
+        "documents_to_support_identity_and_address_should_be_updated_in_aadhaar_after_every_10_years_from_date_of_enrolment_for_aadhaar": "X",
+        "c_o": "BIRLIT 8, BULD",
+        "das_sussing": "STID",
+        "signature_not_verified_tignature": "",
+        "6t630t_enrolment_no": "0000/00687/91744",
+        "aim_shows_limits_616581_addition_dul_sinen_assemb_closed": "X",
+        "entities_seeking_aadhaar_are_obligated_to_seek_consent": "X -",
+        "dd_address": "in ANR) Aadhaar is proof of identity, not of citizenship or date of birth. It should be used with verification authentication, or scanning of QR code / offline XML).",
+        "aadhaar_is_proof_of_identity_not_of_citizenship_or_date_of_birth_dob_dob_is_based_on_information_supported_by_proof_of_dob_document_specified_in_regulations_submitted_by_aadhaar_number_holder": "X",
+        "this_aadhaar_letter_should_be_verified_through_either_online_authentication_by_uidal_appointed_authentication_agency_or_qr_code_scanning_using_maadhaar_or_aadhaar_qr_scanner_app_available_in_app_stores_or_using_secure_qr_code_reader_app_available_on_www_uidai_gov_in": "X",
+        "po": "Kolathur,",
+        "pin_code": "600099,",
+        "mobile": "7010768207",
+        "district": "Tiruvallur,",
+        "vtc": "Kolathur,",
+        "vid": "9156 4028 9354 7364",
+        "state": "Tamil Nadu,",
+        "sublic_birth": "600099",
+        "agest": "MALE",
+        "dist": "Tiruvallur,",
+        "2_asm_616001_your_aadhaar_no": "6494 2290 8905",
+        "tamil_nadu": "600099",
+        "if": "",
+        "kolathur_po": "Kolathur,",
+        "www_uidai_gov_in": "X",
+        "new": "Lakshmipuram,",
+        "bianl_birthdlil": "Unique Identification Authority of India",
+        "help_uidai_gov_in": "X"
+      },
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T18:29:53.047Z",
+      "updatedAt": "2026-03-05T18:29:53.047Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-0194D6C0",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "citizenName": "Ramesh Kumar",
+      "title": "Water supply broken",
+      "description": "The water supply in my area has been \r\n   completely broken for the past 5 days. \r\n   My entire family including 3 children \r\n   have no drinking water. This is absolutely \r\n   unacceptable and causing severe hardship. \r\n   Nobody is responding to our calls.",
+      "category": "Water Supply",
+      "state": "Tamil Nadu",
+      "district": "Unknown",
+      "status": "Resolved",
+      "sentiment": "Negative",
+      "sentimentScore": 0,
+      "sentimentData": {
+        "Positive": 0.0002,
+        "Negative": 0.9996,
+        "Neutral": 0.0002,
+        "Mixed": 0
+      },
+      "keyPhrases": [
+        "my area",
+        "our calls",
+        "my entire family",
+        "severe hardship",
+        "3 children",
+        "the water supply",
+        "the past 5 days",
+        "no drinking water"
+      ],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [],
+      "extractedText": null,
+      "formFields": null,
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T18:18:49.275Z",
+      "updatedAt": "2026-03-05T20:15:28.010Z",
+      "resolvedAt": null,
+      "citizenFeedback": "Citizen confirmed resolution via portal.",
+      "verifiedAt": "2026-03-05T20:15:28.010Z"
+    },
+    {
+      "id": "GRV-4F2FA431",
+      "userId": "USR-477DA8BA",
+      "citizenName": "Aquila",
+      "title": "Hey this is a test bro",
+      "description": "hello this is a very long test and yeahhello this is a very long test and yeah",
+      "category": "Healthcare",
+      "state": "Odisha",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.506,
+      "sentimentData": {
+        "Positive": 0.012,
+        "Negative": 0,
+        "Neutral": 0.506,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [
+        "yeah"
+      ],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "doc-1772730038233-141424575.png",
+          "originalName": "qrcode-ai-fbb5742e-52a8-46b3-bb0c-bf730ddb7a10.png",
+          "mimetype": "image/png",
+          "size": 314369,
+          "url": "http://localhost:5000/uploads/doc-1772730038233-141424575.png"
+        }
+      ],
+      "extractedText": "Mock extracted text from document",
+      "formFields": {
+        "name": "Ramesh Kumar",
+        "id": "XXXX-XXXX-1234"
+      },
+      "isDuplicate": false,
+      "fraudScore": 0.05,
+      "adminNote": null,
+      "createdAt": "2026-03-05T17:00:38.239Z",
+      "updatedAt": "2026-03-05T17:00:38.239Z",
+      "resolvedAt": null
+    },
     {
       "id": "GRV-871473A6",
       "userId": "USR-CIT-001",
@@ -386,10 +1084,10 @@
       "fraudScore": 0.05,
       "adminNote": null,
       "createdAt": "2026-03-05T07:13:56.396Z",
-      "updatedAt": "2026-03-05T07:15:23.226Z",
+      "updatedAt": "2026-03-05T16:46:34.023Z",
       "resolvedAt": null,
       "citizenFeedback": "Citizen confirmed resolution via portal.",
-      "verifiedAt": "2026-03-05T07:15:23.226Z"
+      "verifiedAt": "2026-03-05T16:46:34.023Z"
     },
     {
       "id": "GRV-C330F324",
@@ -1678,6 +2376,117 @@
       "createdAt": "2026-01-01T00:00:00.000Z",
       "updatedAt": "2026-01-03T00:00:00.000Z",
       "resolvedAt": null
+    },
+    {
+      "id": "GRV-3180507F",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "afsaf fas fas fass",
+      "description": "afsaf fas fas fassafsaf fas fas fassafsaf fas fas fassafsaf fas fas fass",
+      "category": "Electricity",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772941701199-aadhar.jpeg",
+          "originalName": "aadhar.jpeg",
+          "mimetype": "image/jpeg",
+          "size": 140307,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772941701199-aadhar.jpeg"
+        }
+      ],
+      "extractedText": "311817₹\n- -\n- -\nGovernment of India\nAADHAAR\n(586)160) / INFORMATION\nGovernment of India\n& aim @iquifiencenco\nshows Limits Cad menus\n616581\naddition DUL @sinen Units Cad\nassemb closed security\nBIANL BIRTHDLIL\nDas sussing UIDAI\nUnique Identification Authority of India\nshows asu etuCL AML Agib\nSTID shows - QR doCam)\nUNITED QR and cruCasefiew account www.uidai.gov.in do\n6T630T/ Enrolment No.: 0000/00687/91744\nOR TLI\naddress Comm(Sub\nTo\n(if\n- USE 10\ndingui - ADDITIONAL\nM Tharunra)\nC/O Muralirajan S,\nand ### / Community\nDoor number 14. Plot number 8, Adithiyam illam,\nQum - Liverging\nKadappa Road, Ramani Nagar,\nLINEN @4 submitted\nSRM GRAND HOTEL,\nNew Lakshmipuram,\n- Quin mAadhaar\nVTC: Kolathur,\n/Cu\nPO: Kolathur,\nDistrict: Tiruvallur,\n& Camsus Signature güysmeri Quig Commin\nState: Tamil Nadu,\nPIN Code: 600099,\nAadhaar is proof of identity, not of citizenship or date of birth (DOB) DOB\nMobile: 7010768207\nis based on information supported by proof of DOB document specified in\nregulations, submitted by Aadhaar number holder.\nSignature Not Verified\nThis Aadhaar letter should be verified through either online\nTignature ,\nauthentication by UIDAl-appointed authentication agency or QR code\nscanning using mAadhaar or Aadhaar QR Scanner app available in app\nstores or using secure QR code reader app available on\nwww.uidai.gov.in.\nAadhaar is unique and secure\nDocuments to support identity and address should be updated in\nAadhaar after every 10 years from date of enrolment for Aadhaar.\nAadhaar helps you avail of various Government and Non-\nGovernment benefits/services.\nKeep your mobile number and email id updated in Aadhaar.\n2 asm 616001 / Your Aadhaar No. :\nDownload mAadhaar app to avail of Aadhaar services\n6494 2290 8905\nUse the feature of Lock/Unlock Aadhaar/biometrics to ensure security\nVID 9156 4028 9354 7364\nwhen not using Aadhaar/biometrics\nEntities seeking Aadhaar are obligated to seek consent\nasm). steargy SIGNL 1\n-\nGovernment of India\nUnique Identification Authority of India\n(LP -\nC/O 9. 01 BIDLIT 14.\nAadhaar no. issued 21/10/2017\nM Tharunraj\nBIRLIT 8, BULD ULIT\nJose (bmitr/DOB: 02/11/2004\nagest/ MALE\n20/03/2025 Details on #\nSTILL\nBILL\nsublic Birth 600099\nAddress:\nDD\n-\naddress\nC/O Muralirajan S, Door number 14, Plot number 8,\nin\nANR)\nAdithiyam illam, Kadappa Road Ramani Nagar,\nAadhaar is proof of identity, not of citizenship\nSRM GRAND HOTEL. New Lakshmipuram,\nor date of birth. It should be used with verification (online\nKolathur, PO: Kolathur, DIST: Tiruvallur,\nTamil Nadu 600099\nauthentication, or scanning of QR code / offline XML).\n6494 2290 8905\n6494 2290 8905\nVID 9156 4028 9354 7364\n6160151 6160151 SILT\n1947\nhelp@uidai.gov.in\nwww.uidai.gov.in",
+      "formFields": {
+        "and": "",
+        "community": "",
+        "linen": "",
+        "lp": "M Tharunraj Jose",
+        "aadhaar_is_unique_and_secure": "X",
+        "bmitr_dob": "02/11/2004",
+        "download_maadhaar_app_to_avail_of_aadhaar_services": "X",
+        "aadhaar_helps_you_avail_of_various_government_and_non_government_benefits_services": "X",
+        "use_the_feature_of_lock_unlock_aadhaar_biometrics_to_ensure_security_when_not_using_aadhaar_biometrics": "X",
+        "documents_to_support_identity_and_address_should_be_updated_in_aadhaar_after_every_10_years_from_date_of_enrolment_for_aadhaar": "X",
+        "c_o": "BIRLIT 8, BULD",
+        "das_sussing": "STID",
+        "signature_not_verified_tignature": "",
+        "6t630t_enrolment_no": "0000/00687/91744",
+        "aim_shows_limits_616581_addition_dul_sinen_assemb_closed": "X",
+        "entities_seeking_aadhaar_are_obligated_to_seek_consent": "X -",
+        "dd_address": "in ANR) Aadhaar is proof of identity, not of citizenship or date of birth. It should be used with verification authentication, or scanning of QR code / offline XML).",
+        "aadhaar_is_proof_of_identity_not_of_citizenship_or_date_of_birth_dob_dob_is_based_on_information_supported_by_proof_of_dob_document_specified_in_regulations_submitted_by_aadhaar_number_holder": "X",
+        "this_aadhaar_letter_should_be_verified_through_either_online_authentication_by_uidal_appointed_authentication_agency_or_qr_code_scanning_using_maadhaar_or_aadhaar_qr_scanner_app_available_in_app_stores_or_using_secure_qr_code_reader_app_available_on_www_uidai_gov_in": "X",
+        "po": "Kolathur,",
+        "pin_code": "600099,",
+        "mobile": "7010768207",
+        "district": "Tiruvallur,",
+        "vtc": "Kolathur,",
+        "vid": "9156 4028 9354 7364",
+        "state": "Tamil Nadu,",
+        "sublic_birth": "600099",
+        "agest": "MALE",
+        "dist": "Tiruvallur,",
+        "2_asm_616001_your_aadhaar_no": "6494 2290 8905",
+        "tamil_nadu": "600099",
+        "if": "",
+        "kolathur_po": "Kolathur,",
+        "www_uidai_gov_in": "X",
+        "new": "Lakshmipuram,",
+        "bianl_birthdlil": "Unique Identification Authority of India",
+        "help_uidai_gov_in": "X"
+      },
+      "isDuplicate": false,
+      "fraudScore": 22,
+      "documentLabels": [
+        {
+          "name": "Page",
+          "confidence": 100
+        },
+        {
+          "name": "Text",
+          "confidence": 100
+        },
+        {
+          "name": "Person",
+          "confidence": 99
+        },
+        {
+          "name": "Advertisement",
+          "confidence": 91
+        },
+        {
+          "name": "Face",
+          "confidence": 91
+        },
+        {
+          "name": "Head",
+          "confidence": 91
+        },
+        {
+          "name": "Poster",
+          "confidence": 89
+        }
+      ],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T03:48:36.763Z",
+      "updatedAt": "2026-03-08T03:48:36.763Z",
+      "resolvedAt": null
     }
   ],
   "schemes": [
@@ -2122,97 +2931,79 @@
       "beneficiaries": 2,
       "createdAt": "2026-03-04T21:55:30.087Z",
       "updatedAt": "2026-03-05T05:10:09.330Z"
+    },
+    {
+      "id": "SCH-1772745725663",
+      "name": "Test scheme",
+      "category": "Housing",
+      "state": "All India",
+      "benefit": "Recommend schemes get 404 when visited. fix it.(GET /api/schemes/recommend 404 0.783 ms - 104)benefit roadmap still produces error . fix it.(GET /api/schemes/benefit-roadmap 404 1.120 ms - 104GET /api/schemes/benefit-roadmap 404 1.412 ms - 104)",
+      "eligibility": "Recommend schemes get 404 when visited. fix it.(GET /api/schemes/recommend 404 0.783 ms - 104)benefit roadmap still produces error . fix it.(GET /api/schemes/benefit-roadmap 404 1.120 ms - 104GET /api/schemes/benefit-roadmap 404 1.412 ms - 104)",
+      "description": "Recommend schemes get 404 when visited. fix it.\n(GET /api/schemes/recommend 404 0.783 ms - 104)\n\nbenefit roadmap still produces error . fix it.\n(GET /api/schemes/benefit-roadmap 404 1.120 ms - 104\nGET /api/schemes/benefit-roadmap 404 1.412 ms - 104)\n\n\n",
+      "minAge": 18,
+      "maxAge": 65,
+      "maxIncome": "12312312312",
+      "isActive": false,
+      "beneficiaries": 0,
+      "createdAt": "2026-03-05T21:22:05.663Z",
+      "updatedAt": "2026-03-05T21:24:08.138Z"
+    },
+    {
+      "id": "SCH-1772893593199",
+      "name": "tESTSCEHEM",
+      "category": "",
+      "state": "All India",
+      "benefit": "34234234234",
+      "eligibility": "3244ADADAD",
+      "description": "http://localhost:5173/citizen/schemes?id=SCH-http://localhost:5173/citizen/schemes?id=SCH-003003",
+      "minAge": 18,
+      "maxAge": 65,
+      "maxIncome": "34242424",
+      "isActive": true,
+      "beneficiaries": 0,
+      "createdAt": "2026-03-07T14:26:33.199Z",
+      "updatedAt": "2026-03-07T14:26:33.199Z"
     }
   ],
   "officers": [],
   "preSevaAlerts": [
     {
-      "id": "PRESEVA-001",
-      "type": "spike_predicted",
-      "state": "Bihar",
-      "district": "Patna",
-      "category": "Flooding",
-      "title": "Predicted Flood Grievance Spike",
-      "probability": 87,
-      "daysUntil": 4,
+      "id": "PRESEVA-TN-8821",
+      "state": "Tamil Nadu",
+      "category": "Water Supply",
+      "title": "THREAT MITIGATED: Predicted Water Shortage",
+      "district": "Chennai",
       "predictedDate": "2026-03-05",
+      "daysUntil": 0,
       "urgency": "critical",
-      "historicalPattern": "Pattern detected in 2024 and 2025 during similar pre-monsoon showers.",
-      "basisGrievances": 1240,
-      "suggestedAction": "Clear drainages in Ward 4, 7, and 12 immediately.",
-      "departmentAlerted": "Water & Sanitation",
-      "alertSentAt": "2026-02-28 10:00 AM",
-      "description": "AI model predicts 85%+ probability of flood-related grievance surge in next 14 days based on IMD data and historical patterns.",
       "status": "Action Taken",
       "prevented": true,
-      "createdAt": "2026-02-20T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:51:55.342Z"
+      "probability": 92,
+      "basisGrievances": 4200,
+      "departmentAlerted": "Chennai Metrowater",
+      "suggestedAction": "Increase desalination output by 20% and redirect supply.",
+      "historicalPattern": "Drought pattern match from Summer 2021 detected 72h prior.",
+      "createdAt": "2026-03-07T03:50:07.407Z",
+      "updatedAt": "2026-03-07T15:50:07.407Z"
     },
     {
-      "id": "PRESEVA-002",
-      "type": "crop_distress",
-      "state": "Rajasthan",
-      "district": "Jaisalmer",
-      "category": "Agriculture",
-      "title": "Drought Pattern Detected",
-      "probability": 79,
-      "daysUntil": 12,
-      "predictedDate": "2026-03-15",
-      "urgency": "high",
-      "historicalPattern": "300% grievance increase in this corridor during similar weather conditions.",
-      "basisGrievances": 850,
-      "suggestedAction": "Release canal water for agricultural use and notify farmers.",
-      "departmentAlerted": "Agriculture",
-      "alertSentAt": "2026-02-28 11:30 AM",
-      "description": "Unusual drought pattern detected. Historical data shows 300% grievance increase in this corridor during similar weather conditions.",
-      "status": "Action Taken",
-      "prevented": true,
-      "createdAt": "2026-02-22T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:51:57.255Z"
-    },
-    {
-      "id": "PRESEVA-003",
-      "type": "health_outbreak",
-      "state": "West Bengal",
-      "district": "Kolkata",
+      "id": "PRESEVA-KL-4412",
+      "state": "Kerala",
       "category": "Healthcare",
-      "title": "Potential Dengue Outbreak",
-      "probability": 72,
-      "daysUntil": 7,
-      "predictedDate": "2026-03-08",
+      "title": "THREAT MITIGATED: Medical Supply Anomaly",
+      "district": "Wayanad",
+      "predictedDate": "2026-03-04",
+      "daysUntil": 0,
       "urgency": "high",
-      "historicalPattern": "Vector disease pattern detected from health complaints.",
-      "basisGrievances": 2100,
-      "suggestedAction": "Start intensive fogging and cleaning of stagnant water.",
-      "departmentAlerted": "Healthcare",
-      "alertSentAt": "2026-02-28 09:15 AM",
-      "description": "Vector disease pattern detected from health complaints. Dengue or malaria outbreak probability high in next 7-10 days.",
       "status": "Action Taken",
       "prevented": true,
-      "createdAt": "2026-02-24T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:55:45.626Z"
-    },
-    {
-      "id": "PRESEVA-004",
-      "type": "infrastructure_failure",
-      "state": "Uttar Pradesh",
-      "district": "Kanpur",
-      "category": "Infrastructure",
-      "title": "Road Surface Deterioration",
-      "probability": 68,
-      "daysUntil": 2,
-      "predictedDate": "2026-03-03",
-      "urgency": "medium",
-      "historicalPattern": "Multiple bridge and road complaints in same corridor.",
-      "basisGrievances": 450,
-      "suggestedAction": "Emergency road patching in the industrial zone.",
-      "departmentAlerted": "Infrastructure",
-      "alertSentAt": "2026-02-28 02:45 PM",
-      "description": "Multiple bridge and road complaints in same corridor. Systemic infrastructure failure predicted without intervention.",
-      "status": "Action Taken",
-      "prevented": true,
-      "createdAt": "2026-02-25T00:00:00.000Z",
-      "resolvedAt": "2026-03-02T17:55:47.262Z"
+      "probability": 88,
+      "basisGrievances": 1560,
+      "departmentAlerted": "Kerala Health Services",
+      "suggestedAction": "Deploy emergency buffer stock of anti-viral medications.",
+      "historicalPattern": "Seasonal escalation pattern matching monsoon surge detected.",
+      "createdAt": "2026-03-06T03:50:07.407Z",
+      "updatedAt": "2026-03-07T03:50:07.407Z"
     }
   ],
   "notifications": [
@@ -2460,6 +3251,177 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-05T07:15:12.405Z"
+    },
+    {
+      "id": "NOTIF-303D79C1",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-871473A6",
+      "message": "Your grievance GRV-871473A6 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-05T09:01:31.946Z"
+    },
+    {
+      "id": "NOTIF-BB1A6100",
+      "userId": "USR-477DA8BA",
+      "grievanceId": "GRV-4F2FA431",
+      "message": "Your grievance \"Hey this is a test bro\" has been filed. Tracking ID: GRV-4F2FA431",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T17:00:38.240Z"
+    },
+    {
+      "id": "NOTIF-BFC45A90",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "grievanceId": "GRV-0194D6C0",
+      "message": "Your grievance \"Water supply broken\" has been filed. Tracking ID: GRV-0194D6C0",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T18:18:49.277Z"
+    },
+    {
+      "id": "NOTIF-FD1B8D53",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "grievanceId": "GRV-0194D6C0",
+      "message": "Your grievance GRV-0194D6C0 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-05T18:27:55.275Z"
+    },
+    {
+      "id": "NOTIF-389C85B6",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "grievanceId": "GRV-352AA10D",
+      "message": "Your grievance \"Some Test to test s3 fiel upload\" has been filed. Tracking ID: GRV-352AA10D",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T18:29:53.049Z"
+    },
+    {
+      "id": "NOTIF-0B4B6866",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "grievanceId": "GRV-456244E7",
+      "message": "Your grievance \"water problem bro\" has been filed. Tracking ID: GRV-456244E7",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T19:37:32.721Z"
+    },
+    {
+      "id": "NOTIF-D6F70BFB",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "grievanceId": "GRV-5C651668",
+      "message": "Your grievance \"Audio test \" has been filed. Tracking ID: GRV-5C651668",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-05T19:50:11.187Z"
+    },
+    {
+      "id": "NOTIF-B5645AC9",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "grievanceId": "GRV-5C651668",
+      "message": "Your grievance GRV-5C651668 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-06T13:13:55.612Z"
+    },
+    {
+      "id": "NOTIF-C16869C7",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-1BBFC6EB",
+      "message": "Your grievance \"test test test big test\" has been filed. Tracking ID: GRV-1BBFC6EB",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:29:34.423Z"
+    },
+    {
+      "id": "NOTIF-49231D5E",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-1BBFC6EB",
+      "message": "Your grievance GRV-1BBFC6EB status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:30:13.015Z"
+    },
+    {
+      "id": "NOTIF-C615CA5F",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-B96323D2",
+      "message": "Your grievance \"audio test hello bro\" has been filed. Tracking ID: GRV-B96323D2",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:31:39.782Z"
+    },
+    {
+      "id": "NOTIF-0EFD8CA9",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-B96323D2",
+      "message": "Your grievance GRV-B96323D2 status updated to: Critical",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-07T16:32:26.623Z"
+    },
+    {
+      "id": "NOTIF-DA106F12",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-BA5B068F",
+      "message": "Your grievance \"This is another test grievance\" has been filed. Tracking ID: GRV-BA5B068F",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T00:07:34.587Z"
+    },
+    {
+      "id": "NOTIF-5E2869DF",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-05AB1014",
+      "message": "Your grievance \"Test for eventbridge\" has been filed. Tracking ID: GRV-05AB1014",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T01:07:34.759Z"
+    },
+    {
+      "id": "NOTIF-1DB07C21",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-94DD2AE2",
+      "message": "Your grievance \"TTEST\" has been filed. Tracking ID: GRV-94DD2AE2",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T01:21:11.844Z"
+    },
+    {
+      "id": "NOTIF-5EF876F4",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-94DD2AE2",
+      "message": "Your grievance GRV-94DD2AE2 status updated to: Resolved (Pending Verification)",
+      "type": "info",
+      "isRead": false,
+      "sentAt": "2026-03-08T01:21:55.244Z"
+    },
+    {
+      "id": "NOTIF-04CE57A5",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-B5CEF671",
+      "message": "Your grievance \"TEst for recko\" has been filed. Tracking ID: GRV-B5CEF671",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T03:21:00.341Z"
+    },
+    {
+      "id": "NOTIF-F2954A54",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-0CB4593E",
+      "message": "Your grievance \"afasdfasfsfsf\" has been filed. Tracking ID: GRV-0CB4593E",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T03:42:56.608Z"
+    },
+    {
+      "id": "NOTIF-AFED1902",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-3180507F",
+      "message": "Your grievance \"afsaf fas fas fass \" has been filed. Tracking ID: GRV-3180507F",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T03:48:36.765Z"
     }
   ],
   "communityPosts": [
@@ -2470,11 +3432,28 @@
       "content": "Summer is coming and water supply is already unreliable. Sign this petition to demand daily 6-hour supply.",
       "category": "Water Supply",
       "state": "Uttar Pradesh",
-      "votes": 1247,
+      "votes": 1253,
       "isPetition": true,
-      "petitionCount": 4821,
+      "petitionCount": 4827,
       "responses": [],
-      "createdAt": "2026-02-15T00:00:00.000Z"
+      "createdAt": "2026-02-15T00:00:00.000Z",
+      "signers": [
+        "a4c8a448-40d1-70a6-1845-3113c82f9834",
+        "6438c408-10f1-7029-42ac-3e794871ef66",
+        "347814c8-4041-7035-251d-3deb55a40609",
+        "USR-CIT-001",
+        "USR-606E9802",
+        "USR-A0F40524"
+      ],
+      "voters": [
+        "a4c8a448-40d1-70a6-1845-3113c82f9834",
+        "6438c408-10f1-7029-42ac-3e794871ef66",
+        "347814c8-4041-7035-251d-3deb55a40609",
+        "USR-CIT-001",
+        "USR-606E9802",
+        "USR-A0F40524"
+      ],
+      "status": "target_reached"
     },
     {
       "id": "POST-002",
@@ -2524,14 +3503,47 @@
       "content": "5555555555555555555555",
       "category": "Infrastructure",
       "state": "Uttar Pradesh",
-      "votes": 2,
+      "votes": 3,
       "voters": [
         "USR-CIT-001",
-        "USR-DBFEF729"
+        "USR-DBFEF729",
+        "a4c8a448-40d1-70a6-1845-3113c82f9834"
       ],
       "isPetition": false,
       "responses": [],
       "createdAt": "2026-03-04T19:45:04.269Z"
+    },
+    {
+      "id": "POST-4677B534",
+      "userId": "a4c8a448-40d1-70a6-1845-3113c82f9834",
+      "authorName": "Citizen",
+      "title": "Interesting right",
+      "content": "Interesting right",
+      "category": "Healthcare",
+      "state": "All India",
+      "votes": 1,
+      "voters": [
+        "a4c8a448-40d1-70a6-1845-3113c82f9834"
+      ],
+      "isPetition": false,
+      "responses": [],
+      "createdAt": "2026-03-05T21:24:38.815Z"
+    },
+    {
+      "id": "POST-0E0DB06C",
+      "userId": "USR-CIT-001",
+      "authorName": "Ramesh Kumar",
+      "title": "xvzxvv",
+      "content": "xvzxcv",
+      "category": "Transport",
+      "state": "Uttar Pradesh",
+      "votes": 1,
+      "voters": [
+        "USR-CIT-001"
+      ],
+      "isPetition": false,
+      "responses": [],
+      "createdAt": "2026-03-07T14:06:44.275Z"
     }
   ],
   "chatHistory": [],

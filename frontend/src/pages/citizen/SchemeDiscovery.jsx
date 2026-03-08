@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose, MdBookmark, MdBookmarkBorder, MdShare, MdSend, MdTrackChanges } from 'react-icons/md';
+import { MdSchool, MdSearch, MdCheck, MdArrowForward, MdFilterList, MdHistory, MdHelpOutline, MdClose, MdBookmark, MdBookmarkBorder, MdShare, MdSend, MdTrackChanges, MdBolt } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine, apiBookmarkScheme, apiUnbookmarkScheme, apiGetBookmarkedSchemes, apiApplyScheme, apiGetMySchemeApplications } from '../../services/api.service';
+import { apiGetGrievances, apiGetSchemes, apiGetMatchedSchemes, apiGetSchemesEligibilityCheck, apiGetSchemesTimeMachine, apiBookmarkScheme, apiUnbookmarkScheme, apiGetBookmarkedSchemes, apiApplyScheme, apiGetMySchemeApplications } from '../../services/api.service';
 import { INDIAN_STATES } from '../../mock/mockData';
 
 const CATEGORIES = ['Agriculture', 'Healthcare', 'Housing', 'Education', 'Labour & Employment', 'Pension & Social Security', 'Women & Child'];
@@ -34,6 +34,22 @@ export default function SchemeDiscovery() {
     const [timeMachineYear, setTimeMachineYear] = useState(2026);
     const [eligibilityModal, setEligibilityModal] = useState(false);
     const [eliForm, setEliForm] = useState({ age: 18, income: 100000, state: 'Delhi', gender: 'male' });
+    const [textractIncomeDetails, setTextractIncomeDetails] = useState(null);
+
+    useEffect(() => {
+        if (eligibilityModal && !textractIncomeDetails) {
+            apiGetGrievances().then(res => {
+                const grievances = res.data?.grievances || res.data || [];
+                if (Array.isArray(grievances)) {
+                    const recentWithIncome = grievances.find(g => g.extractedIncome > 0);
+                    if (recentWithIncome) {
+                        setTextractIncomeDetails({ income: recentWithIncome.extractedIncome, docId: recentWithIncome.id || recentWithIncome.trackingId });
+                        setEliForm(f => ({ ...f, income: recentWithIncome.extractedIncome }));
+                    }
+                }
+            }).catch(() => { });
+        }
+    }, [eligibilityModal, textractIncomeDetails]);
 
     useEffect(() => {
         const load = async () => {
@@ -81,7 +97,8 @@ export default function SchemeDiscovery() {
         apiGetBookmarkedSchemes().then(res => {
             if (res.success && Array.isArray(res.data)) {
                 const bm = {};
-                res.data.forEach(s => { bm[s.id] = true; });
+                // Server returns objects with schemeId, legacy may return id
+                res.data.forEach(s => { bm[s.schemeId || s.id] = true; });
                 setBookmarks(bm);
             }
         });
@@ -94,13 +111,21 @@ export default function SchemeDiscovery() {
         });
     }, []);
 
-    const handleBookmark = async (e, id) => {
+    const handleBookmark = async (e, scheme) => {
         e.stopPropagation();
+        const id = scheme.id;
         if (bookmarks[id]) {
             await apiUnbookmarkScheme(id);
             setBookmarks(bm => { const n = { ...bm }; delete n[id]; return n; });
         } else {
-            await apiBookmarkScheme(id);
+            await apiBookmarkScheme({
+                schemeId: id,
+                name: scheme.name,
+                category: scheme.category,
+                state: scheme.state,
+                description: scheme.description || '',
+                benefit: scheme.benefit || ''
+            });
             setBookmarks(bm => ({ ...bm, [id]: true }));
         }
     };
@@ -221,7 +246,7 @@ export default function SchemeDiscovery() {
                                 <span style={{ background: `${catColors[s.category] || '#6B7280'}15`, color: catColors[s.category] || '#6B7280', border: `1px solid ${catColors[s.category] || '#6B7280'}30`, padding: '3px 10px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700 }}>{s.category}</span>
                                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                                     <span className={`badge ${s.isActive ? 'badge-resolved' : 'badge-pending'}`}>{s.isActive ? 'Active' : 'Closed'}</span>
-                                    <button onClick={e => handleBookmark(e, s.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: bookmarks[s.id] ? '#8B5CF6' : 'var(--text-muted)', fontSize: '1.1rem', padding: 2 }} title={bookmarks[s.id] ? 'Remove bookmark' : 'Bookmark'}>
+                                    <button onClick={e => handleBookmark(e, s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: bookmarks[s.id] ? '#8B5CF6' : 'var(--text-muted)', fontSize: '1.1rem', padding: 2 }} title={bookmarks[s.id] ? 'Remove bookmark' : 'Bookmark'}>
                                         {bookmarks[s.id] ? <MdBookmark /> : <MdBookmarkBorder />}
                                     </button>
                                     <button onClick={e => handleShare(e, s)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1rem', padding: 2 }} title="Share"><MdShare /></button>
@@ -322,8 +347,15 @@ export default function SchemeDiscovery() {
                                 <input type="number" className="form-input" value={eliForm.age} onChange={e => setEliForm({ ...eliForm, age: parseInt(e.target.value) })} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Monthly Income (₹)</label>
-                                <input type="number" className="form-input" value={eliForm.income} onChange={e => setEliForm({ ...eliForm, income: parseInt(e.target.value) })} />
+                                <label className="form-label">
+                                    Monthly Income (₹)
+                                    {textractIncomeDetails && (
+                                        <span style={{ marginLeft: 8, fontSize: '0.65rem', background: 'rgba(59,130,246,0.15)', color: '#60A5FA', padding: '2px 6px', borderRadius: 4, whiteSpace: 'nowrap' }}>
+                                            <MdBolt style={{ verticalAlign: 'text-bottom' }} /> Auto-filled by AWS Textract (from {textractIncomeDetails.docId})
+                                        </span>
+                                    )}
+                                </label>
+                                <input type="number" className="form-input" value={eliForm.income} onChange={e => setEliForm({ ...eliForm, income: parseInt(e.target.value) || 0 })} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">State</label>

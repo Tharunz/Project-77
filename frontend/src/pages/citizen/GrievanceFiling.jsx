@@ -39,6 +39,7 @@ export default function GrievanceFiling() {
     const [submitted, setSubmitted] = useState(null);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [idCopied, setIdCopied] = useState(false);
     const [recordingVoice, setRecordingVoice] = useState(false);
     const [charCount, setCharCount] = useState(0);
     const [attachedFiles, setAttachedFiles] = useState([]);
@@ -225,10 +226,18 @@ export default function GrievanceFiling() {
                 borderRadius: 'var(--radius)', padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 6, width: '100%'
             }}>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{t('trackingId')}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: '1.4rem', fontWeight: 800, color: 'var(--teal)' }}>{submitted.id}</span>
-                    <button onClick={() => navigator.clipboard?.writeText(submitted.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem' }}>
-                        <MdCopyAll />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <span style={{
+                        fontFamily: 'monospace', fontSize: '0.9rem', fontWeight: 800,
+                        color: '#00E5FF', background: 'rgba(0,229,255,0.07)',
+                        border: '1px solid rgba(0,229,255,0.2)', borderRadius: 6,
+                        padding: '4px 12px', letterSpacing: '0.06em'
+                    }}>{submitted.id}</span>
+                    <button
+                        onClick={() => { navigator.clipboard?.writeText(submitted.id); setIdCopied(true); setTimeout(() => setIdCopied(false), 2000); }}
+                        style={{ background: idCopied ? 'rgba(0,200,150,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${idCopied ? 'rgba(0,200,150,0.3)' : 'var(--border)'}`, borderRadius: 6, padding: '4px 10px', cursor: 'pointer', color: idCopied ? '#00C896' : 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 600, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 4 }}
+                    >
+                        {idCopied ? '✓ Copied!' : '⧉ Copy'}
                     </button>
                 </div>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Save this ID to track your grievance</p>
@@ -284,7 +293,7 @@ export default function GrievanceFiling() {
                     <div className="form-group">
                         <label className="form-label">Recording Language</label>
                         <select className="form-input" value={audioLang} onChange={e => setAudioLang(e.target.value)}>
-                            {['हिन्दी','English','தமிழ்','తెలుగు','বাংলা','मराठी','ಕನ್ನಡ','മലയാളം','ગુજરાતી','ਪੰਜਾਬੀ'].map(l => <option key={l}>{l}</option>)}
+                            {['हिन्दी', 'English', 'தமிழ்', 'తెలుగు', 'বাংলা', 'मराठी', 'ಕನ್ನಡ', 'മലയാളം', 'ગુજરાતી', 'ਪੰਜਾਬੀ'].map(l => <option key={l}>{l}</option>)}
                         </select>
                     </div>
 
@@ -293,7 +302,7 @@ export default function GrievanceFiling() {
                         <AudioWaveform active={audioRecording} />
                         <div style={{ fontFamily: 'monospace', fontSize: '1.3rem', color: audioRecording ? '#EF4444' : 'var(--text-muted)', fontWeight: 700 }}>
                             {audioRecording && <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#EF4444', marginRight: 8, animation: 'blink 1s ease-in-out infinite' }} />}
-                            {String(Math.floor(audioTime / 60)).padStart(2,'0')}:{String(audioTime % 60).padStart(2,'0')} / {String(MAX_AUDIO_SEC / 60).padStart(2,'0')}:00
+                            {String(Math.floor(audioTime / 60)).padStart(2, '0')}:{String(audioTime % 60).padStart(2, '0')} / {String(MAX_AUDIO_SEC / 60).padStart(2, '0')}:00
                         </div>
                         {!audioBlob ? (
                             <button type="button" onClick={audioRecording ? stopAudioRecording : startAudioRecording} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 32px', borderRadius: 50, border: 'none', background: audioRecording ? '#EF4444' : 'linear-gradient(135deg,#FF6B2C,#EF4444)', color: 'white', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer', boxShadow: audioRecording ? '0 0 24px rgba(239,68,68,0.5)' : 'none' }}>

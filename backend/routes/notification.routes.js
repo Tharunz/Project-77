@@ -14,6 +14,7 @@ const db = require('../db/database');
 
 // ─── POST /api/notification/send (admin) ──────────────────────────────────────
 router.post('/send', protect, adminOnly, async (req, res, next) => {
+    console.log(`[ROUTE HIT] POST /notification/send - user: ${req.user?.id || 'none'}`);
     try {
         const { userId, message, type = 'info', grievanceId, sendEmail: doEmail = false, emailSubject, emailBody } = req.body;
 
@@ -50,6 +51,7 @@ router.post('/send', protect, adminOnly, async (req, res, next) => {
 
 // ─── GET /api/notification ──────────────────────────────────────────────────────
 router.get('/', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /notification - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
         const notifications = db_instance.get('notifications')
@@ -73,6 +75,7 @@ router.get('/', protect, (req, res, next) => {
 
 // ─── GET /api/notification/history/:userId ────────────────────────────────────
 router.get('/history/:userId', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] GET /notification/history/${req.params.userId} - user: ${req.user?.id || 'none'}`);
     try {
         if (req.user.role !== 'admin' && req.user.id !== req.params.userId) {
             return res.status(403).json({
@@ -104,6 +107,7 @@ router.get('/history/:userId', protect, (req, res, next) => {
 
 // ─── PATCH /api/notification/:id/read ────────────────────────────────────────
 router.patch('/:id/read', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] PATCH /notification/${req.params.id}/read - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
         const notification = db_instance.get('notifications').find({ id: req.params.id }).value();
@@ -139,6 +143,7 @@ router.patch('/:id/read', protect, (req, res, next) => {
 
 // ─── PATCH /api/notification/mark-all-read ───────────────────────────────────
 router.patch('/mark-all-read', protect, (req, res, next) => {
+    console.log(`[ROUTE HIT] PATCH /notification/mark-all-read - user: ${req.user?.id || 'none'}`);
     try {
         const db_instance = db.getDb();
         const notifications = db_instance.get('notifications')

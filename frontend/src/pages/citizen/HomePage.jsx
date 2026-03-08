@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, Suspense, lazy, useCallback, memo, useMemo } from 'react';
+import { apiGetPublicPredictions } from '../../services/api.service';
 import { Link } from 'react-router-dom';
 import { MdArrowForward, MdShield, MdDashboard, MdPerson } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
@@ -13,18 +14,18 @@ import './HomePage.css';
 const IndiaMap = lazy(() => import('../../components/IndiaMap'));
 
 /* ── Page data ── */
-const ALERTS = [
-    '⚡ PreSeva Alert · Water Supply Failure predicted · Muzaffarpur, Bihar · 91% confidence · Dept. Alerted',
+const DEFAULT_ALERTS = [
+    '⚡ PreSeva Alert · Water Supply Failure predicted · Bihar · 91% confidence · Dept. Alerted',
     '✓ Resolved · 2.3L citizens received PM Kisan benefits in Rajasthan · Avg time: 1.8 days',
-    '⚡ PreSeva Alert · Road maintenance failure predicted · Varanasi, UP · 84% · PWD Notified',
+    '⚡ PreSeva Alert · Healthcare Gap predicted · Madhya Pradesh · 84% · Health Dept. Alerted',
     '📊 Grievance #GRV-8847 resolved in 1.2 days · SLA met 3.8 days early',
-    '⚡ PreSeva Alert · PHC Staffing Gap · Palamu, Jharkhand · 78% · Health Dept. Alerted',
+    '⚡ PreSeva Alert · Infrastructure Risk predicted · Odisha · 78% · PWD Alerted',
     '✓ 43 Problems Prevented This Month · 8,743 Citizens Never Faced a Service Failure',
 ];
-const PREDS = [
-    { prob: 91, title: 'Water Supply Failure', sub: 'Muzaffarpur, Bihar · 48 hrs', status: 'Dept. Alerted', sc: '#FFB800' },
-    { prob: 84, title: 'Road Collapse — NH-27', sub: 'Varanasi, UP · 4 days', status: '✓ Prevented', sc: '#00E5A0' },
-    { prob: 78, title: 'PHC Doctor Gap', sub: 'Palamu, Jharkhand · 6 days', status: 'Under Review', sc: '#5C8EFF' },
+const DEFAULT_PREDS = [
+    { prob: 91, title: 'Water Supply Failure', sub: 'Bihar · 48 hrs', status: 'Dept. Alerted', sc: '#FFB800' },
+    { prob: 84, title: 'Healthcare Gap', sub: 'Madhya Pradesh · 48 hrs', status: 'Under Review', sc: '#5C8EFF' },
+    { prob: 78, title: 'Infrastructure Risk', sub: 'Odisha · 48 hrs', status: 'Monitoring', sc: '#00E5A0' },
 ];
 
 /* ── Hooks ── */
@@ -112,14 +113,100 @@ export default function HomePage() {
     const [vC, rC] = useCounter(142, 2400); const [vS, rS] = useCounter(500, 1900);
     const [vL, rL] = useCounter(22, 1600); const [vA, rA] = useCounter(91, 2100);
     const sr1 = useSR(), sr2 = useSR(), sr3 = useSR(), sr4 = useSR(), sr5 = useSR();
-    const [tickerQueue, setTickerQueue] = useState(ALERTS);
+    const [tickerQueue, setTickerQueue] = useState(DEFAULT_ALERTS);
     const [hoveredLegend, setHoveredLegend] = useState(null);
     const [activeLegendFilter, setActiveLegendFilter] = useState(null);
     const [mapReady, setMapReady] = useState(false);
     const [timeSinceUpdate, setTimeSinceUpdate] = useState(0);
     const [liveGrievanceCount, setLiveGrievanceCount] = useState(247);
+    const [sagePredictions, setSagePredictions] = useState(DEFAULT_PREDS);
+    const [sageMakerActive, setSageMakerActive] = useState(false);
+
+    // Fetch live SageMaker predictions for ticker and PreSeva section
+    useEffect(() => {
+        apiGetPublicPredictions().then(res => {
+            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+                const isSM = res.poweredBy === 'Amazon SageMaker';
+                setSageMakerActive(isSM);
+                // Populate ticker with live alerts
+                const liveAlerts = res.data.map(p =>
+                    `⚡ PreSeva Alert · ${p.category} · ${p.state} · ${p.confidence} · Dispatch Recommended`
+                );
+                setTickerQueue(prev => [
+                    ...liveAlerts,
+                    '✓ Resolved · 2.3L citizens received PM Kisan benefits in Rajasthan · Avg time: 1.8 days',
+                    '📊 Grievance #GRV-8847 resolved in 1.2 days · SLA met 3.8 days early',
+                    '✓ 43 Problems Prevented This Month · 8,743 Citizens Never Faced a Service Failure',
+                ]);
+                // Populate PreSeva prediction cards
+                const livePreds = res.data.slice(0, 3).map(p => ({
+                    prob: Math.round(p.probability * 100),
+                    title: `${p.category} Risk`,
+                    sub: `${p.state} · ${p.predictedTimeframe || '48 hrs'}`,
+                    status: p.riskLevel === 'CRITICAL' ? '🚨 Critical' : p.riskLevel === 'HIGH' ? '⚠️ High Risk' : 'Monitoring',
+                    sc: p.riskLevel === 'CRITICAL' ? '#FF3B3B' : p.riskLevel === 'HIGH' ? '#FF5500' : '#FFB800'
+                }));
+                setSagePredictions(livePreds);
+            }
+        }).catch(() => { /* silent fallback */ });
+    }, []);
 
     const handleMapReady = useCallback(() => setMapReady(true), []);
+
+    // Called by IndiaMap when it loads its own predictions (optional enrichment)
+    const handlePredictionsLoaded = useCallback((preds, poweredBy) => {
+        if (poweredBy === 'Amazon SageMaker') setSageMakerActive(true);
+    }, []);
+
+    // Handle real-time map pulse events for ticker
+    const handleMapPulse = useCallback((msg) => {
+        setTickerQueue(prev => {
+            if (prev[0] === msg) return prev;
+            return [msg, ...prev].slice(0, 15);
+        });
+    }, []);
+
+    // Live Kinesis Feed via SSE
+    useEffect(() => {
+        const eventSource = new EventSource('/api/live-feed');
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                let msg = '';
+
+                switch (data.type) {
+                    case 'GRIEVANCE_FILED':
+                        msg = `📊 Grievance Filed · ${data.category} · ${data.state} · Priority: ${data.priority}`;
+                        break;
+                    case 'FRAUD_REVIEW':
+                        msg = `🛡️ Fraud Review · ${data.grievanceId} · Result: ${data.finalStatus}`;
+                        break;
+                    case 'USER_LOGIN':
+                        msg = `👤 Access Portal · Citizen Login from ${data.state || 'India'}`;
+                        break;
+                    case 'PRESEVA_ANALYSIS_RUN':
+                        msg = `🔮 PreSeva Active · Predicted ${data.criticalCount} Critical Anomalies`;
+                        break;
+                    case 'PRESEVA_PREVENTED':
+                        msg = `✅ Threat Mitigated · ${data.category} · ${data.state} · Prevention Confirmed`;
+                        break;
+                    default:
+                        msg = `⚡ Project NCIE · Real-time Operational Pulse detected`;
+                }
+
+                handleMapPulse(msg);
+            } catch (err) {
+                console.error('[SSE] Parse error:', err);
+            }
+        };
+
+        eventSource.onerror = () => {
+            console.warn('[SSE] Connection lost. Attempting reconnect...');
+        };
+
+        return () => eventSource.close();
+    }, [handleMapPulse]);
 
     useEffect(() => {
         const t1 = setInterval(() => {
@@ -132,32 +219,33 @@ export default function HomePage() {
         return () => { clearInterval(t1); clearInterval(t2); }
     }, []);
 
-    const handleMapPulse = useCallback((msg) => {
-        setTickerQueue(prev => {
-            if (prev[0] === msg) return prev;
-            return [msg, ...prev].slice(0, 15);
-        });
-    }, []);
-
     const mapLegend = [
-        { lbl: 'SAFE', c: '#00E5A0', lvl: 0 },
-        { lbl: 'LOW', c: '#5C8EFF', lvl: 1 },
-        { lbl: 'MEDIUM', c: '#FFB800', lvl: 2 },
-        { lbl: 'HIGH', c: '#FF5500', lvl: 3 },
-        { lbl: 'CRITICAL', c: '#FF3B3B', lvl: 4 },
+        { lbl: 'SAFE', c: '#06b6d4', lvl: 0 },
+        { lbl: 'LOW', c: '#06b6d4', lvl: 1 },
+        { lbl: 'MEDIUM', c: '#eab308', lvl: 2 },
+        { lbl: 'HIGH', c: '#f97316', lvl: 3 },
+        { lbl: 'CRITICAL', c: '#ef4444', lvl: 4 },
     ];
 
     // Memoize the ticker entries to prevent reset of animation
-    const tickerContent = useMemo(() => (
-        <div className="ticker-inner">
-            {tickerQueue.map((a, i) => (
-                <TickerItem key={`q-${i}-${a.substring(0, 10)}`} text={a} isNew={i === 0} />
-            ))}
-            {tickerQueue.map((a, i) => (
-                <TickerItem key={`d-${i}-${a.substring(0, 10)}`} text={a} />
-            ))}
-        </div>
-    ), [tickerQueue]);
+    const tickerContent = useMemo(() => {
+        const PIXELS_PER_SECOND = 80;
+        const contentWidth = tickerQueue.length * 320;
+        const duration = contentWidth / PIXELS_PER_SECOND;
+
+        return (
+            <div className="ticker-inner" style={{
+                animation: `ticker-scroll ${duration}s linear infinite`
+            }}>
+                {tickerQueue.map((a, i) => (
+                    <TickerItem key={`q-${i}-${a.substring(0, 10)}`} text={a} isNew={i === 0} />
+                ))}
+                {tickerQueue.map((a, i) => (
+                    <TickerItem key={`d-${i}-${a.substring(0, 10)}`} text={a} />
+                ))}
+            </div>
+        );
+    }, [tickerQueue]);
 
     return (
         <div className="it">
@@ -239,7 +327,7 @@ export default function HomePage() {
                             {/* The Holographic Map */}
                             <div className="it-map-svg-wrap">
                                 <Suspense fallback={<div className="map-fallback">INITIALIZING INTELLIGENCE CORE...</div>}>
-                                    <IndiaMap onPulse={handleMapPulse} hoveredLegendLevel={hoveredLegend} activeFilterLevel={activeLegendFilter} onReady={handleMapReady} />
+                                    <IndiaMap onPulse={handleMapPulse} hoveredLegendLevel={hoveredLegend} activeFilterLevel={activeLegendFilter} onReady={handleMapReady} onPredictionsLoaded={handlePredictionsLoaded} />
                                 </Suspense>
                             </div>
                         </div>
@@ -253,7 +341,7 @@ export default function HomePage() {
                                         <button
                                             key={item.lbl}
                                             className={`it-ss-pill ${isActive ? 'active' : ''}`}
-                                            style={{ '--pill-color': item.c, '--pill-color-rgb': item.c === '#00E5A0' ? '0,229,160' : item.c === '#5C8EFF' ? '92,142,255' : item.c === '#FFB800' ? '255,184,0' : item.c === '#FF5500' ? '255,85,0' : '255,59,59' }}
+                                            style={{ '--pill-color': item.c, '--pill-color-rgb': item.c === '#06b6d4' ? '6,182,212' : item.c === '#00E5A0' ? '0,229,160' : item.c === '#5C8EFF' ? '92,142,255' : item.c === '#eab308' ? '234,179,8' : item.c === '#FFB800' ? '255,184,0' : item.c === '#f97316' ? '249,115,22' : item.c === '#FF5500' ? '255,85,0' : item.c === '#ef4444' ? '239,68,68' : '255,59,59' }}
                                             onMouseEnter={() => setHoveredLegend(item.lvl)}
                                             onMouseLeave={() => setHoveredLegend(null)}
                                             onClick={() => setActiveLegendFilter(isActive ? null : item.lvl)}
@@ -265,6 +353,7 @@ export default function HomePage() {
                                 })}
                             </div>
                             <div className="it-ss-right">
+
                                 <div className="it-ss-stat"><span>36</span> STATES MONITORED</div>
                                 <div className="it-ss-div" />
                                 <div className="it-ss-stat"><span>{liveGrievanceCount}</span> ACTIVE GRIEVANCES</div>
@@ -367,7 +456,7 @@ export default function HomePage() {
                     </div>
                 </div>
                 <div className="it-pv-right sr" ref={sr2}>
-                    {PREDS.map((p, i) => { const rc = p.prob > 88 ? '#FF5500' : p.prob > 80 ? '#FFB800' : '#5C8EFF'; return (<div key={i} className="it-pred"><Ring prob={p.prob} color={rc} /><div className="it-pred-info"><h4>{p.title}</h4><p>{p.sub}</p></div><span className="it-pred-badge" style={{ background: `${p.sc}18`, color: p.sc, border: `1px solid ${p.sc}30` }}>{p.status}</span></div>); })}
+                    {sagePredictions.map((p, i) => { const rc = p.prob > 88 ? '#FF5500' : p.prob > 80 ? '#FFB800' : '#5C8EFF'; return (<div key={i} className="it-pred"><Ring prob={p.prob} color={rc} /><div className="it-pred-info"><h4>{p.title}</h4><p>{p.sub}</p></div><span className="it-pred-badge" style={{ background: `${p.sc}18`, color: p.sc, border: `1px solid ${p.sc}30` }}>{p.status}</span></div>); })}
                 </div>
             </section>
 

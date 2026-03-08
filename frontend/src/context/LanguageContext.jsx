@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { apiFetch } from '../services/api.service';
 
 const LANGUAGES = [
     { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -181,20 +182,104 @@ const TRANSLATIONS = {
 const getTranslations = (code) => TRANSLATIONS[code] || TRANSLATIONS.en;
 
 const LanguageContext = createContext({
-    lang: 'en', setLang: () => {}, t: k => k, languages: LANGUAGES,
+    lang: 'en', setLang: () => { }, t: k => k, languages: LANGUAGES,
 });
 
+// Cache prefix for localStorage
+const CACHE_PREFIX = 'ncie_translations_';
+
 export function LanguageProvider({ children }) {
-    const stored = localStorage.getItem('ncie_lang') || 'en';
-    const [lang, setLangState] = useState(stored);
+    const storedLang = localStorage.getItem('ncie_lang') || 'en';
+    const [lang, setLangState] = useState(storedLang);
+
+    // In-memory cache for dynamic translations
+    const [dynamicCache, setDynamicCache] = useState(() => {
+        const cache = {};
+        LANGUAGES.forEach(l => {
+            try {
+                const saved = localStorage.getItem(`${CACHE_PREFIX}${l.code}`);
+                cache[l.code] = saved ? JSON.parse(saved) : {};
+            } catch (e) {
+                cache[l.code] = {};
+            }
+        });
+        return cache;
+    });
+
+    // Queue for strings that need translation
+    const translationQueue = useRef(new Set());
+    const isTranslating = useRef(false);
 
     const setLang = useCallback((code) => {
         localStorage.setItem('ncie_lang', code);
         setLangState(code);
     }, []);
 
-    const translations = getTranslations(lang);
-    const t = useCallback((key) => translations[key] || key, [translations]);
+    // The core translation function
+    const t = useCallback((key) => {
+        if (!key || typeof key !== 'string') return key;
+        if (lang === 'en') return key;
+
+        // 1. Check static map
+        const staticMap = TRANSLATIONS[lang] || {};
+        if (staticMap[key]) return staticMap[key];
+
+        // 2. Check dynamic cache
+        const langCache = dynamicCache[lang] || {};
+        if (langCache[key]) return langCache[key];
+
+        // 3. Queue for background translation if not already queued
+        if (!translationQueue.current.has(key)) {
+            translationQueue.current.add(key);
+        }
+
+        return key; // Return original while waiting
+    }, [lang, dynamicCache]);
+
+    // Background process to clear the queue
+    useEffect(() => {
+        if (lang === 'en' || translationQueue.current.size === 0 || isTranslating.current) return;
+
+        const processQueue = async () => {
+            isTranslating.current = true;
+            const keysToTranslate = Array.from(translationQueue.current).slice(0, 20); // Batch limit
+
+            try {
+                const response = await apiFetch('/translate/batch', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        texts: keysToTranslate,
+                        targetLang: lang
+                    })
+                });
+
+                if (response.success && Array.isArray(response.data)) {
+                    const newTranslations = {};
+                    response.data.forEach(item => {
+                        newTranslations[item.originalText] = item.translatedText;
+                        translationQueue.current.delete(item.originalText);
+                    });
+
+                    setDynamicCache(prev => {
+                        const updated = {
+                            ...prev,
+                            [lang]: { ...(prev[lang] || {}), ...newTranslations }
+                        };
+                        // Persist to localStorage
+                        localStorage.setItem(`${CACHE_PREFIX}${lang}`, JSON.stringify(updated[lang]));
+                        return updated;
+                    });
+                }
+            } catch (err) {
+                console.error('[LanguageContext] Translation failed:', err);
+            } finally {
+                isTranslating.current = false;
+            }
+        };
+
+        const timer = setTimeout(processQueue, 1000); // Debounce
+        return () => clearTimeout(timer);
+    }, [lang, dynamicCache]);
 
     return (
         <LanguageContext.Provider value={{ lang, setLang, t, languages: LANGUAGES }}>

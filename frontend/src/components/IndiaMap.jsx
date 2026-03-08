@@ -1,26 +1,108 @@
-import React, { useState, useEffect, memo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useCallback, useRef } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { apiGetPublicPredictions } from '../services/api.service';
 
 const GEO_URL = "/india_states.geojson";
 let globalGeoCache = null;
 
 const normalizeStateName = (name) => {
     if (!name) return "";
-    const n = name.trim().toLowerCase();
-    if (n.includes("delhi")) return "Delhi";
-    if (n.includes("andaman")) return "Andaman and Nicobar Islands";
-    if (n.includes("dadara") || n.includes("dadra") || n.includes("daman")) return "Dadra and Nagar Haveli and Daman and Diu";
-    if (n === "jammu & kashmir" || n === "jammu and kashmir") return "Jammu and Kashmir";
-    if (n === "uttaranchal" || n === "uttarakhand") return "Uttarakhand";
-    if (n === "orissa" || n === "odisha") return "Odisha";
-    if (n === "pondicherry") return "Puducherry";
-
-    // Case-insensitive fallback match
-    const standardName = Object.keys(STATE_DISTRESS).find(k => k.toLowerCase() === n);
-    return standardName || name;
+    const map = {
+        // North variants
+        'Jammu & Kashmir': 'Jammu and Kashmir',
+        'J & K': 'Jammu and Kashmir',
+        'J&K': 'Jammu and Kashmir',
+        // South variants — comprehensive coverage
+        'Tamilnadu': 'Tamil Nadu',
+        'TamilNadu': 'Tamil Nadu',
+        'tamil nadu': 'Tamil Nadu',
+        'TamilNadu': 'Tamil Nadu',
+        'karnataka': 'Karnataka',
+        'kerala': 'Kerala',
+        'Andra Pradesh': 'Andhra Pradesh',
+        'Andhra': 'Andhra Pradesh',
+        'AP': 'Andhra Pradesh',
+        'TS': 'Telangana',
+        'Telegana': 'Telangana',
+        'Telangana State': 'Telangana',
+        // NE variants
+        'Arunanchal Pradesh': 'Arunachal Pradesh',
+        'Arunachal': 'Arunachal Pradesh',
+        // UT variants
+        'Dadra & Nagar Haveli': 'Dadra and Nagar Haveli',
+        'Dadra and Nagar Haveli and Daman and Diu': 'Dadra and Nagar Haveli',
+        'Daman and Diu': 'Dadra and Nagar Haveli',
+        'Dadra & Nagar Haveli & Daman & Diu': 'Dadra and Nagar Haveli',
+        'Andaman & Nicobar': 'Andaman and Nicobar',
+        'Andaman & Nicobar Islands': 'Andaman and Nicobar',
+        'Andaman and Nicobar Islands': 'Andaman and Nicobar',
+        'A & N Islands': 'Andaman and Nicobar',
+        'NCT of Delhi': 'Delhi',
+        'Delhi NCT': 'Delhi',
+        'NCT Delhi': 'Delhi',
+        'Pondicherry': 'Puducherry',
+        'Pondy': 'Puducherry',
+        // Additional edge cases
+        'Madhya Bharat': 'Madhya Pradesh',
+        'U.P.': 'Uttar Pradesh',
+        'UP': 'Uttar Pradesh',
+        'M.P.': 'Madhya Pradesh',
+        'MP': 'Madhya Pradesh',
+        'T.N.': 'Tamil Nadu',
+        'TN': 'Tamil Nadu',
+        'K.L.': 'Kerala',
+        'KL': 'Kerala',
+        'A.P.': 'Andhra Pradesh',
+        'TG': 'Telangana',
+        'G.A.': 'Goa',
+        'GA': 'Goa',
+        'W.B.': 'West Bengal',
+        'WB': 'West Bengal',
+        'J&K': 'Jammu and Kashmir',
+        'D.N.H.': 'Dadra and Nagar Haveli',
+        'DNH': 'Dadra and Nagar Haveli',
+        'C.G.': 'Chhattisgarh',
+        'CG': 'Chhattisgarh',
+        'J.K.': 'Jammu and Kashmir',
+        'JK': 'Jammu and Kashmir',
+        'U.K.': 'Uttarakhand',
+        'UK': 'Uttarakhand',
+        'H.P.': 'Himachal Pradesh',
+        'HP': 'Himachal Pradesh',
+        'P.B.': 'Punjab',
+        'PB': 'Punjab',
+        'R.J.': 'Rajasthan',
+        'RJ': 'Rajasthan',
+        'M.H.': 'Maharashtra',
+        'MH': 'Maharashtra',
+        'O.D.': 'Odisha',
+        'OD': 'Odisha',
+        'A.S.': 'Assam',
+        'AS': 'Assam',
+        'BR': 'Bihar',
+        'HR': 'Haryana',
+        'JH': 'Jharkhand',
+        'OR': 'Odisha',
+        'PY': 'Puducherry',
+        'SK': 'Sikkim',
+        'TR': 'Tripura',
+        'ML': 'Meghalaya',
+        'MN': 'Manipur',
+        'MZ': 'Mizoram',
+        'NL': 'Nagaland',
+        'AR': 'Arunachal Pradesh',
+        'LA': 'Ladakh',
+        'LD': 'Ladakh',
+        'CH': 'Chandigarh',
+        'AN': 'Andaman and Nicobar',
+        'DN': 'Dadra and Nagar Haveli',
+        'DD': 'Daman and Diu'
+    };
+    return map[name] || name;
 };
 
-const STATE_DISTRESS = {
+// Fallback distress levels (used while SageMaker data is loading)
+const STATE_DISTRESS_FALLBACK = {
     'Jammu and Kashmir': 3, 'Ladakh': 1, 'Himachal Pradesh': 1, 'Punjab': 2, 'Chandigarh': 1, 'Uttarakhand': 1,
     'Haryana': 2, 'Delhi': 3, 'Uttar Pradesh': 4, 'Rajasthan': 3, 'Bihar': 4, 'Sikkim': 0, 'West Bengal': 2, 'Assam': 2,
     'Arunachal Pradesh': 1, 'Nagaland': 1, 'Manipur': 3, 'Meghalaya': 1, 'Tripura': 2, 'Mizoram': 0, 'Gujarat': 2,
@@ -29,46 +111,49 @@ const STATE_DISTRESS = {
     'Puducherry': 0, 'Andaman and Nicobar Islands': 0, 'Lakshadweep': 0,
 };
 
-const STATE_DISTRESS_KEYS = Object.keys(STATE_DISTRESS);
+const STATE_DISTRESS_KEYS = Object.keys(STATE_DISTRESS_FALLBACK);
+
+// Risk level → numeric distress level
+const RISK_TO_LEVEL = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
 
 const STATE_MOCK_DATA = {
-    'Uttar Pradesh': { g: 12405, top: 'Healthcare', rr: '82%', pred: 'Water Supply Issue', resp: '24h' },
-    'Bihar': { g: 9832, top: 'Education', rr: '76%', pred: 'Staff Shortage', resp: '36h' },
-    'Jharkhand': { g: 7421, top: 'Pension', rr: '71%', pred: 'Payment Delay', resp: '48h' },
-    'Delhi': { g: 6521, top: 'Transport', rr: '88%', pred: 'DTC Congestion', resp: '12h' },
-    'Maharashtra': { g: 5892, top: 'Agriculture', rr: '85%', pred: 'Grid Load Max', resp: '18h' },
-    'West Bengal': { g: 5432, top: 'Infrastructure', rr: '79%', pred: 'Bridge Integrity', resp: '28h' },
-    'Madhya Pradesh': { g: 4982, top: 'Public Works', rr: '81%', pred: 'Road Repair', resp: '30h' },
-    'Gujarat': { g: 4521, top: 'Energy', rr: '89%', pred: 'Solar Grid Balance', resp: '15h' },
-    'Rajasthan': { g: 4231, top: 'Water', rr: '74%', pred: 'Canal Leakage', resp: '40h' },
-    'Karnataka': { g: 3982, top: 'Technology', rr: '92%', pred: 'Broadband Outage', resp: '10h' },
-    'Tamil Nadu': { g: 3765, top: 'Industry', rr: '87%', pred: 'Industrial Waste', resp: '20h' },
-    'Andhra Pradesh': { g: 3421, top: 'Fisheries', rr: '83%', pred: 'Port Congestion', resp: '22h' },
-    'Telangana': { g: 3102, top: 'IT Services', rr: '94%', pred: 'Server Latency', resp: '8h' },
-    'Odisha': { g: 2987, top: 'Disaster Mgmt', rr: '91%', pred: 'Cyclone Warning', resp: '6h' },
-    'Kerala': { g: 2765, top: 'Tourism', rr: '88%', pred: 'Eco-System Balance', resp: '18h' },
-    'Assam': { g: 2543, top: 'Environment', rr: '76%', pred: 'Flood Risk', resp: '36h' },
-    'Punjab': { g: 2321, top: 'Agriculture', rr: '85%', pred: 'Crop Yield Opt', resp: '24h' },
-    'Haryana': { g: 2109, top: 'Livestock', rr: '84%', pred: 'Fodder Scarcity', resp: '26h' },
-    'Chhattisgarh': { g: 1987, top: 'Mining', rr: '78%', pred: 'Safety Protocol', resp: '32h' },
-    'Uttarakhand': { g: 1765, top: 'Hydropower', rr: '82%', pred: 'Turbine Maint', resp: '24h' },
-    'Himachal Pradesh': { g: 1543, top: 'Horticulture', rr: '86%', pred: 'Apple Export', resp: '20h' },
-    'Jammu and Kashmir': { g: 1321, top: 'Connectivity', rr: '72%', pred: 'Network Blackout', resp: '48h' },
-    'Ladakh': { g: 876, top: 'Logistics', rr: '95%', pred: 'Supply Chain Opt', resp: '12h' },
-    'Goa': { g: 654, top: 'Maritime', rr: '93%', pred: 'Beach Safety', resp: '14h' },
-    'Manipur': { g: 543, top: 'Public Safety', rr: '68%', pred: 'Civil Order', resp: '72h' },
-    'Nagaland': { g: 432, top: 'Rural Dev', rr: '75%', pred: 'Village Access', resp: '48h' },
-    'Arunachal Pradesh': { g: 321, top: 'Border Infra', rr: '81%', pred: 'Strategic Route', resp: '24h' },
-    'Mizoram': { g: 210, top: 'Forestry', rr: '90%', pred: 'Bamboo Flowering', resp: '18h' },
-    'Tripura': { g: 198, top: 'Communication', rr: '83%', pred: 'Signal Strength', resp: '22h' },
-    'Meghalaya': { g: 187, top: 'Weather', rr: '89%', pred: 'Heavy Rain Prep', resp: '14h' },
-    'Sikkim': { g: 154, top: 'Organic Farming', rr: '96%', pred: 'Certification', resp: '10h' },
-    'Chandigarh': { g: 142, top: 'Urban Planning', rr: '97%', pred: 'Zoning Efficiency', resp: '8h' },
-    'Puducherry': { g: 132, top: 'Coastal', rr: '94%', pred: 'Erosion Monitor', resp: '12h' },
-    'Dadra and Nagar Haveli and Daman and Diu': { g: 121, top: 'Industry', rr: '92%', pred: 'Factory Safety', resp: '14h' },
-    'Lakshadweep': { g: 98, top: 'Marine Life', rr: '98%', pred: 'Coral Health', resp: '6h' },
-    'Andaman and Nicobar Islands': { g: 112, top: 'Naval Logistics', rr: '95%', pred: 'Port Transit', resp: '10h' },
-    'default': { g: 3102, top: 'Civic', rr: '91%', pred: 'Normal Operation', resp: '14h' }
+    'Uttar Pradesh': { g: 12405, rr: '82%', resp: '24h' },
+    'Bihar': { g: 9832, rr: '76%', resp: '36h' },
+    'Jharkhand': { g: 7421, rr: '71%', resp: '48h' },
+    'Delhi': { g: 6521, rr: '88%', resp: '12h' },
+    'Maharashtra': { g: 5892, rr: '85%', resp: '18h' },
+    'West Bengal': { g: 5432, rr: '79%', resp: '28h' },
+    'Madhya Pradesh': { g: 4982, rr: '81%', resp: '30h' },
+    'Gujarat': { g: 4521, rr: '89%', resp: '15h' },
+    'Rajasthan': { g: 4231, rr: '74%', resp: '40h' },
+    'Karnataka': { g: 3982, rr: '92%', resp: '10h' },
+    'Tamil Nadu': { g: 3765, rr: '87%', resp: '20h' },
+    'Andhra Pradesh': { g: 3421, rr: '83%', resp: '22h' },
+    'Telangana': { g: 3102, rr: '94%', resp: '8h' },
+    'Odisha': { g: 2987, rr: '91%', resp: '6h' },
+    'Kerala': { g: 2765, rr: '88%', resp: '18h' },
+    'Assam': { g: 2543, rr: '76%', resp: '36h' },
+    'Punjab': { g: 2321, rr: '85%', resp: '24h' },
+    'Haryana': { g: 2109, rr: '84%', resp: '26h' },
+    'Chhattisgarh': { g: 1987, rr: '78%', resp: '32h' },
+    'Uttarakhand': { g: 1765, rr: '82%', resp: '24h' },
+    'Himachal Pradesh': { g: 1543, rr: '86%', resp: '20h' },
+    'Jammu and Kashmir': { g: 1321, rr: '72%', resp: '48h' },
+    'Ladakh': { g: 876, rr: '95%', resp: '12h' },
+    'Goa': { g: 654, rr: '93%', resp: '14h' },
+    'Manipur': { g: 543, rr: '68%', resp: '72h' },
+    'Nagaland': { g: 432, rr: '75%', resp: '48h' },
+    'Arunachal Pradesh': { g: 321, rr: '81%', resp: '24h' },
+    'Mizoram': { g: 210, rr: '90%', resp: '18h' },
+    'Tripura': { g: 198, rr: '83%', resp: '22h' },
+    'Meghalaya': { g: 187, rr: '89%', resp: '14h' },
+    'Sikkim': { g: 154, rr: '96%', resp: '10h' },
+    'Chandigarh': { g: 142, rr: '97%', resp: '8h' },
+    'Puducherry': { g: 132, rr: '94%', resp: '12h' },
+    'Dadra and Nagar Haveli and Daman and Diu': { g: 121, rr: '92%', resp: '14h' },
+    'Lakshadweep': { g: 98, rr: '98%', resp: '6h' },
+    'Andaman and Nicobar Islands': { g: 112, rr: '95%', resp: '10h' },
+    'default': { g: 3102, rr: '91%', resp: '14h' }
 };
 
 const DC = ['#00E5A0', '#5C8EFF', '#FFB800', '#FF5500', '#FF3B3B'];
@@ -78,7 +163,18 @@ const MapOverlays = memo(() => (
     <></>
 ));
 
-const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, onHoverState, onClickState, bootPhase }) => {
+const getRiskBorderColor = (pred) => {
+    if (!pred) return '#06b6d4'; // default = safe blue
+    switch (pred.probabilityLabel) {
+        case 'CRITICAL': return '#ef4444'; // red
+        case 'HIGH': return '#f97316'; // orange
+        case 'MEDIUM': return '#eab308'; // yellow
+        case 'LOW': return '#06b6d4'; // cyan blue
+        default: return '#06b6d4';
+    }
+};
+
+const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, onHoverState, onClickState, bootPhase, sageMakerLevels, predictionMap }) => {
     const hasClick = clickedStateName !== null;
     const hasLegendHover = hoveredLegendLevel !== null;
 
@@ -86,34 +182,35 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
         <g className={`map-geographies ${hasClick ? 'has-click' : ''} ${hasLegendHover ? 'has-legend-hover' : ''}`}>
             <Geographies geography={geoData}>
                 {({ geographies }) => {
-                    // Group by distress level: 5 <g> compositor layers instead of 36 individual ones
                     const groups = [[], [], [], [], []];
                     geographies.forEach(geo => {
-                        const name = geo.properties._normalizedName || normalizeStateName(geo.properties.NAME_1 || geo.properties.ST_NM || geo.properties.name || geo.properties.state_name || '');
-                        const level = STATE_DISTRESS[name] ?? 1;
-                        groups[level].push({ geo, name, level });
+                        const rawName = geo.properties.NAME_1 || geo.properties.ST_NM || geo.properties.name || geo.properties.state_name || '';
+                        const name = geo.properties._normalizedName || normalizeStateName(rawName);
+                        const level = sageMakerLevels[name] !== undefined ? sageMakerLevels[name] : (STATE_DISTRESS_FALLBACK[name] ?? 1);
+                        groups[level].push({ geo, name, level, rawName });
                     });
 
                     return groups.map((geos, level) => (
                         <g key={level} className={`state-breathe-${level}`}>
-                            {geos.map(({ geo, name }) => {
+                            {geos.map(({ geo, name, rawName }) => {
                                 const isClicked = clickedStateName === name;
                                 const isLegendPulsed = hoveredLegendLevel === level;
                                 const isBoot = bootPhase === 'building';
+                                const pred = predictionMap[name];
+                                const riskColor = getRiskBorderColor(pred);
 
-                                let fillVal = 'rgba(0,229,255,0.15)';
-                                if (!hasClick) {
-                                    if (level === 4) fillVal = 'url(#bloom-crit)';
-                                    else if (level === 3) fillVal = 'url(#bloom-high)';
-                                    else if (level === 2) fillVal = 'rgba(255,184,0,0.12)';
-                                    else if (level === 1) fillVal = 'rgba(92,142,255,0.12)';
-                                    else fillVal = 'rgba(0,229,160,0.12)';
-                                    if (isBoot) fillVal = 'transparent';
-                                } else if (isClicked) {
-                                    fillVal = `${DC[level]}59`;
+                                console.log('SVG state name:', rawName, '→ normalized:', name, '→ risk:', pred?.probabilityLabel);
+
+                                let fillVal = riskColor + '1a'; // Subtle tint (10% opacity)
+                                if (isBoot) {
+                                    fillVal = 'transparent';
+                                } else if (hasClick && isClicked) {
+                                    fillVal = riskColor + '40';
+                                } else if (hasClick && !isClicked) {
+                                    fillVal = riskColor + '10';
                                 }
 
-                                const strokeColor = isLegendPulsed ? '#FFFFFF' : DC[level];
+                                const strokeColor = isLegendPulsed ? '#FFFFFF' : riskColor;
                                 const strokeWidth = isClicked ? 2.5 : 2;
 
                                 const delaySecs = (geoData.delayMap && geoData.delayMap[name]) || 0;
@@ -124,7 +221,7 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
                                     <g key={geo.rsmKey || name}
                                         className={`state-layer-group ${isClicked ? 'is-clicked' : ''} ${isLegendPulsed ? 'is-legend-pulsed' : ''}`}
                                         style={{
-                                            ...(isClicked ? { '--ac': DC[level] } : {}),
+                                            ...(isClicked ? { '--ac': riskColor } : {}),
                                             opacity: (hasClick && !isClicked) ? 0.4 : 1,
                                             transition: 'opacity 0.4s ease',
                                             ...fillStyle
@@ -139,7 +236,7 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
                                             }}
                                             style={{
                                                 default: { fill: fillVal, stroke: strokeColor, strokeWidth, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
-                                                hover: { fill: isClicked ? fillVal : `${DC[level]}44`, stroke: '#FFFFFF', strokeWidth: 2, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
+                                                hover: { fill: isClicked ? fillVal : riskColor + '30', stroke: '#FFFFFF', strokeWidth: 2, strokeOpacity: 1, outline: 'none', cursor: 'pointer', ...pathStyle },
                                                 pressed: { outline: 'none', ...pathStyle },
                                             }}
                                             className="state-geo-path"
@@ -159,15 +256,57 @@ const StateBaseLayer = memo(({ geoData, clickedStateName, hoveredLegendLevel, on
 
 
 
-function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
+function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady, onPredictionsLoaded }) {
     const [geoData, setGeoData] = useState(globalGeoCache);
-    const [bootPhase, setBootPhase] = useState('loading'); // loading, ready 
+    const [bootPhase, setBootPhase] = useState('loading');
     const [isFading, setIsFading] = useState(false);
     const [bootProgress, setBootProgress] = useState(0);
     const [bootText, setBootText] = useState('ESTABLISHING SECURE LINK...');
 
     const [clickedState, setClickedState] = useState(null);
     const [isClosingClick, setIsClosingClick] = useState(false);
+
+    // SageMaker state
+    const [sageMakerLevels, setSageMakerLevels] = useState({});
+    const [publicPredictions, setPublicPredictions] = useState([]);
+    const predictionMapRef = useRef({});
+
+    // Fetch public predictions on mount and re-color when data changes
+    useEffect(() => {
+        const loadPredictions = async () => {
+            try {
+                const res = await apiGetPublicPredictions();
+                if (res.success && Array.isArray(res.data)) {
+                    setPublicPredictions(res.data);
+                    // Build dynamic distress level map and cache map from SageMaker predictions
+                    const levelMap = {};
+                    const map = {};
+                    res.data.forEach(pred => {
+                        const normalizedName = normalizeStateName(pred.state);
+                        map[normalizedName] = pred;
+                        const level = RISK_TO_LEVEL[pred.riskLevel] || 1;
+                        // Use highest level for that state
+                        if (!levelMap[normalizedName] || level > levelMap[normalizedName]) {
+                            levelMap[normalizedName] = level;
+                        }
+                    });
+                    predictionMapRef.current = map;
+                    setSageMakerLevels(levelMap);
+
+                    console.log('[IndiaMap] Loaded', res.data.length, 'predictions');
+                    console.log('Prediction map keys:', Object.keys(predictionMapRef.current));
+                    console.log('Tamil Nadu pred:', predictionMapRef.current['Tamil Nadu']);
+                    console.log('Kerala pred:', predictionMapRef.current['Kerala']);
+
+                    // Notify parent about predictions (for ticker)
+                    if (onPredictionsLoaded) onPredictionsLoaded(res.data, res.poweredBy);
+                }
+            } catch (err) {
+                console.warn('[IndiaMap] Could not load API predictions:', err.message);
+            }
+        };
+        loadPredictions();
+    }, [onPredictionsLoaded, publicPredictions.length]);
 
     // Document click to close details
     useEffect(() => {
@@ -178,7 +317,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                 setTimeout(() => {
                     setClickedState(null);
                     setIsClosingClick(false);
-                }, 300); // Wait for reverse animation
+                }, 300);
             }
         };
         const handleEscape = (e) => {
@@ -192,13 +331,12 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
         return () => { document.removeEventListener('click', handleClickOutside); document.removeEventListener('keydown', handleEscape); };
     }, [clickedState, isClosingClick]);
 
-    // Holographic Core Boot Engine (Web Worker Powered)
+    // Holographic Core Boot Engine
     useEffect(() => {
         if (!globalGeoCache) {
             let p = 0;
             let dataReady = false;
 
-            // Initialize Multi-Threaded Parallel Processing Pool
             const coreCount = Math.min(navigator.hardwareConcurrency || 4, 8);
             const workers = [];
             let completedWorkers = 0;
@@ -216,7 +354,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                     workers.push(worker);
 
                     worker.onmessage = (e) => {
-                        const { type, data, error } = e.data;
+                        const { type, data } = e.data;
                         if (type === 'SUCCESS') {
                             allFeatures.push(...data.features);
                             Object.assign(allDelayMaps, data.delayMap);
@@ -263,7 +401,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
 
                 if (p >= 100) {
                     clearInterval(pInterval);
-                    setBootPhase('building'); // Trigger the drawing animation
+                    setBootPhase('building');
                     setTimeout(() => {
                         setIsFading(true);
                         setTimeout(() => {
@@ -286,15 +424,32 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
         }
     }, [onReady]);
 
-    // Hover is handled internally by Geography style to ensure 60fps fluidity
     const handleHoverState = useCallback(() => { }, []);
 
-    const handleClickState = useCallback((stateData) => {
+    const handleClickState = useCallback(async (stateData) => {
         if (isClosingClick) return;
         setClickedState(stateData);
+        // Instant panel open using cached predictionMapRef.current[stateData.name]
     }, [isClosingClick]);
 
     const hasClick = clickedState !== null;
+
+    const getPreSevaIntelText = (prediction) => {
+        if (!prediction) return 'All systems normal. Routine monitoring in place.';
+        const { category, confidence, riskLevel } = prediction;
+        const conf = confidence || '50%';
+        switch (riskLevel) {
+            case 'CRITICAL':
+                return `${category} · ${conf} confidence. Immediate intervention required. Deploy emergency response.`;
+            case 'HIGH':
+                return `${category} · ${conf} confidence. Elevated risk detected. Priority dispatch recommended.`;
+            case 'MEDIUM':
+                return `${category} · ${conf} confidence. Moderate risk. Schedule preventive inspection.`;
+            case 'LOW':
+            default:
+                return `${category} · ${conf} confidence. Situation stable. Routine monitoring in place.`;
+        }
+    };
 
     if (!geoData && bootPhase !== 'loading') return null;
 
@@ -357,16 +512,22 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                             onHoverState={handleHoverState}
                             onClickState={handleClickState}
                             bootPhase={bootPhase}
+                            sageMakerLevels={sageMakerLevels}
+                            predictionMap={predictionMapRef.current}
                         />
 
                         <MapOverlays />
                     </ComposableMap>
 
-                    {/* DOM Element HUD — LEFT PANEL (Isolated State) */}
+                    {/* DOM Element HUD — LEFT PANEL */}
                     {hasClick && (() => {
                         const mockData = STATE_MOCK_DATA[clickedState.name] || STATE_MOCK_DATA['default'];
-                        const distressLevel = clickedState.level;
-                        const activeColor = DC[distressLevel];
+                        const pred = predictionMapRef.current[clickedState.name];
+                        const activeColor = getRiskBorderColor(pred);
+                        // AI Prediction details
+                        const riskLevelLabel = pred ? pred.riskLevel : 'LOW';
+                        const aiCategory = pred ? pred.category : 'No active threats detected';
+                        const aiConfidence = pred ? `${pred.confidence} Confidence Level` : 'Monitoring active';
 
                         return (
                             <div className={`detail-card-left ${isClosingClick ? 'slide-out-left' : 'slide-in-left'}`}>
@@ -389,7 +550,7 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                                         <div className="iso-metric">
                                             <span className="iso-metric-lbl">RISK LEVEL</span>
                                             <div className="iso-score-circle" style={{ borderColor: activeColor, background: `${activeColor}15`, color: activeColor, textShadow: `0 0 10px ${activeColor}` }}>
-                                                {10 + distressLevel * 22}
+                                                {riskLevelLabel}
                                             </div>
                                         </div>
 
@@ -405,14 +566,16 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                                     <div className="iso-metric" style={{ marginTop: '16px' }}>
                                         <span className="iso-metric-lbl">ACTIVE GRIEVANCES</span>
                                         <div className="iso-desc">
-                                            {mockData.g.toLocaleString()}
+                                            {pred ? (pred.citizensAtRisk || mockData.g).toLocaleString() : mockData.g.toLocaleString()}
                                         </div>
                                     </div>
 
                                     <div className="hud-ai-analysis" style={{ borderLeft: `2px solid ${activeColor}` }}>
-                                        <div className="hud-ai-title">AI PREDICTION</div>
-                                        <div className="hud-ai-value">{mockData.pred}</div>
-                                        <div className="hud-ai-conf" style={{ color: activeColor }}>{mockData.rr} Confidence Level</div>
+                                        <div className="hud-ai-title" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            AI PREDICTION
+                                        </div>
+                                        <div className="hud-ai-value">{aiCategory}</div>
+                                        <div className="hud-ai-conf" style={{ color: activeColor }}>{aiConfidence}</div>
                                     </div>
 
                                     <div className="hud-scanner"></div>
@@ -421,14 +584,22 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                         )
                     })()}
 
-                    {/* DOM Element HUD — RIGHT PANEL (Mission Control Detailed View) */}
+                    {/* DOM Element HUD — RIGHT PANEL */}
                     {hasClick && (() => {
                         const mockData = STATE_MOCK_DATA[clickedState.name] || STATE_MOCK_DATA['default'];
+                        const pred = predictionMapRef.current[clickedState.name];
+                        const activeColor = getRiskBorderColor(pred);
+
+                        const riskLevelLabel = pred ? pred.riskLevel : 'LOW';
+                        const topCategory = pred ? pred.category : 'General';
+                        const topConfidence = pred ? pred.confidence : 'N/A';
+                        const intelText = getPreSevaIntelText(pred);
+
                         return (
                             <div className={`detail-card-overlay ${isClosingClick ? 'slide-out' : 'slide-in'}`}>
                                 <div className="dco-top">
                                     <div className="dco-title">
-                                        <div className="dco-dot" style={{ background: DC[clickedState.level] }} />
+                                        <div className="dco-dot" style={{ background: activeColor }} />
                                         {clickedState.name} Intelligence
                                     </div>
                                     <button className="dco-close" onClick={() => setIsClosingClick(true)}>×</button>
@@ -438,13 +609,13 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
 
                                 <div className="dco-status">
                                     <span>STATUS</span>
-                                    <div style={{ color: DC[clickedState.level] }}>{LEVEL_LABELS[clickedState.level]}</div>
+                                    <div style={{ color: activeColor }}>{riskLevelLabel}</div>
                                 </div>
 
                                 <div className="dco-grid">
                                     <div className="dco-box">
                                         <label>GRIEVANCES</label>
-                                        <span style={{ color: '#FFB800' }}>{mockData.g.toLocaleString()}</span>
+                                        <span style={{ color: '#FFB800' }}>{pred ? (pred.citizensAtRisk || mockData.g).toLocaleString() : mockData.g.toLocaleString()}</span>
                                     </div>
                                     <div className="dco-box">
                                         <label>RESOLVED</label>
@@ -455,22 +626,26 @@ function IndiaMap({ onPulse, hoveredLegendLevel, activeFilterLevel, onReady }) {
                                         <span style={{ color: '#5C8EFF' }}>{mockData.resp}</span>
                                     </div>
                                     <div className="dco-box">
-                                        <label>RISK LEVEL</label>
-                                        <span style={{ color: DC[clickedState.level] }}>{(clickedState.level * 22) + 10}</span>
+                                        <label>AI CONFIDENCE</label>
+                                        <span style={{ color: activeColor }}>{topConfidence}</span>
                                     </div>
                                 </div>
 
                                 <div className="dco-cats">
                                     <label>CRITICAL CATEGORIES</label>
                                     <div className="dco-pills">
-                                        <span>{mockData.top}</span>
-                                        <span>Administration</span>
+                                        <span>{topCategory}</span>
+                                        <span>Infrastructure</span>
                                     </div>
                                 </div>
 
                                 <div className="dco-intel">
-                                    <div className="dco-intel-tl">⚡ PRESEVA INTEL</div>
-                                    <div className="dco-intel-tx">{mockData.pred} · 82% confidence. Priority dispatch recommended.</div>
+                                    <div className="dco-intel-tl">
+                                        ⚡ PRESEVA INTEL
+                                    </div>
+                                    <div className="dco-intel-tx">
+                                        {intelText}
+                                    </div>
                                 </div>
 
                                 <button className="dco-cta">View Full Report →</button>

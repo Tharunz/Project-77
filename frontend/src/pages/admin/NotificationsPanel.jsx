@@ -18,10 +18,14 @@ export default function NotificationsPanel() {
     const [filter, setFilter] = useState('all');
 
     useEffect(() => {
-        apiGetNotifications().then(res => {
-            setNotifications(res.data || []);
-            setLoading(false);
-        });
+        const forceStop = setTimeout(() => setLoading(false), 3000);
+        apiGetNotifications()
+            .then(res => {
+                setNotifications(res.data || []);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false))
+            .finally(() => clearTimeout(forceStop));
     }, []);
 
     const markRead = async (id) => {

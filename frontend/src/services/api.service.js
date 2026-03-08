@@ -29,28 +29,57 @@ const getAuthHeaders = () => {
 };
 
 // Helper: Generic Fetch Wrapper to process JSON and catch server errors
-const apiFetch = async (endpoint, options = {}) => {
+export const apiFetch = async (endpoint, options = {}, ms = 10000) => {
+    const token = localStorage.getItem('token');
+    console.log(`[API →] ${options.method || 'GET'} ${endpoint}`, token ? '🔑' : '⚠️ NO TOKEN');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ms);
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             ...options,
+            signal: controller.signal,
             headers: {
                 ...getAuthHeaders(),
                 ...options.headers
             }
         });
-        const text = await res.text();
+        // Clone response before consuming to prevent cloning errors
+        let responseClone;
+        try {
+            responseClone = res.clone();
+        } catch (cloneErr) {
+            // If cloning fails, the response might already be consumed
+            console.warn(`[API] Response clone failed for ${endpoint}:`, cloneErr.message);
+            responseClone = res; // Use original as fallback
+        }
+
+        const text = await responseClone.text();
         if (!text || !text.trim()) {
+            console.warn(`[API ←] ${endpoint} ${res.status} — empty response`);
             return { success: false, error: 'Server returned an empty response. Is the backend running?' };
         }
         try {
-            return JSON.parse(text);
+            const parsed = JSON.parse(text);
+            if (res.ok) {
+                console.log(`[API ←] ${endpoint} ${res.status} ✅`);
+            } else {
+                console.warn(`[API ←] ${endpoint} ${res.status} ❌`, parsed.message || parsed.error || '');
+            }
+            return parsed;
         } catch {
-            console.error(`Non-JSON response at ${endpoint}:`, text.slice(0, 120));
+            console.error(`[API ←] ${endpoint} ${res.status} — non-JSON:`, text.slice(0, 120));
             return { success: false, error: `Server error (${res.status}). Backend may be unreachable.` };
         }
     } catch (err) {
-        console.error(`API Error at ${endpoint}:`, err);
+        if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+            console.error(`[API ←] ${endpoint} TIMEOUT after ${ms}ms`);
+            return { success: false, error: 'Request timed out. Please try again.' };
+        }
+        console.error(`[API ←] ${endpoint} ERROR:`, err.message);
         return { success: false, error: 'Cannot connect to backend. Please ensure the server is running on port 5000.' };
+    } finally {
+        clearTimeout(timeout);
     }
 };
 
@@ -63,7 +92,12 @@ export const apiLogin = async (email, password) => {
         body: JSON.stringify({ email, password })
     });
     if (res.success && res.data) {
+        // res.data.token is the IdToken when Cognito is enabled, or local JWT otherwise.
+        // Both cases: store as 'token' so getAuthHeaders() sends it as Bearer.
         localStorage.setItem('token', res.data.token);
+        if (res.data.accessToken) {
+            localStorage.setItem('access_token', res.data.accessToken);
+        }
         return { success: true, user: res.data.user, token: res.data.token };
     }
     return { success: false, error: res.message || res.error || 'Login failed' };
@@ -76,6 +110,9 @@ export const apiRegister = async (data) => {
     });
     if (res.success && res.data) {
         localStorage.setItem('token', res.data.token);
+        if (res.data.accessToken) {
+            localStorage.setItem('access_token', res.data.accessToken);
+        }
         return { success: true, user: res.data.user, token: res.data.token };
     }
     return { success: false, error: res.message || res.error || 'Registration failed' };
@@ -213,6 +250,7 @@ export const apiGetSchemes = async (filters = {}) => {
     if (filters.category) queryParams.append('category', filters.category);
     if (filters.state) queryParams.append('state', filters.state);
     if (filters.search) queryParams.append('search', filters.search);
+    queryParams.append('limit', '500');
 
     const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
     const res = await apiFetch(`/schemes${qs}`);
@@ -451,8 +489,8 @@ export const apiGetSLAData = async () => {
 export const apiGetFraudDuplicates = async () => {
     const res = await apiFetch('/admin/fraud-alerts');
     // Prototype fallback — always use rich mock data if reasoning is missing
-    if (!res.success || !res.data || (Array.isArray(res.data) && (res.data.length === 0 || !res.data[0].aiReason))) {
-        return { success: true, data: mockFraudDuplicates };
+    if (!res.success || !res.audits || (Array.isArray(res.audits) && (res.audits.length === 0 || !res.audits[0].aiReason))) {
+        return { success: true, audits: mockFraudDuplicates };
     }
     return res;
 };
@@ -467,6 +505,19 @@ export const apiReviewFraud = async (id, action) => {
 // Feature 16: Admin Analytics (Advanced)
 export const apiGetAdminAnalytics = async () => {
     return await apiFetch('/admin/analytics');
+};
+
+// AWS Lambda Admin Functions
+export const apiGetLambdaStatus = async () => {
+    return await apiFetch('/admin/lambda-status');
+};
+
+export const apiTriggerSlaCheck = async () => {
+    return await apiFetch('/admin/run-sla-check');
+};
+
+export const apiGetBreachedGrievances = async () => {
+    return await apiFetch('/grievance/breached');
 };
 
 // Admin Notifications (Shared for Citizen & Admin)
@@ -561,6 +612,30 @@ export const apiGetPreSevaAlerts = async () => {
 export const apiGetPreSevaStats = async () => {
     return await apiFetch('/preseva/stats');
 };
+
+export const apiGetSnsStatus = async () => {
+    return await apiFetch('/admin/sns-status');
+};
+
+export const apiGetQueueStats = async () => {
+    return await apiFetch('/admin/queue-stats');
+};
+
+export const apiGetSecretsStatus = async () => {
+    return await apiFetch('/admin/secrets-status');
+};
+
+export const apiGetStreamStatus = async () => {
+    return await apiFetch('/admin/stream-status');
+};
+
+export const apiGetConfig = async () => {
+    return await apiFetch('/admin/config');
+};
+
+export const apiGetAwsServicesStatus = async () => {
+    return await apiFetch('/admin/aws-services-status');
+};
 export const apiMarkPrevented = async (id) => {
     return await apiFetch(`/preseva/alerts/${id}/resolve`, { method: 'PUT' });
 };
@@ -607,18 +682,24 @@ export const apiApplyScheme = async (schemeId, applicationData) => {
 };
 
 // ==============================
-//  BOOKMARKS
+//  BOOKMARKS (Issue 12 — DynamoDB backed)
 // ==============================
 export const apiGetBookmarkedSchemes = async () => {
-    return await apiFetch('/schemes/bookmarked');
+    const res = await apiFetch('/bookmarks/my');
+    if (res.success) return res;
+    return { success: true, data: [] };
 };
 
-export const apiBookmarkScheme = async (schemeId) => {
-    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'POST' });
+export const apiBookmarkScheme = async (scheme) => {
+    // scheme = { schemeId, name, category, state, description, benefit }
+    return await apiFetch('/bookmarks/add', {
+        method: 'POST',
+        body: JSON.stringify(scheme)
+    });
 };
 
 export const apiUnbookmarkScheme = async (schemeId) => {
-    return await apiFetch(`/schemes/${schemeId}/bookmark`, { method: 'DELETE' });
+    return await apiFetch(`/bookmarks/${schemeId}`, { method: 'DELETE' });
 };
 
 // ==============================
@@ -633,6 +714,15 @@ export const apiPresevAssignAlert = async (id, assignData) => {
 
 export const apiGetPresevaPredictionsByState = async (state) => {
     return await apiFetch(`/preseva/alerts?state=${encodeURIComponent(state)}`);
+};
+
+// ─── SageMaker PreSeva — Public Endpoints ─────────────────────────────────────
+export const apiGetPublicPredictions = async () => {
+    return await apiFetch('/preseva/public-predictions');
+};
+
+export const apiGetStatePreSeva = async (stateName) => {
+    return await apiFetch(`/preseva/state/${encodeURIComponent(stateName)}`);
 };
 
 // ==============================
