@@ -807,4 +807,40 @@ router.get('/:id/documents', protect, async (req, res, next) => {
     }
 });
 
+// ─── GET /api/grievance/document-url ───────────────────────────────────────────
+router.get('/document-url', protect, async (req, res) => {
+  res.set('Cache-Control', 'no-store')
+  try {
+    const { key } = req.query
+    if (!key) return res.status(400).json({ error: 'key required' })
+
+    const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3')
+    const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
+
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        sessionToken: process.env.AWS_SESSION_TOKEN
+      }
+    })
+
+    const url = await getSignedUrl(
+      s3,
+      new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+        Key: key
+      }),
+      { expiresIn: 86400 }
+    )
+
+    console.log(`[S3] Presigned URL generated for citizen: ${key} ✅`)
+    res.json({ success: true, url })
+  } catch(err) {
+    console.log(`[S3] URL generation failed: ${err.message}`)
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
+
 module.exports = router;

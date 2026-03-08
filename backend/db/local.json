@@ -403,6 +403,140 @@
   ],
   "grievances": [
     {
+      "id": "GRV-0CB4593E",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "afasdfasfsfsf",
+      "description": "afasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsfafasdfasfsfsf",
+      "category": "Education",
+      "state": "Jharkhand",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772941362366-Aquila Resume.pdf",
+          "originalName": "Aquila Resume.pdf",
+          "mimetype": "application/pdf",
+          "size": 631921,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772941362366-Aquila Resume.pdf"
+        }
+      ],
+      "extractedText": "THARUNRAJ.M (Aquila)\nComputer Science Student\nCybersecurity Enthusiast\nLow-Level Coder\nFull-Stack Developer\ntrinity.localhost@gmail.com\n+91 7010768207\nD5\ngithub.com/Tharunz\nI\nSUMMARY\nI\nEDUCATION\nPassionate CS student specializing in cybersecurity with hands-on\nB.E. Computer Science (Cyber\nexperience since age 11. Expertise in reverse engineering, low-level\nSecurity)\nJ.N.N Institute of Engineering\nprogramming, and backend development. Proven track record building\n2024 2028\nproduction-ready applications from encrypted messaging to Al-powered\nLKG through 12th Grade\nsolutions and physics simulations. Strong proficiency in systems\nS.B.O.A School and Junior College\nprogramming, code review, data structures, and problem-solving.\n2007 2021\nI\nPROJECTS\nI\nTECHNICAL SKILLS\nZecrypted\nEncryption\nReal-time\nSecurity\nCore Expertise\nEnd-to-end encrypted messaging app as 12th-grade project with secure\nReverse Engineering\nprotocols and real-time features\nLow-Level Programming\nStudyMate\nIBM Granite\nNLP\nGenAl\nCode Review\nBackend Dev\nDSA\nPDF-based Q&A system with IBM Granite for document analysis (24-hour\nGenAl hackathon)\nProblem Solving\ndeAl-fy\nNLP\nML\nText Processing\nCybersecurity\nLocal NLP tool for humanizing LLM-generated text, addressing AI\nPenetration Testing\nEncryption\ndetection concerns\nNetwork Security\nSchwarzschild 2D Simulator\nC++\nSDL2\nPhysics\nVulnerability Assessment\nPhysics-based black hole simulation using C++ and SDL2 with real-time\nrendering\nLanguages\nGzone\nWeb Scraping\nTorrent\nBackend\nC++\nC\nPython\nJavaScript\nGame scraping software with integrated torrent functionality and web\nAssembly\nscraping algorithms\nAI/ML\nCobutra\nGPS\nReal-time\nMobile\nCollege bus tracking system for real-time location monitoring and route\nNLP\nLLMs\nGenAl\noptimization\nData Analytics\nRecon\nAPI\nAnalytics\nWeb Dev\nTools\nValorant player analytics platform for performance tracking and statistics\nGit\nSDL2\nTorrent Protocols\nvisualization\nWeb Scraping",
+      "formFields": {
+        "i_summary": "",
+        "github_com_tharunz": "X D5",
+        "recon": "API Analytics Web Dev",
+        "b_e_computer_science_cyber_security": "J.N.N Institute of Engineering 2024 2028",
+        "trinity_localhost_gmail_com": "X",
+        "tools": "Git SDL2 Torrent Protocols Web Scraping",
+        "core_expertise": "Reverse Engineering",
+        "lkg_through_12th_grade_s_b_o_a_school_and_junior_college": "2007 2021",
+        "languages": "C++ C Python"
+      },
+      "isDuplicate": false,
+      "fraudScore": 18,
+      "documentLabels": [
+        {
+          "name": "Document",
+          "confidence": 94
+        },
+        {
+          "name": "Text",
+          "confidence": 89
+        },
+        {
+          "name": "Paper",
+          "confidence": 82
+        }
+      ],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T03:42:56.606Z",
+      "updatedAt": "2026-03-08T03:42:56.606Z",
+      "resolvedAt": null
+    },
+    {
+      "id": "GRV-B5CEF671",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "TEst for recko",
+      "description": "asfdsf fasf sfasf af sf  sd sfds",
+      "category": "Healthcare",
+      "state": "Jharkhand",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772940047644-Aquila Resume.pdf",
+          "originalName": "Aquila Resume.pdf",
+          "mimetype": "application/pdf",
+          "size": 631921,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772940047644-Aquila Resume.pdf"
+        }
+      ],
+      "extractedText": "THARUNRAJ.M (Aquila)\nComputer Science Student\nCybersecurity Enthusiast\nLow-Level Coder\nFull-Stack Developer\ntrinity.localhost@gmail.com\n+91 7010768207\nD5\ngithub.com/Tharunz\nI\nSUMMARY\nI\nEDUCATION\nPassionate CS student specializing in cybersecurity with hands-on\nB.E. Computer Science (Cyber\nexperience since age 11. Expertise in reverse engineering, low-level\nSecurity)\nJ.N.N Institute of Engineering\nprogramming, and backend development. Proven track record building\n2024 2028\nproduction-ready applications from encrypted messaging to Al-powered\nLKG through 12th Grade\nsolutions and physics simulations. Strong proficiency in systems\nS.B.O.A School and Junior College\nprogramming, code review, data structures, and problem-solving.\n2007 2021\nI\nPROJECTS\nI\nTECHNICAL SKILLS\nZecrypted\nEncryption\nReal-time\nSecurity\nCore Expertise\nEnd-to-end encrypted messaging app as 12th-grade project with secure\nReverse Engineering\nprotocols and real-time features\nLow-Level Programming\nStudyMate\nIBM Granite\nNLP\nGenAl\nCode Review\nBackend Dev\nDSA\nPDF-based Q&A system with IBM Granite for document analysis (24-hour\nGenAl hackathon)\nProblem Solving\ndeAl-fy\nNLP\nML\nText Processing\nCybersecurity\nLocal NLP tool for humanizing LLM-generated text, addressing AI\nPenetration Testing\nEncryption\ndetection concerns\nNetwork Security\nSchwarzschild 2D Simulator\nC++\nSDL2\nPhysics\nVulnerability Assessment\nPhysics-based black hole simulation using C++ and SDL2 with real-time\nrendering\nLanguages\nGzone\nWeb Scraping\nTorrent\nBackend\nC++\nC\nPython\nJavaScript\nGame scraping software with integrated torrent functionality and web\nAssembly\nscraping algorithms\nAI/ML\nCobutra\nGPS\nReal-time\nMobile\nCollege bus tracking system for real-time location monitoring and route\nNLP\nLLMs\nGenAl\noptimization\nData Analytics\nRecon\nAPI\nAnalytics\nWeb Dev\nTools\nValorant player analytics platform for performance tracking and statistics\nGit\nSDL2\nTorrent Protocols\nvisualization\nWeb Scraping",
+      "formFields": {
+        "i_summary": "",
+        "github_com_tharunz": "X D5",
+        "recon": "API Analytics Web Dev",
+        "b_e_computer_science_cyber_security": "J.N.N Institute of Engineering 2024 2028",
+        "trinity_localhost_gmail_com": "X",
+        "tools": "Git SDL2 Torrent Protocols Web Scraping",
+        "core_expertise": "Reverse Engineering",
+        "lkg_through_12th_grade_s_b_o_a_school_and_junior_college": "2007 2021",
+        "languages": "C++ C Python"
+      },
+      "isDuplicate": false,
+      "fraudScore": 16,
+      "documentLabels": [
+        {
+          "name": "Document",
+          "confidence": 94
+        },
+        {
+          "name": "Text",
+          "confidence": 89
+        },
+        {
+          "name": "Paper",
+          "confidence": 82
+        }
+      ],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T03:21:00.338Z",
+      "updatedAt": "2026-03-08T03:21:00.338Z",
+      "resolvedAt": null
+    },
+    {
       "id": "GRV-94DD2AE2",
       "userId": "USR-CIT-001",
       "citizenName": "Ramesh Kumar",
@@ -2242,6 +2376,117 @@
       "createdAt": "2026-01-01T00:00:00.000Z",
       "updatedAt": "2026-01-03T00:00:00.000Z",
       "resolvedAt": null
+    },
+    {
+      "id": "GRV-3180507F",
+      "userId": "USR-CIT-001",
+      "citizenName": "Ramesh Kumar",
+      "title": "afsaf fas fas fass",
+      "description": "afsaf fas fas fassafsaf fas fas fassafsaf fas fas fassafsaf fas fas fass",
+      "category": "Electricity",
+      "state": "Uttar Pradesh",
+      "district": "Unknown",
+      "status": "Pending",
+      "sentiment": "Neutral",
+      "sentimentScore": 0.5,
+      "sentimentData": {
+        "Positive": 0.1,
+        "Negative": 0.1,
+        "Neutral": 0.8,
+        "Mixed": 0.02
+      },
+      "keyPhrases": [],
+      "priority": "High",
+      "assignedOfficer": null,
+      "documents": [
+        {
+          "filename": "grievance-documents/1772941701199-aadhar.jpeg",
+          "originalName": "aadhar.jpeg",
+          "mimetype": "image/jpeg",
+          "size": 140307,
+          "url": "https://ncie-documents-tharun-lab.s3.us-east-1.amazonaws.com/grievance-documents/1772941701199-aadhar.jpeg"
+        }
+      ],
+      "extractedText": "311817₹\n- -\n- -\nGovernment of India\nAADHAAR\n(586)160) / INFORMATION\nGovernment of India\n& aim @iquifiencenco\nshows Limits Cad menus\n616581\naddition DUL @sinen Units Cad\nassemb closed security\nBIANL BIRTHDLIL\nDas sussing UIDAI\nUnique Identification Authority of India\nshows asu etuCL AML Agib\nSTID shows - QR doCam)\nUNITED QR and cruCasefiew account www.uidai.gov.in do\n6T630T/ Enrolment No.: 0000/00687/91744\nOR TLI\naddress Comm(Sub\nTo\n(if\n- USE 10\ndingui - ADDITIONAL\nM Tharunra)\nC/O Muralirajan S,\nand ### / Community\nDoor number 14. Plot number 8, Adithiyam illam,\nQum - Liverging\nKadappa Road, Ramani Nagar,\nLINEN @4 submitted\nSRM GRAND HOTEL,\nNew Lakshmipuram,\n- Quin mAadhaar\nVTC: Kolathur,\n/Cu\nPO: Kolathur,\nDistrict: Tiruvallur,\n& Camsus Signature güysmeri Quig Commin\nState: Tamil Nadu,\nPIN Code: 600099,\nAadhaar is proof of identity, not of citizenship or date of birth (DOB) DOB\nMobile: 7010768207\nis based on information supported by proof of DOB document specified in\nregulations, submitted by Aadhaar number holder.\nSignature Not Verified\nThis Aadhaar letter should be verified through either online\nTignature ,\nauthentication by UIDAl-appointed authentication agency or QR code\nscanning using mAadhaar or Aadhaar QR Scanner app available in app\nstores or using secure QR code reader app available on\nwww.uidai.gov.in.\nAadhaar is unique and secure\nDocuments to support identity and address should be updated in\nAadhaar after every 10 years from date of enrolment for Aadhaar.\nAadhaar helps you avail of various Government and Non-\nGovernment benefits/services.\nKeep your mobile number and email id updated in Aadhaar.\n2 asm 616001 / Your Aadhaar No. :\nDownload mAadhaar app to avail of Aadhaar services\n6494 2290 8905\nUse the feature of Lock/Unlock Aadhaar/biometrics to ensure security\nVID 9156 4028 9354 7364\nwhen not using Aadhaar/biometrics\nEntities seeking Aadhaar are obligated to seek consent\nasm). steargy SIGNL 1\n-\nGovernment of India\nUnique Identification Authority of India\n(LP -\nC/O 9. 01 BIDLIT 14.\nAadhaar no. issued 21/10/2017\nM Tharunraj\nBIRLIT 8, BULD ULIT\nJose (bmitr/DOB: 02/11/2004\nagest/ MALE\n20/03/2025 Details on #\nSTILL\nBILL\nsublic Birth 600099\nAddress:\nDD\n-\naddress\nC/O Muralirajan S, Door number 14, Plot number 8,\nin\nANR)\nAdithiyam illam, Kadappa Road Ramani Nagar,\nAadhaar is proof of identity, not of citizenship\nSRM GRAND HOTEL. New Lakshmipuram,\nor date of birth. It should be used with verification (online\nKolathur, PO: Kolathur, DIST: Tiruvallur,\nTamil Nadu 600099\nauthentication, or scanning of QR code / offline XML).\n6494 2290 8905\n6494 2290 8905\nVID 9156 4028 9354 7364\n6160151 6160151 SILT\n1947\nhelp@uidai.gov.in\nwww.uidai.gov.in",
+      "formFields": {
+        "and": "",
+        "community": "",
+        "linen": "",
+        "lp": "M Tharunraj Jose",
+        "aadhaar_is_unique_and_secure": "X",
+        "bmitr_dob": "02/11/2004",
+        "download_maadhaar_app_to_avail_of_aadhaar_services": "X",
+        "aadhaar_helps_you_avail_of_various_government_and_non_government_benefits_services": "X",
+        "use_the_feature_of_lock_unlock_aadhaar_biometrics_to_ensure_security_when_not_using_aadhaar_biometrics": "X",
+        "documents_to_support_identity_and_address_should_be_updated_in_aadhaar_after_every_10_years_from_date_of_enrolment_for_aadhaar": "X",
+        "c_o": "BIRLIT 8, BULD",
+        "das_sussing": "STID",
+        "signature_not_verified_tignature": "",
+        "6t630t_enrolment_no": "0000/00687/91744",
+        "aim_shows_limits_616581_addition_dul_sinen_assemb_closed": "X",
+        "entities_seeking_aadhaar_are_obligated_to_seek_consent": "X -",
+        "dd_address": "in ANR) Aadhaar is proof of identity, not of citizenship or date of birth. It should be used with verification authentication, or scanning of QR code / offline XML).",
+        "aadhaar_is_proof_of_identity_not_of_citizenship_or_date_of_birth_dob_dob_is_based_on_information_supported_by_proof_of_dob_document_specified_in_regulations_submitted_by_aadhaar_number_holder": "X",
+        "this_aadhaar_letter_should_be_verified_through_either_online_authentication_by_uidal_appointed_authentication_agency_or_qr_code_scanning_using_maadhaar_or_aadhaar_qr_scanner_app_available_in_app_stores_or_using_secure_qr_code_reader_app_available_on_www_uidai_gov_in": "X",
+        "po": "Kolathur,",
+        "pin_code": "600099,",
+        "mobile": "7010768207",
+        "district": "Tiruvallur,",
+        "vtc": "Kolathur,",
+        "vid": "9156 4028 9354 7364",
+        "state": "Tamil Nadu,",
+        "sublic_birth": "600099",
+        "agest": "MALE",
+        "dist": "Tiruvallur,",
+        "2_asm_616001_your_aadhaar_no": "6494 2290 8905",
+        "tamil_nadu": "600099",
+        "if": "",
+        "kolathur_po": "Kolathur,",
+        "www_uidai_gov_in": "X",
+        "new": "Lakshmipuram,",
+        "bianl_birthdlil": "Unique Identification Authority of India",
+        "help_uidai_gov_in": "X"
+      },
+      "isDuplicate": false,
+      "fraudScore": 22,
+      "documentLabels": [
+        {
+          "name": "Page",
+          "confidence": 100
+        },
+        {
+          "name": "Text",
+          "confidence": 100
+        },
+        {
+          "name": "Person",
+          "confidence": 99
+        },
+        {
+          "name": "Advertisement",
+          "confidence": 91
+        },
+        {
+          "name": "Face",
+          "confidence": 91
+        },
+        {
+          "name": "Head",
+          "confidence": 91
+        },
+        {
+          "name": "Poster",
+          "confidence": 89
+        }
+      ],
+      "moderationFlags": [],
+      "adminNote": null,
+      "extractedTextBlocks": [],
+      "extractedIncome": null,
+      "extractedName": null,
+      "createdAt": "2026-03-08T03:48:36.763Z",
+      "updatedAt": "2026-03-08T03:48:36.763Z",
+      "resolvedAt": null
     }
   ],
   "schemes": [
@@ -2738,8 +2983,8 @@
       "departmentAlerted": "Chennai Metrowater",
       "suggestedAction": "Increase desalination output by 20% and redirect supply.",
       "historicalPattern": "Drought pattern match from Summer 2021 detected 72h prior.",
-      "createdAt": "2026-03-07T01:23:11.105Z",
-      "updatedAt": "2026-03-07T13:23:11.105Z"
+      "createdAt": "2026-03-07T03:50:07.407Z",
+      "updatedAt": "2026-03-07T15:50:07.407Z"
     },
     {
       "id": "PRESEVA-KL-4412",
@@ -2757,8 +3002,8 @@
       "departmentAlerted": "Kerala Health Services",
       "suggestedAction": "Deploy emergency buffer stock of anti-viral medications.",
       "historicalPattern": "Seasonal escalation pattern matching monsoon surge detected.",
-      "createdAt": "2026-03-06T01:23:11.105Z",
-      "updatedAt": "2026-03-07T01:23:11.105Z"
+      "createdAt": "2026-03-06T03:50:07.407Z",
+      "updatedAt": "2026-03-07T03:50:07.407Z"
     }
   ],
   "notifications": [
@@ -3150,6 +3395,33 @@
       "type": "info",
       "isRead": false,
       "sentAt": "2026-03-08T01:21:55.244Z"
+    },
+    {
+      "id": "NOTIF-04CE57A5",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-B5CEF671",
+      "message": "Your grievance \"TEst for recko\" has been filed. Tracking ID: GRV-B5CEF671",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T03:21:00.341Z"
+    },
+    {
+      "id": "NOTIF-F2954A54",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-0CB4593E",
+      "message": "Your grievance \"afasdfasfsfsf\" has been filed. Tracking ID: GRV-0CB4593E",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T03:42:56.608Z"
+    },
+    {
+      "id": "NOTIF-AFED1902",
+      "userId": "USR-CIT-001",
+      "grievanceId": "GRV-3180507F",
+      "message": "Your grievance \"afsaf fas fas fass \" has been filed. Tracking ID: GRV-3180507F",
+      "type": "success",
+      "isRead": false,
+      "sentAt": "2026-03-08T03:48:36.765Z"
     }
   ],
   "communityPosts": [

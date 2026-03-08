@@ -386,28 +386,163 @@ router.get('/activity-feed', (req, res, next) => {
 });
 
 // ─── GET /api/admin/fraud-alerts ─────────────────────────────────────────────
-router.get('/fraud-alerts', (req, res, next) => {
-    try {
-        const db_instance = db.getDb();
-        const fraudulent = db_instance.get('grievances')
-            .filter(g => g.fraudScore > 0.5 || g.isDuplicate)
-            .value()
-            .map(g => ({
-                ...g,
-                flagReason: g.isDuplicate ? 'Duplicate submission detected' : 'High fraud probability score',
-                similarGrievanceCount: g.isDuplicate ? 2 : 1
-            }));
+router.get('/fraud-alerts', protect, adminOnly, async (req, res, next) => {
+  res.set('Cache-Control', 'no-store')
+  
+  try {
+    const { analyzeDocument } = require('../services/rekognition.service')
+    
+    // Get real files from S3 grievance-documents/
+    const grievanceDocs = await listGrievanceDocuments()
+    
+    // Also list documents/ folder for test images
+    const s3 = getS3Client()
+    const testResult = await s3.send(new ListObjectsV2Command({
+      Bucket: process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+      Prefix: 'documents/rekognition-test',
+      MaxKeys: 5
+    }))
+    const testDocs = (testResult.Contents || [])
+      .filter(obj => obj.Key !== 'documents/')
 
-        return res.status(200).json({
-            success: true,
-            data: fraudulent,
-            message: `${fraudulent.length} suspicious grievance(s) flagged.`,
-            timestamp: new Date().toISOString()
-        });
-    } catch (err) {
-        next(err);
-    }
+    console.log(`[Rekognition] Fraud: Grievance docs: ${grievanceDocs.length}, Test docs: ${testDocs.length}`)
+
+    // Build targets — real docs first, then test images
+    const realTargets = grievanceDocs.slice(0, 5).map((obj, i) => {
+      const filename = obj.Key.split('/').pop()
+      const grievanceMatch = filename.match(/GRV-\d+/i)
+      
+      return {
+        grievanceId: grievanceMatch 
+          ? grievanceMatch[0].toUpperCase() 
+          : `GRV-${String(i + 50).padStart(3, '0')}`,
+        documentKey: obj.Key,
+        citizen: 'Citizen (Filed Grievance)',
+        state: 'India',
+        category: 'Grievance Document',
+        isReal: true,
+        uploadedAt: obj.LastModified
+      }
+    })
+
+    // Fill with test images if needed
+    const neededFiller = Math.max(0, 3 - realTargets.length)
+    const testTargets = testDocs.slice(0, neededFiller).map((obj, i) => ({
+      grievanceId: `GRV-TEST-${i + 1}`,
+      documentKey: obj.Key,
+      citizen: ['Ramesh Kumar', 'Priya Singh', 'Mohammed Iqbal'][i] || 'Test Citizen',
+      state: ['Uttar Pradesh', 'Bihar', 'Delhi'][i] || 'Test State',
+      category: ['Water Supply', 'Road Infrastructure', 'Electricity'][i] || 'Test',
+      isReal: false,
+      uploadedAt: obj.LastModified
+    }))
+
+    const targets = [...realTargets, ...testTargets]
+    
+    console.log(`[Rekognition] Fraud analyzing ${targets.length} documents (${realTargets.length} real, ${testTargets.length} test)`)
+    
+    const fraudResults = await Promise.all(
+      targets.map(async (item) => {
+        const analysis = await analyzeDocument(
+          process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+          item.documentKey
+        )
+
+        return {
+          id: item.grievanceId,
+          title: `${item.category} - ${item.state}`,
+          citizenName: item.citizen,
+          state: item.state,
+          category: item.category,
+          status: 'Pending',
+          priority: 'Medium',
+          createdAt: new Date().toISOString(),
+          fraudScore: analysis.fraudScore,
+          fraudProbability: analysis.fraudProbability,
+          labels: analysis.labels,
+          moderationFlags: analysis.moderationFlags,
+          isFlagged: analysis.fraudScore > 50,
+          flagReason: analysis.moderationFlags.length > 0 
+            ? `Rekognition detected: ${analysis.moderationFlags.map(f => f.name).join(', ')}` 
+            : analysis.fraudScore > 50 
+              ? 'Rekognition detected anomalies in document'
+              : 'Document cleared by Rekognition',
+          analyzedAt: new Date().toISOString(),
+          source: analysis.source || 'AWS Rekognition',
+          isDuplicate: false,
+          similarGrievanceCount: 1,
+          documentKey: item.documentKey,
+          documentName: item.documentKey.split('/').pop(),
+          isReal: item.isReal,
+          documentSource: item.isReal 
+            ? '● Live Grievance Document' 
+            : 'Test Document',
+          uploadedAt: item.uploadedAt
+        }
+      })
+    )
+
+    // Filter to only show flagged items
+    const flaggedResults = fraudResults.filter(f => f.isFlagged)
+
+    console.log(`[Rekognition] Fraud analysis complete. ${flaggedResults.length} flagged out of ${fraudResults.length} ✅`)
+
+    res.json({
+      success: true,
+      audits: flaggedResults,
+      summary: {
+        total: flaggedResults.length,
+        flagged: flaggedResults.length,
+        realDocuments: realTargets.length,
+        testDocuments: testTargets.length
+      },
+      poweredBy: 'Amazon Rekognition'
+    })
+
+  } catch(err) {
+    console.log('[Rekognition] Fraud alerts error:', err.message)
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    })
+  }
 });
+
+// ─── GET /api/admin/document-url ───────────────────────────────────────────
+router.get('/document-url', protect, adminOnly, async (req, res) => {
+  res.set('Cache-Control', 'no-store')
+  try {
+    const { key } = req.query
+    if (!key) return res.status(400).json({ error: 'key required' })
+
+    const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3')
+    const { getSignedUrl } = require('@aws-sdk/s3-request-presigner')
+
+    const s3 = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        sessionToken: process.env.AWS_SESSION_TOKEN
+      }
+    })
+
+    const command = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+      Key: key
+    })
+
+    // Presigned URL valid for 24 hours
+    const url = await getSignedUrl(s3, command, { expiresIn: 86400 })
+    
+    console.log(`[S3] Generated presigned URL for: ${key} ✅`)
+    res.json({ success: true, url, key })
+
+  } catch(err) {
+    console.log(`[S3] Presigned URL failed: ${err.message}`)
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
 
 // ─── PATCH /api/admin/fraud-alerts/:id/review ────────────────────────────────
 router.patch('/fraud-alerts/:id/review', (req, res, next) => {
@@ -461,22 +596,180 @@ router.patch('/fraud-alerts/:id/review', (req, res, next) => {
     }
 });
 
-// ─── Feature 28: AI Ghost Audits API ──────────────────────────────────────────
-router.get('/ghost-audits', (req, res, next) => {
-    try {
-        const db_instance = db.getDb();
-        const alerts = db_instance.get('ghostAuditAlerts').value() || [];
+// ─── S3 Helper Functions ─────────────────────────────────────────────────────
+const { 
+  S3Client, 
+  ListObjectsV2Command 
+} = require('@aws-sdk/client-s3')
 
-        return res.status(200).json({
-            success: true,
-            data: alerts,
-            message: "Ghost audit alerts fetched successfully.",
-            timestamp: new Date().toISOString()
-        });
-    } catch (err) {
-        next(err);
-    }
-});
+const getS3Client = () => new S3Client({
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    sessionToken: process.env.AWS_SESSION_TOKEN
+  }
+})
+
+// List ALL image files from grievance-documents/
+const listGrievanceDocuments = async () => {
+  try {
+    const s3 = getS3Client()
+    
+    const result = await s3.send(new ListObjectsV2Command({
+      Bucket: process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+      Prefix: 'grievance-documents/',
+      MaxKeys: 20
+    }))
+
+    const imageExts = ['jpg','jpeg','png','gif','tiff','tif','bmp','webp']
+    
+    const imageFiles = (result.Contents || [])
+      .filter(obj => {
+        // Skip the folder itself
+        if (obj.Key === 'grievance-documents/') return false
+        const ext = obj.Key.split('.').pop().toLowerCase()
+        return imageExts.includes(ext)
+      })
+      .sort((a, b) => 
+        new Date(b.LastModified) - new Date(a.LastModified)
+      )  // newest first
+
+    console.log(`[Rekognition] Found ${imageFiles.length} images in grievance-documents/`)
+    console.log('[Rekognition] Files:', imageFiles.map(f => f.Key))
+
+    return imageFiles
+
+  } catch(err) {
+    console.log('[Rekognition] S3 list failed:', err.message)
+    return []
+  }
+}
+
+// ─── Feature 28: AI Ghost Audits API ──────────────────────────────────────────
+router.get('/ghost-audits', protect, adminOnly, async (req, res, next) => {
+  res.set('Cache-Control', 'no-store')
+  
+  try {
+    const { analyzeDocument } = require('../services/rekognition.service')
+    
+    // Get real files from S3 grievance-documents/
+    const grievanceDocs = await listGrievanceDocuments()
+    
+    // Also list documents/ folder for test images
+    const s3 = getS3Client()
+    const testResult = await s3.send(new ListObjectsV2Command({
+      Bucket: process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+      Prefix: 'documents/rekognition-test',
+      MaxKeys: 5
+    }))
+    const testDocs = (testResult.Contents || [])
+      .filter(obj => obj.Key !== 'documents/')
+
+    console.log(`[Rekognition] Grievance docs: ${grievanceDocs.length}, Test docs: ${testDocs.length}`)
+
+    // Build targets — real docs first, then test images
+    const realTargets = grievanceDocs.slice(0, 5).map((obj, i) => {
+      // Extract filename to guess grievance info
+      const filename = obj.Key.split('/').pop()
+      // Filename might be like: GRV-051-doc.jpg or random uuid
+      const grievanceMatch = filename.match(/GRV-\d+/i)
+      
+      return {
+        grievanceId: grievanceMatch 
+          ? grievanceMatch[0].toUpperCase() 
+          : `GRV-${String(i + 50).padStart(3, '0')}`,
+        documentKey: obj.Key,
+        citizen: 'Citizen (Filed Grievance)',
+        state: 'India',
+        category: 'Grievance Document',
+        isReal: true,
+        uploadedAt: obj.LastModified
+      }
+    })
+
+    // Fill with test images if needed
+    const neededFiller = Math.max(0, 3 - realTargets.length)
+    const testTargets = testDocs.slice(0, neededFiller).map((obj, i) => ({
+      grievanceId: `GRV-TEST-${i + 1}`,
+      documentKey: obj.Key,
+      citizen: ['Ramesh Kumar', 'Priya Singh', 'Mohammed Iqbal'][i] || 'Test Citizen',
+      state: ['Uttar Pradesh', 'Bihar', 'Delhi'][i] || 'Test State',
+      category: ['Water Supply', 'Road Infrastructure', 'Electricity'][i] || 'Test',
+      isReal: false,
+      uploadedAt: obj.LastModified
+    }))
+
+    const targets = [...realTargets, ...testTargets]
+    
+    console.log(`[Rekognition] Analyzing ${targets.length} documents (${realTargets.length} real, ${testTargets.length} test)`)
+
+    // Run Rekognition on each
+    const auditResults = await Promise.all(
+      targets.map(async (item) => {
+        const analysis = await analyzeDocument(
+          process.env.S3_BUCKET || 'ncie-documents-tharun-lab',
+          item.documentKey
+        )
+
+        return {
+          auditId: `AUD-${item.grievanceId}`,
+          grievanceId: item.grievanceId,
+          citizen: item.citizen,
+          state: item.state,
+          category: item.category,
+          documentKey: item.documentKey,
+          documentName: item.documentKey.split('/').pop(),
+          isReal: item.isReal,
+          documentSource: item.isReal 
+            ? '● Live Grievance Document' 
+            : 'Test Document',
+          fraudScore: analysis.fraudScore || 0,
+          fraudProbability: analysis.fraudProbability || 0,
+          labels: analysis.labels || [],
+          moderationFlags: analysis.moderationFlags || [],
+          isFlagged: (analysis.fraudScore || 0) > 50,
+          flagReason: analysis.moderationFlags?.length > 0
+            ? `Rekognition detected: ${analysis.moderationFlags.map(f => f.name).join(', ')}` 
+            : (analysis.fraudScore || 0) > 50
+              ? 'Rekognition detected document anomalies'
+              : 'Document verified by Rekognition',
+          analyzedAt: new Date().toISOString(),
+          source: analysis.source || 'AWS Rekognition',
+          status: (analysis.fraudScore || 0) > 70
+            ? 'CRITICAL'
+            : (analysis.fraudScore || 0) > 40
+              ? 'REVIEW'
+              : 'CLEARED',
+          uploadedAt: item.uploadedAt
+        }
+      })
+    )
+
+    console.log(`[Rekognition] Analysis complete. ${auditResults.filter(a => a.isFlagged).length} flagged ✅`)
+
+    res.json({
+      success: true,
+      audits: auditResults,
+      summary: {
+        total: auditResults.length,
+        flagged: auditResults.filter(a => a.isFlagged).length,
+        cleared: auditResults.filter(a => !a.isFlagged).length,
+        critical: auditResults.filter(a => a.status === 'CRITICAL').length,
+        realDocuments: realTargets.length,
+        testDocuments: testTargets.length
+      },
+      poweredBy: 'Amazon Rekognition'
+    })
+
+  } catch(err) {
+    console.log('[Rekognition] Ghost audits error:', err.message)
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    })
+  }
+})
 
 // ─── Feature 27 & 20: Digital Budget Escrow APIs (Admin) ─────────────────────
 router.get('/escrow', (req, res, next) => {

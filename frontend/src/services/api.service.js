@@ -489,8 +489,8 @@ export const apiGetSLAData = async () => {
 export const apiGetFraudDuplicates = async () => {
     const res = await apiFetch('/admin/fraud-alerts');
     // Prototype fallback — always use rich mock data if reasoning is missing
-    if (!res.success || !res.data || (Array.isArray(res.data) && (res.data.length === 0 || !res.data[0].aiReason))) {
-        return { success: true, data: mockFraudDuplicates };
+    if (!res.success || !res.audits || (Array.isArray(res.audits) && (res.audits.length === 0 || !res.audits[0].aiReason))) {
+        return { success: true, audits: mockFraudDuplicates };
     }
     return res;
 };
