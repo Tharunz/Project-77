@@ -620,6 +620,15 @@ Project-77/
 
 ---
 
+## 👥 Team Members
+
+- 🎨 Tharun Raj — Frontend
+- 👨‍💻 Surya Prakash J — Backend
+- 📚 Sri Sai Dharshan Vel — Research 
+- 🧪 Adithya Elavazhagan — Testing & Demo
+
+---
+
 <div align="center">
 
 **Built for AWS × Kyndryl Hackathon 2025**
